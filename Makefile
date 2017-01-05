@@ -120,8 +120,7 @@ release: all
 profile: all
 
 configtest:
-	@echo Validating cnf/avi.conf.sample
-	@cfgvalidate -v cnf/avi.conf.sample
+	@if [ -x "$$(command -v cfgvalidate)" ]; then cfgvalidate -v cnf/avi.conf.sample; fi
 
 $(LIBFILE): $(OBJS)
 	$(CXX) $(CFLAGS) -shared -rdynamic -o $(LIBFILE) $(OBJS) $(LIBS)
