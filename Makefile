@@ -93,13 +93,13 @@ INSTALL_DATA = install -m 664
 
 # Compilation directories
 
-vpath %.cpp source
-vpath %.h include
+vpath %.cpp $(SUBNAME)
+vpath %.h $(SUBNAME)
 
 # The files to be compiled
 
-SRCS = $(wildcard source/*.cpp)
-HDRS = $(wildcard include/*.h)
+SRCS = $(wildcard $(SUBNAME)/*.cpp)
+HDRS = $(wildcard $(SUBNAME)/*.h)
 OBJS = $(patsubst %.cpp, obj/%.o, $(notdir $(SRCS)))
 
 INCLUDES := -Iinclude $(INCLUDES)
@@ -120,10 +120,10 @@ $(LIBFILE): $(OBJS)
 	$(CXX) $(CFLAGS) -shared -rdynamic -o $(LIBFILE) $(OBJS) $(LIBS)
 
 clean:
-	rm -f $(LIBFILE) $(OBJS) *~ source/*~ include/*~ $(objdir)/*.d
+	rm -f $(LIBFILE) $(OBJS) *~ $(SUBNAME)/*~ $(objdir)/*.d
 
 format:
-	clang-format -i -style=file include/*.h source/*.cpp
+	clang-format -i -style=file $(SUBNAME)/*.h $(SUBNAME)/*.cpp
 
 install:
 	@mkdir -p $(includedir)/$(INCDIR)
@@ -145,7 +145,7 @@ objdir:
 rpm: clean
 	@if [ -e $(SPEC).spec ]; \
 	then \
-	  tar -czvf $(SPEC).tar.gz --transform "s,^,engines/$(SPEC)/," * ; \
+	  tar -czvf $(SPEC).tar.gz --transform "s,^,$(SPEC)/," * ; \
 	  rpmbuild -ta $(SPEC).tar.gz ; \
 	  rm -f $(SPEC).tar.gz ; \
 	else \
@@ -157,6 +157,4 @@ rpm: clean
 obj/%.o: %.cpp
 	$(CXX) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
-ifneq ($(wildcard obj/*.d),)
 -include $(wildcard obj/*.d)
-endif

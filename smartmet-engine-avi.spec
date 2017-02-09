@@ -35,9 +35,9 @@ SmartMet %{SPECNAME} development headers.
 
 %prep
 
-%setup -q -n engines/%{SPECNAME}
+%setup -q -n %{SPECNAME}
  
-%build -q -n engines/%{SPECNAME}
+%build -q -n %{SPECNAME}
 make %{_smp_mflags}
 
 %install
