@@ -3,7 +3,7 @@
 #include "Engine.h"
 #include "Connection.h"
 #include <spine/Exception.h>
-#include <macgyver/String.h>
+#include <macgyver/StringConversion.h>
 #include <stdexcept>
 #include <boost/algorithm/string/trim.hpp>
 
