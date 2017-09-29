@@ -14,6 +14,9 @@ BuildRequires: gcc-c++
 BuildRequires: make
 BuildRequires: boost-devel
 BuildRequires: libconfig >= 1.4.9
+BuildRequires: libpqxx-devel
+BuildRequires: zlib-devel
+BuildRequires: bzip2-devel
 BuildRequires: smartmet-library-spine-devel >= 17.3.15
 BuildRequires: smartmet-library-macgyver >= 17.3.14
 Requires: boost-date-time
@@ -31,6 +34,7 @@ SmartMet aviation message engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
+Requires: libpqxx-devel
 Obsoletes: smartmet-brainstorm-aviengine-devel < 16.11.1
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
