@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 18.1.15
+Version: 18.2.9
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -17,12 +17,12 @@ BuildRequires: libconfig >= 1.4.9
 BuildRequires: libpqxx-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 18.1.15
-BuildRequires: smartmet-library-macgyver >= 17.11.27
+BuildRequires: smartmet-library-spine-devel >= 18.2.9
+BuildRequires: smartmet-library-macgyver >= 18.2.6
 Requires: boost-date-time
-Requires: smartmet-library-macgyver >= 17.11.27
+Requires: smartmet-library-macgyver >= 18.2.6
 Requires: libconfig >= 1.4.9
-Requires: smartmet-library-spine >= 18.1.15
+Requires: smartmet-library-spine >= 18.2.9
 Provides: %{SPECNAME}
 Obsoletes: smartmet-brainstorm-aviengine < 16.11.1
 Obsoletes: smartmet-brainstorm-aviengine-debuginfo < 16.11.1
@@ -61,6 +61,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Feb  9 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.2.9-1.fmi
+- Repackaged since base class SmartMetEngine size changed
+
 * Mon Jan 15 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.1.15-1.fmi
 - Recompiled with latest libpqxx
 
