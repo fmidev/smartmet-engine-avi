@@ -63,6 +63,7 @@ class MessageType
   unsigned int getValidityHours() const { return itsValidityHours; }
   bool getLatestMessageOnly() const { return itsLatestMessageOnly; }
   const std::list<std::string> &getMessirPatterns() const { return itsMessirPatterns; }
+
  private:
   std::list<std::string> itsTypes;
   TimeRangeType itsTimeRangeType;
@@ -100,6 +101,7 @@ class Config : public SmartMet::Spine::ConfigBase
   }
 
   const MessageTypes &getMessageTypes() const { return itsMessageTypes; }
+
  private:
   std::string itsHost;
   int itsPort;

@@ -2,10 +2,10 @@
 
 #include "Engine.h"
 #include "Connection.h"
-#include <spine/Exception.h>
-#include <macgyver/StringConversion.h>
-#include <stdexcept>
 #include <boost/algorithm/string/trim.hpp>
+#include <macgyver/StringConversion.h>
+#include <spine/Exception.h>
+#include <stdexcept>
 
 using namespace std;
 
@@ -1780,9 +1780,7 @@ void sortColumnList(Columns& columns)
  */
 // ----------------------------------------------------------------------
 
-Engine::Engine(const std::string& theConfigFileName) : itsConfigFileName(theConfigFileName)
-{
-}
+Engine::Engine(const std::string& theConfigFileName) : itsConfigFileName(theConfigFileName) {}
 
 // ----------------------------------------------------------------------
 /*!
@@ -3666,8 +3664,8 @@ StationQueryData Engine::queryMessages(const StationIdList& stationIdList,
 
 // ----------------------------------------------------------------------
 /*!
-* \brief Join station data to another by station id
-*/
+ * \brief Join station data to another by station id
+ */
 // ----------------------------------------------------------------------
 
 StationQueryData& Engine::joinStationAndMessageData(const StationQueryData& stationData,

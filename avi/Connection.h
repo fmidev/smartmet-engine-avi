@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include <string>
 #include <boost/shared_ptr.hpp>
-#include <pqxx/pqxx>
 #include <list>
+#include <pqxx/pqxx>
+#include <string>
 
 namespace SmartMet
 {
