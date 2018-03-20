@@ -3,9 +3,9 @@
 #pragma once
 
 #include "Config.h"
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <spine/SmartMetEngine.h>
 #include <spine/TimeSeries.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <list>
 #include <map>
 #include <pqxx/pqxx>
