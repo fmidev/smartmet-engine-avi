@@ -10,7 +10,6 @@ namespace Engine
 {
 namespace Avi
 {
-
 BOOST_AUTO_TEST_CASE(messagetype_addtype)
 {
   const std::string messagetype1 = "METAR";
@@ -33,7 +32,7 @@ BOOST_AUTO_TEST_CASE(messagetype_equalto_operator)
 {
   const std::string messagetype1 = "METAR";
   MessageType obj;
-  BOOST_CHECK(not (obj == messagetype1));
+  BOOST_CHECK(not(obj == messagetype1));
   obj.addType(messagetype1);
   BOOST_CHECK(obj == messagetype1);
 }
@@ -100,7 +99,6 @@ BOOST_AUTO_TEST_CASE(messagetype_addMessirPattern)
   BOOST_CHECK_EQUAL(obj.getMessirPatterns().back(), messirPattern2);
 }
 
-
-}
-}
-}
+}  // namespace Avi
+}  // namespace Engine
+}  // namespace SmartMet
