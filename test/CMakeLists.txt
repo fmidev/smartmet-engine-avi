@@ -22,7 +22,10 @@ find_path(MacGyver_INCLUDE_DIR TypeName.h ${CMAKE_INSTALL_PREFIX} /usr/include/s
 if (NOT MacGyver_INCLUDE_DIR)
   message(ERROR "SmartMet MacGyver include directory not found")
 endif()
-
+find_library(Avi_LIBRARY avi ${Avi_SOURCE_DIR})
+if (NOT Avi_LIBRARY)
+  message(FATAL_ERROR "SmartMet Avi Engine library not found")
+endif()
 
 get_filename_component(SmartMet_INCLUDE_DIR ${Spine_INCLUDE_DIR} DIRECTORY)
 file(GLOB UNIT_TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
@@ -44,6 +47,7 @@ foreach(testSrc ${UNIT_TEST_SRCS})
     ${ZLIB_LIBRARIES}
     ${Spine_LIBRARY}
     ${MacGyver_LIBRARY}
+    ${Avi_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT})
 
 #  add_dependencies(${testName} ${PROJECT_NAME})
