@@ -34,6 +34,13 @@ add_compile_options(-std=c++11 -Wall -W -Wno-unused-parameter)
 set(CMAKE_CXX_FLAGS "-DUNIX")
 
 
+# Copy config files
+file(GLOB SAMPLE_CONFIC_FILES ${Avi_SOURCE_DIR}/test/cnf/*.conf)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/cnf)
+foreach(configFileName ${SAMPLE_CONFIC_FILES})
+  file(COPY ${configFileName} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/cnf)
+endforeach(configFileName)
+
 foreach(testSrc ${UNIT_TEST_SRCS})
   get_filename_component(testName ${testSrc} NAME_WE)
   add_executable(${testName} ${testSrc})
