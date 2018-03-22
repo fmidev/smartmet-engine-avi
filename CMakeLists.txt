@@ -11,6 +11,8 @@ option(MAKE_TESTS "Make the tests" ON)
 
 include_directories(avi)
 
+set(Avi_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+
 if (MAKE_TESTS)
   enable_testing()
   add_subdirectory(test)
