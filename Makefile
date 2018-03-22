@@ -123,7 +123,7 @@ clean:
 	rm -f $(LIBFILE) $(OBJS) *~ $(SUBNAME)/*~ $(objdir)/*.d
 
 format:
-	clang-format -i -style=file $(SUBNAME)/*.h $(SUBNAME)/*.cpp
+	clang-format -i -style=file $(SUBNAME)/*.h $(SUBNAME)/*.cpp test/*.cpp
 
 install:
 	@mkdir -p $(includedir)/$(INCDIR)
