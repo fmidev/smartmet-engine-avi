@@ -19,7 +19,8 @@ BOOST_AUTO_TEST_CASE(connection_constructor_not_valid_args)
       Spine::Exception);
 }
 
-BOOST_AUTO_TEST_CASE(connection_constructor_valid_args)
+BOOST_AUTO_TEST_CASE(connection_constructor_valid_args,
+                     *boost::unit_test::depends_on("connection_constructor_not_valid_args"))
 {
   const bool boolVariable = true;
   const std::string filename = "cnf/valid.conf";
@@ -34,7 +35,8 @@ BOOST_AUTO_TEST_CASE(connection_constructor_valid_args)
   BOOST_CHECK(connection.isConnected());
 }
 
-BOOST_AUTO_TEST_CASE(connection_accessors)
+BOOST_AUTO_TEST_CASE(connection_accessors,
+                     *boost::unit_test::depends_on("connection_constructor_valid_args"))
 {
   const bool boolVariable = true;
   const std::string stringVariable;
@@ -53,7 +55,8 @@ BOOST_AUTO_TEST_CASE(connection_accessors)
   BOOST_CHECK_EQUAL(connection.quote(filename), std::string("'").append(filename).append("'"));
 }
 
-BOOST_AUTO_TEST_CASE(connection_query_select_age)
+BOOST_AUTO_TEST_CASE(connection_query_select_age,
+                     *boost::unit_test::depends_on("connection_constructor_valid_args"))
 {
   const std::string filename = "cnf/valid.conf";
   Config conf(filename);
