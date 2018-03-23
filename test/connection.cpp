@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE "MessageTypeClassModule"
+#define BOOST_TEST_MODULE "ConnectionClassModule"
 
 #include "Connection.h"
 #include "Config.h"
