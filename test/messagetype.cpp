@@ -21,10 +21,12 @@ BOOST_AUTO_TEST_CASE(messagetype_addtype)
 
 BOOST_AUTO_TEST_CASE(messagetype_getMessageTypes)
 {
+  const std::list<std::string> stringListVariable;
   const std::string messagetype1 = "METAR";
   MessageType obj;
   obj.addType(messagetype1);
   auto messageTypes = obj.getMessageTypes();
+  BOOST_CHECK(typeid(messageTypes) == typeid(stringListVariable));
   BOOST_CHECK_EQUAL(messageTypes.size(), 1);
 }
 
@@ -39,7 +41,9 @@ BOOST_AUTO_TEST_CASE(messagetype_equalto_operator)
 
 BOOST_AUTO_TEST_CASE(messagetype_getTimeRangeType_default)
 {
+  const TimeRangeType timeRangeTypeVariable = TimeRangeType::NullTimeRange;
   MessageType obj;
+  BOOST_CHECK(typeid(obj.getTimeRangeType()) == typeid(timeRangeTypeVariable));
   BOOST_CHECK_EQUAL(obj.getTimeRangeType(), TimeRangeType::NullTimeRange);
   BOOST_CHECK_EQUAL(obj.getTimeRangeType(), 0);
   BOOST_CHECK(not obj.hasValidityHours());
@@ -55,7 +59,9 @@ BOOST_AUTO_TEST_CASE(messagetype_setTimeRangeType_MessageTimeRange)
 
 BOOST_AUTO_TEST_CASE(messagetype_getValidityHours_default)
 {
+  const unsigned int unsignedIntVariable = 0;
   MessageType obj;
+  BOOST_CHECK(typeid(obj.getValidityHours()) == typeid(unsignedIntVariable));
   BOOST_CHECK_EQUAL(obj.getValidityHours(), 0);
 }
 
@@ -69,7 +75,9 @@ BOOST_AUTO_TEST_CASE(messagetype_setValidityHours_3)
 
 BOOST_AUTO_TEST_CASE(messagetype_setLatestMessageOnly_default)
 {
+  const bool boolVariable = true;
   MessageType obj;
+  BOOST_CHECK(typeid(obj.getLatestMessageOnly()) == typeid(boolVariable));
   BOOST_CHECK_EQUAL(obj.getLatestMessageOnly(), false);
 }
 
@@ -82,7 +90,9 @@ BOOST_AUTO_TEST_CASE(messagetype_setLatestMessageOnly_true)
 
 BOOST_AUTO_TEST_CASE(messagetype_getMessirPattern_default)
 {
+  const std::list<std::string> stringListVariable;
   MessageType obj;
+  BOOST_CHECK(typeid(obj.getMessirPatterns()) == typeid(stringListVariable));
   BOOST_CHECK_EQUAL(obj.getMessirPatterns().size(), 0);
 }
 
