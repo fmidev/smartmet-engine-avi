@@ -26,6 +26,10 @@ find_library(Avi_LIBRARY avi ${Avi_SOURCE_DIR})
 if (NOT Avi_LIBRARY)
   message(FATAL_ERROR "SmartMet Avi Engine library not found")
 endif()
+find_library(PQXX_LIBRARY pqxx)
+if (NOT PQXX_LIBRARY)
+  message(FATAL_ERROR "PQXX library not found")
+endif()
 
 
 get_filename_component(SmartMet_INCLUDE_DIR ${Spine_INCLUDE_DIR} DIRECTORY)
@@ -56,6 +60,7 @@ foreach(testSrc ${UNIT_TEST_SRCS})
     ${Spine_LIBRARY}
     ${MacGyver_LIBRARY}
     ${Avi_LIBRARY}
+    ${PQXX_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT})
 
 #  add_dependencies(${testName} ${PROJECT_NAME})
