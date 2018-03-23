@@ -3,7 +3,6 @@
 #include "Config.h"
 
 #include <boost/test/included/unit_test.hpp>
-#include <memory>
 #include <typeinfo>
 
 namespace SmartMet
