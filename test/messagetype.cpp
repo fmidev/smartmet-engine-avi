@@ -39,6 +39,14 @@ BOOST_AUTO_TEST_CASE(messagetype_equalto_operator)
   BOOST_CHECK(obj == messagetype1);
 }
 
+BOOST_AUTO_TEST_CASE(messagetype_hasValidityHours_default)
+{
+  const bool boolVariable = true;
+  MessageType obj;
+  BOOST_CHECK(typeid(obj.hasValidityHours()) == typeid(boolVariable));
+  BOOST_CHECK(not obj.hasValidityHours());
+}
+
 BOOST_AUTO_TEST_CASE(messagetype_getTimeRangeType_default)
 {
   const TimeRangeType timeRangeTypeVariable = TimeRangeType::NullTimeRange;
