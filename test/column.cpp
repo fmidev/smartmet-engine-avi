@@ -19,13 +19,13 @@ const ColumnType columnTypeInteger = ColumnType::Integer;
 const std::string tableColumnNameEmpty;
 const std::string tableColumnNameNotEmpty(std::string("columnname"));
 
-BOOST_AUTO_TEST_CASE(column_constructor_default)
+BOOST_AUTO_TEST_CASE(column_constructor)
 {
   const Column column(columnTypeNone, tableColumnNameEmpty);
 }
 
 BOOST_AUTO_TEST_CASE(column_public_operator_equalto_string,
-                     *boost::unit_test::depends_on("column_constructor_default"))
+                     *boost::unit_test::depends_on("column_constructor"))
 {
   const Column column(columnTypeNone, tableColumnNameEmpty);
 
@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(column_public_operator_equalto_string,
 }
 
 BOOST_AUTO_TEST_CASE(column_public_operator_equalto_column,
-                     *boost::unit_test::depends_on("column_constructor_default"))
+                     *boost::unit_test::depends_on("column_constructor"))
 {
   const Column column(columnTypeNone, tableColumnNameEmpty);
   const Column otherColumn(columnTypeInteger, tableColumnNameEmpty);
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(column_public_operator_equalto_column,
 }
 
 BOOST_AUTO_TEST_CASE(column_public_member_method_columnNumberSort,
-                     *boost::unit_test::depends_on("column_constructor_default"))
+                     *boost::unit_test::depends_on("column_constructor"))
 {
   const Column column(columnTypeNone, tableColumnNameEmpty);
   const Column otherColumn(columnTypeInteger, tableColumnNameEmpty);
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(column_public_member_method_columnNumberSort,
 }
 
 BOOST_AUTO_TEST_CASE(column_public_member_variable_itsType,
-                     *boost::unit_test::depends_on("column_constructor_default"))
+                     *boost::unit_test::depends_on("column_constructor"))
 {
   const Column column(columnTypeNone, tableColumnNameEmpty);
   const Column otherColumn(columnTypeInteger, tableColumnNameEmpty);
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(column_public_member_variable_itsType,
 }
 
 BOOST_AUTO_TEST_CASE(column_public_member_variable_itsName,
-                     *boost::unit_test::depends_on("column_constructor_default"))
+                     *boost::unit_test::depends_on("column_constructor"))
 {
   const Column column(columnTypeNone, tableColumnNameEmpty);
   const Column otherColumn2(columnTypeInteger, tableColumnNameNotEmpty);
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(column_public_member_variable_itsName,
 }
 
 BOOST_AUTO_TEST_CASE(column_member_method_getTableColumnName,
-                     *boost::unit_test::depends_on("column_constructor_default"))
+                     *boost::unit_test::depends_on("column_constructor"))
 {
   const Column column(columnTypeNone, tableColumnNameEmpty);
 
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(column_columnexpression)
   BOOST_CHECK_EQUAL((*columnExpression)(name1, name2), "value1,value2");
 }
 BOOST_AUTO_TEST_CASE(column_constructor_with_expression,
-                     *boost::unit_test::depends_on("column_constructor_default"))
+                     *boost::unit_test::depends_on("column_constructor"))
 {
   const Column column1(
       columnTypeNone, tableColumnNameEmpty, tableColumnNameEmpty, &catenateExpression, NULL);
