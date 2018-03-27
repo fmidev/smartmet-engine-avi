@@ -115,6 +115,19 @@ BOOST_AUTO_TEST_CASE(column_member_method_getTableColumnName,
 // ColumnExpression itsCoordinateExpression;
 // ColumnSelection itsSelection;
 
+// So we need to test the ColumnExpression by using a dummy function
+std::string catenateExpression(const std::string& value1, const std::string& value2)
+{
+  return value1 + "," + value2;
+}
+BOOST_AUTO_TEST_CASE(column_columnexpression)
+{
+  const std::string name1 = "value1";
+  const std::string name2 = "value2";
+  ColumnExpression columnExpression = &catenateExpression;
+
+  BOOST_CHECK_EQUAL((*columnExpression)(name1, name2), "value1,value2");
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
