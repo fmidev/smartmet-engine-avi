@@ -128,6 +128,19 @@ BOOST_AUTO_TEST_CASE(column_columnexpression)
 
   BOOST_CHECK_EQUAL((*columnExpression)(name1, name2), "value1,value2");
 }
+BOOST_AUTO_TEST_CASE(column_constructor_with_expression,
+                     *boost::unit_test::depends_on("column_constructor_default"))
+{
+  const Column column1(
+      columnTypeNone, tableColumnNameEmpty, tableColumnNameEmpty, &catenateExpression, NULL);
+  const Column column2(
+      columnTypeNone, tableColumnNameEmpty, tableColumnNameEmpty, NULL, &catenateExpression);
+  const Column column3(columnTypeNone,
+                       tableColumnNameEmpty,
+                       tableColumnNameEmpty,
+                       &catenateExpression,
+                       &catenateExpression);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
