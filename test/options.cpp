@@ -105,6 +105,52 @@ BOOST_AUTO_TEST_CASE(timeoptions_members)
   BOOST_CHECK_EQUAL(timeOptionsVariable.getMessageTableTimeRangeColumn(),
                     std::string("messagetime"));
 }
+
+BOOST_AUTO_TEST_CASE(queryoptions_members)
+{
+  const std::list<std::string> stringListVariable;
+  LocationOptions locationOptionsVariable;
+  TimeOptions timeOptionsVariable;
+  const Validity validityVariable = Validity::Accepted;
+  const bool boolVariable = true;
+  const int intVariable = -1;
+
+  QueryOptions queryOptions;
+
+  BOOST_CHECK(typeid(queryOptions.itsMessageTypes) == typeid(stringListVariable));
+  BOOST_CHECK_EQUAL(queryOptions.itsMessageTypes.size(), stringListVariable.size());
+
+  BOOST_CHECK(typeid(queryOptions.itsParameters) == typeid(stringListVariable));
+  BOOST_CHECK_EQUAL(queryOptions.itsParameters.size(), stringListVariable.size());
+
+  BOOST_CHECK(typeid(queryOptions.itsLocationOptions) == typeid(locationOptionsVariable));
+  BOOST_CHECK_EQUAL(sizeof(queryOptions.itsLocationOptions), sizeof(locationOptionsVariable));
+
+  BOOST_CHECK(typeid(queryOptions.itsTimeOptions) == typeid(timeOptionsVariable));
+  BOOST_CHECK_EQUAL(sizeof(queryOptions.itsTimeOptions), sizeof(timeOptionsVariable));
+
+  BOOST_CHECK(typeid(queryOptions.itsValidity) == typeid(validityVariable));
+  BOOST_CHECK_EQUAL(queryOptions.itsValidity, validityVariable);
+
+  BOOST_CHECK(typeid(queryOptions.itsMessageColumnSelected) == typeid(boolVariable));
+  // Unable to test the value of itsMessageColumnSelected bacause it is uninitialized
+  // BOOST_CHECK_EQUAL(queryOptions.itsMessageColumnSelected, boolVariable);
+
+  BOOST_CHECK(typeid(queryOptions.itsMaxMessageStations) == typeid(intVariable));
+  BOOST_CHECK_EQUAL(queryOptions.itsMaxMessageStations, intVariable);
+
+  BOOST_CHECK(typeid(queryOptions.itsMaxMessageRows) == typeid(intVariable));
+  BOOST_CHECK_EQUAL(queryOptions.itsMaxMessageRows, intVariable);
+
+  BOOST_CHECK(typeid(queryOptions.itsDistinctMessages) == typeid(boolVariable));
+  BOOST_CHECK_EQUAL(queryOptions.itsDistinctMessages, boolVariable);
+
+  BOOST_CHECK(typeid(queryOptions.itsFilterMETARs) == typeid(boolVariable));
+  BOOST_CHECK_EQUAL(queryOptions.itsFilterMETARs, boolVariable);
+
+  BOOST_CHECK(typeid(queryOptions.itsDebug) == typeid(boolVariable));
+  BOOST_CHECK_EQUAL(queryOptions.itsDebug, not boolVariable);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
