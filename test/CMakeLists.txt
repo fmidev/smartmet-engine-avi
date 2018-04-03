@@ -30,7 +30,10 @@ find_library(PQXX_LIBRARY pqxx)
 if (NOT PQXX_LIBRARY)
   message(FATAL_ERROR "PQXX library not found")
 endif()
-
+find_library(CONFIGPP_LIBRARY config++)
+if (NOT CONFIGPP_LIBRARY)
+  message(FATAL_ERROR "libconfig++ library not found")
+endif()
 
 get_filename_component(SmartMet_INCLUDE_DIR ${Spine_INCLUDE_DIR} DIRECTORY)
 file(GLOB UNIT_TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
@@ -61,6 +64,7 @@ foreach(testSrc ${UNIT_TEST_SRCS})
     ${MacGyver_LIBRARY}
     ${Avi_LIBRARY}
     ${PQXX_LIBRARY}
+    ${CONFIGPP_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT})
 
 #  add_dependencies(${testName} ${PROJECT_NAME})
