@@ -66,6 +66,20 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_s
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().itsName, "stationid");
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().itsType, ColumnType::Integer);
 }
+
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_name,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("name");
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.size(), 2);
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().itsName, "stationid");
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().itsType, ColumnType::Integer);
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.back().itsName, "name");
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.back().itsType, ColumnType::String);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
