@@ -30,8 +30,12 @@ BOOST_AUTO_TEST_CASE(engine_singleton, *boost::unit_test::depends_on("engine_con
   opts.configfile = "cnf/reactor.conf";
   opts.parseConfig();
 
+  engine = nullptr;
+
   SmartMet::Spine::Reactor reactor(opts);
   engine = reinterpret_cast<Engine *>(reactor.getSingleton("Avi", NULL));
+
+  BOOST_CHECK(engine != nullptr);
 }
 }  // namespace Avi
 }  // namespace Engine
