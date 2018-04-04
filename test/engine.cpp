@@ -37,6 +37,14 @@ BOOST_AUTO_TEST_CASE(engine_singleton, *boost::unit_test::depends_on("engine_con
 
   BOOST_CHECK(engine != nullptr);
 }
+
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_empty_queryoptions_fail,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
