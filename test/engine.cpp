@@ -48,6 +48,17 @@ const std::list<std::string> allValidParameters({"stationid",
                                                  "messirheading",
                                                  "messageversion"});
 
+const std::list<std::string> allValidRejectedMessagesParameters({"message",
+                                                                 "messagetime",
+                                                                 "messagevalidfrom",
+                                                                 "messagevalidto",
+                                                                 "messagecreated",
+                                                                 "messagefilemodified",
+                                                                 "messirheading",
+                                                                 "messageversion",
+                                                                 "messagerejectreason",
+                                                                 "messagerejectedicao"});
+
 BOOST_AUTO_TEST_CASE(engine_constructor, *boost::unit_test::depends_on(""))
 {
   const std::string filename = "cnf/valid.conf";
