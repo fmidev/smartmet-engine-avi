@@ -65,6 +65,8 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_s
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.size(), 1);
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().itsName, "stationid");
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().itsType, ColumnType::Integer);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_name,
@@ -79,6 +81,8 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_n
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().itsType, ColumnType::Integer);
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.back().itsName, "name");
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.back().itsType, ColumnType::String);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }
 }  // namespace Avi
 }  // namespace Engine
