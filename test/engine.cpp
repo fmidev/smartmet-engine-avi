@@ -84,6 +84,36 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_n
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }
+
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_order,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+
+  // stationid is always the first one in a result even when it is
+  // not the first one in the itsParameters list of QueryOptions.
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("elevation");
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsParameters.push_back("name");
+  queryOptions.itsParameters.push_back("icao");
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.size(), 4);
+  auto it = stationQueryData.itsColumns.begin();
+  BOOST_CHECK_EQUAL(it->itsName, "stationid");
+  BOOST_CHECK_EQUAL(it->itsType, ColumnType::Integer);
+  ++it;
+  BOOST_CHECK_EQUAL(it->itsName, "elevation");
+  BOOST_CHECK_EQUAL(it->itsType, ColumnType::Integer);
+  ++it;
+  BOOST_CHECK_EQUAL(it->itsName, "name");
+  BOOST_CHECK_EQUAL(it->itsType, ColumnType::String);
+  ++it;
+  BOOST_CHECK_EQUAL(it->itsName, "icao");
+  BOOST_CHECK_EQUAL(it->itsType, ColumnType::String);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
