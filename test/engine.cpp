@@ -18,6 +18,36 @@ namespace Avi
 {
 Engine *engine;
 
+const std::list<std::string> allValidParameters({"stationid",
+                                                 "icao",
+                                                 "name",
+                                                 "latitude",
+                                                 "longitude",
+                                                 "lonlat",
+                                                 "latlon",
+                                                 "distance",
+                                                 "bearing",
+                                                 "elevation",
+                                                 "stationvalidfrom",
+                                                 "stationvalidto",
+                                                 "stationmodified",
+                                                 "iso2",
+                                                 "messagetype",
+                                                 "messagetypedescription",
+                                                 "messagetypemodified",
+                                                 "route",
+                                                 "routedescription",
+                                                 "routemodified",
+                                                 "messageid",
+                                                 "message",
+                                                 "messagetime",
+                                                 "messagevalidfrom",
+                                                 "messagevalidto",
+                                                 "messagecreated",
+                                                 "messagefilemodified",
+                                                 "messirheading",
+                                                 "messageversion"});
+
 BOOST_AUTO_TEST_CASE(engine_constructor, *boost::unit_test::depends_on(""))
 {
   const std::string filename = "cnf/valid.conf";
@@ -145,6 +175,17 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_case_in
   queryOptions.itsParameters.push_back("elevation");
   queryOptions.itsParameters.push_back("StationId");
   BOOST_CHECK_THROW(engine->queryStations(queryOptions), Spine::Exception);
+}
+
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_all_valid_parameters,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters = allValidParameters;
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(queryOptions.itsParameters.size(), 29);
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.size(), 3);
 }
 }  // namespace Avi
 }  // namespace Engine
