@@ -79,6 +79,10 @@ BOOST_AUTO_TEST_CASE(engine_singleton, *boost::unit_test::depends_on("engine_con
   BOOST_CHECK(engine != nullptr);
 }
 
+//
+// Tests for Engine::queryStations method with parameter list query option
+//
+
 BOOST_AUTO_TEST_CASE(engine_queryStations_with_empty_queryoptions_fail,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
@@ -198,6 +202,32 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_all_val
   BOOST_CHECK_EQUAL(queryOptions.itsParameters.size(), 29);
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.size(), 3);
 }
+
+//
+// Tests for Engine::queryStations method with location options
+//
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_stationid,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsStationIds.push_back(10);  //!< EFJY
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 10);
+
+  queryOptions.itsLocationOptions.itsStationIds.push_back(16);  //!< EFKU
+  stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 10);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 16);
+}
+
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
