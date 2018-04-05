@@ -239,6 +239,20 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
 }
 
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_stationid_duplicate,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsStationIds.push_back(10);
+  queryOptions.itsLocationOptions.itsStationIds.push_back(16);
+  queryOptions.itsLocationOptions.itsStationIds.push_back(16);
+  queryOptions.itsLocationOptions.itsStationIds.push_back(10);
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
