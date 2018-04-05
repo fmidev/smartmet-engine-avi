@@ -240,6 +240,17 @@ BOOST_AUTO_TEST_CASE(
 }
 
 BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_stationid_outofrange_fail,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsStationIds.push_back(std::numeric_limits<unsigned int>::max());
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+}
+
+BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_stationid_duplicate,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
