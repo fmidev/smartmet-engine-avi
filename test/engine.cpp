@@ -341,6 +341,30 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 8);   //!< EFIV
 }
 
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_locationoption_queryoption_multiple_bbox_overlap,
+                     *boost::unit_test::depends_on(
+                         "engine_queryStations_with_locationoption_queryoption_multiple_bbox"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsBBoxes.push_back(
+      BBox(24.80458, 25.67534, 61.85539, 62.40234));  //!< EFHA id=5 and EFJY id=10 and ILJY id=32
+  queryOptions.itsLocationOptions.itsBBoxes.push_back(
+      BBox(24.80458, 24.90697, 60.31582, 61.85540));  //!< EFHK id=7 and EFHA id=5
+
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  auto it = stationQueryData.itsStationIds.begin();
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 4);
+  BOOST_CHECK_EQUAL(*it, 10);  //!< EFJY
+  ++it;
+  BOOST_CHECK_EQUAL(*it, 5);  //!< EFHA
+  ++it;
+  BOOST_CHECK_EQUAL(*it, 7);  //!< EFHK
+  ++it;
+  BOOST_CHECK_EQUAL(*it, 32);  //!< ILJY
+}
+
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
