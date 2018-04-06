@@ -365,6 +365,21 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_locationoption_queryoption_multip
   BOOST_CHECK_EQUAL(*it, 32);  //!< ILJY
 }
 
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_locationoption_queryoption_oversize_bbox,
+                     *boost::unit_test::depends_on(
+                         "engine_queryStations_with_locationoption_queryoption_multiple_bbox"))
+{
+  BOOST_CHECK(engine != nullptr);
+  // Test bboxes over the edges of the WGS84 bbox [-90,-180,90,180]
+  // [lat_min,lon_min,lat_max,lon_max]
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsBBoxes.push_back(BBox(-181, 181, 68.61335, 68.61336));
+  queryOptions.itsLocationOptions.itsBBoxes.push_back(BBox(27.41896, 27.41897, -91, 91));
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 8);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
