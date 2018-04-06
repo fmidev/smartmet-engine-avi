@@ -288,6 +288,23 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsLocationOptions.itsIcaos.push_back("XXxx");
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_icao_duplicate,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsIcaos.push_back("EFJY");
+  queryOptions.itsLocationOptions.itsIcaos.push_back("EFKU");
+  queryOptions.itsLocationOptions.itsIcaos.push_back("EFKU");
+  queryOptions.itsLocationOptions.itsIcaos.push_back("EFJY");
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 10);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 16);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
