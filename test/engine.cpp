@@ -321,6 +321,20 @@ BOOST_AUTO_TEST_CASE(
 }
 
 BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_bbox_value_order,
+    *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_bbox"))
+{
+  BOOST_CHECK(engine != nullptr);
+  // Latitude and longitude values can be given either min,max or max,min order.
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsBBoxes.push_back(BBox(29.6116, 29.6115, 62.6599, 62.6598));
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 9);
+}
+
+BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_multiple_bbox,
     *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_bbox"))
 {
