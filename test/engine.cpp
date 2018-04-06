@@ -394,6 +394,27 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_locationoption_queryoption_oversi
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 8);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_place,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+
+  queryOptions.itsLocationOptions.itsPlaces.push_back("Inari Ivalo lentoasema");
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 8);  //!< EFIV
+
+  queryOptions.itsLocationOptions.itsPlaces.clear();
+  queryOptions.itsLocationOptions.itsPlaces.push_back("Inari Ivalo");
+  queryOptions.itsLocationOptions.itsPlaces.push_back("Ivalo");
+  queryOptions.itsLocationOptions.itsPlaces.push_back("*Ivalo*");
+  stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
