@@ -305,6 +305,42 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 10);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 16);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_bbox,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsBBoxes.push_back(
+      BBox(24.90696, 24.90697, 60.31582, 60.31583));  //!< EFHK
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
+}
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_multiple_bbox,
+    *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_bbox"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsBBoxes.push_back(
+      BBox(29.61158, 29.61159, 62.65986, 62.65987));  //!< EFJO id=9
+  queryOptions.itsLocationOptions.itsBBoxes.push_back(
+      BBox(24.80458, 24.90697, 60.31582, 61.85540));  //!< EFHK id=7 and EFHA id=5
+  queryOptions.itsLocationOptions.itsBBoxes.push_back(
+      BBox(27.41896, 27.41897, 68.61335, 68.61336));  //!< EFIV id=8
+
+  // The station order in the station id list is same as the order in the itsBBoxes list.
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 4);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 9);  //!< EFJO
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 8);   //!< EFIV
+}
+
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
