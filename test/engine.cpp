@@ -415,6 +415,31 @@ BOOST_AUTO_TEST_CASE(
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_invalid_place_sql_injection_fail,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+
+  queryOptions.itsLocationOptions.itsPlaces.push_back("'");
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+}
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_invalid_place_sql_injection_success,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsPlaces.push_back(
+      "Kajaani lentoasema')), UPPER(quote_literal('Pori lentoasema");
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
