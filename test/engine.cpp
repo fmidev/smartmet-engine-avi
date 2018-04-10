@@ -598,6 +598,22 @@ BOOST_AUTO_TEST_CASE(
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_wkt_polygon_with_two_loops_fail,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+
+  // One polygon, with two loops: the first around EFHK and the second around ILHK station.
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
+      "POLYGON((24.90695 60.31581, 24.90697 60.31581, 24.90697 60.31583, 24.90695 60.31583, "
+      "24.90695 60.31581),(24.95674 60.3266, 24.95674 60.3268, 24.95676 60.3268, 24.95676 60.3266, "
+      "24.95674 60.3266))");
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
