@@ -471,6 +471,39 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsLocationOptions.itsCountries = {""};
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_lonlat,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+
+  // MaxDistance is not set. The result is empty.
+  queryOptions.itsLocationOptions.itsLonLats.push_back(LonLat(24.90696, 60.31600));
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
+
+  // MaxDistance is too small
+  queryOptions.itsLocationOptions.itsMaxDistance = 10.0;  //!< Distance is in meters
+  stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
+
+  // Nearest station is neares than the MaxDistance.
+  queryOptions.itsLocationOptions.itsMaxDistance = 1000.0;
+  stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
+
+  // Inside the 14 km radius has more than two stations. Get only two of them.
+  queryOptions.itsLocationOptions.itsMaxDistance = 14000.0;
+  queryOptions.itsLocationOptions.itsNumberOfNearestStations = 2;
+  stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 30);  //!< ILHK
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
