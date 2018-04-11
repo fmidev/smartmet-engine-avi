@@ -614,6 +614,21 @@ BOOST_AUTO_TEST_CASE(
       "24.95674 60.3266))");
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_wkt_multipolygon_fail,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  // The first polygon around EFHK and the second around ILHK station.
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
+      "MULTIPOLYGON(((24.90695 60.31581, 24.90697 60.31581, 24.90697 60.31583, 24.90695 60.31583, "
+      "24.90695 60.31581)),((24.95674 60.3266, 24.95674 60.3268, 24.95676 60.3268, 24.95676 "
+      "60.3266, 24.95674 60.3266)))");
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
