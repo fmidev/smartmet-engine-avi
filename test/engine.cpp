@@ -490,7 +490,7 @@ BOOST_AUTO_TEST_CASE(
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 
-  // Nearest station is neares than the MaxDistance.
+  // Nearest station is nearer than the MaxDistance.
   queryOptions.itsLocationOptions.itsMaxDistance = 1000.0;
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
