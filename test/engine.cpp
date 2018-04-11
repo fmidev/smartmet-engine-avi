@@ -629,6 +629,31 @@ BOOST_AUTO_TEST_CASE(
       "60.3266, 24.95674 60.3266)))");
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_wkt_point,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+
+  // MaxDistance is not set. The result is empty.
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POINT(24.90695 60.3157)");
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
+
+  // A station is farther than MaxDistance
+  queryOptions.itsLocationOptions.itsMaxDistance = 10.0;
+  stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
+
+  // A station is nearer than MaxDistance
+  queryOptions.itsLocationOptions.itsMaxDistance = 1000.0;
+  stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
