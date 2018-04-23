@@ -391,7 +391,7 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_locationoption_queryoption_oversi
   queryOptions.itsLocationOptions.itsBBoxes.push_back(BBox(-181, 181, 68.61335, 68.61336));
   queryOptions.itsLocationOptions.itsBBoxes.push_back(BBox(27.41896, 27.41897, -91, 91));
   StationQueryData stationQueryData = engine->queryStations(queryOptions);
-  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 3);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 8);
 }
 
