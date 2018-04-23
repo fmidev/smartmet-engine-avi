@@ -599,6 +599,18 @@ BOOST_AUTO_TEST_CASE(
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
 
+  // Select a station with a counterclockwise ring in a polygon and select the same
+  // also with a clocwise ring which is inside the first ring.
+  // This should give an empty result. See Figure 11 of OGC 06-103rc4 Simple feature
+  // access - Part 1: Common Architecture v1.2.1
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
+      "POLYGON((24.90694 60.31580, 24.90698 60.31580, 24.90698 60.31584, 24.90694 60.31584, "
+      "24.90694 60.31580),(24.90695 60.31581, 24.90695 60.31583, 24.90697 60.31583, 24.90697 "
+      "60.31581, 24.90695 60.31581))");  //!< counterclockwise (exterior) and clockwise (interior)
+  stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
+
   // Two polygons intersect with each others.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
