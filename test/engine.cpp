@@ -543,6 +543,18 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 30);  //!< ILHK
 
+  // A polygon with two separate counterclockwise rings.
+  // This should not be representable as a single instance of Polygon.
+  // See Figure 12 of OGC 06-103rc4 Simple feature access - Part 1: Common Architecture v1.2.1
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
+      "POLYGON((24.95674 60.3266, 24.95676 60.3266, 24.95676 60.3268, 24.95674 60.3268, "
+      "24.95674 60.3266),(24.90695 60.31581, 24.90697 60.31581, 24.90697 60.31583, 24.90695 "
+      "60.31583, 24.90695 60.31581))");  //!< ILHK and EFHK
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 30);  //!< ILHK
+
   // Clockwise polygon around EFHK station.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
