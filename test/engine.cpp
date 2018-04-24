@@ -696,6 +696,48 @@ BOOST_AUTO_TEST_CASE(
       "MULTIPOINT((24.90695 60.3157), (24.95674 60.3266))");
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_wkt_linestring,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+
+  // Route: Gotland --> Jyväskylä --> Joensuu
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("LINESTRING(18.5 57.5, 25.7 62.4, 29.7 62.6)");
+
+  // MaxDistance is not set. The result is empty.
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
+
+  // A station is nearer than MaxDistance in meters from the route.
+  queryOptions.itsLocationOptions.itsMaxDistance=1500;
+  stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 4);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 16852); //!< ESVB id=16852
+  //!< ILJY id=32
+  //!< EFJY id=10
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 62); //!< ILXD id=62
+
+  // Route: Joensuu --> Jyväskylä --> Gotland
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("LINESTRING(29.7 62.6, 25.7 62.4, 18.5 57.5)");
+  stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 4);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 62); //!< ILXD id=62
+  //!< EFJY id=10
+  //!< ILJY id=32
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 16852); //!< ESVB id=16852
+
+  // Two LineString parts
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("LINESTRING(29.7 62.6, 25.7 62.4)");
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("LINESTRING(25.7 62.4, 18.5 57.5)");
+  stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 4);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
