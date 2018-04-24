@@ -505,27 +505,41 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 30);  //!< ILHK
 }
 
+const std::string ILHK_counterclockwise =
+    "(24.95673 60.3265, 24.95677 60.3265, 24.95677 60.3269, 24.95673 60.3269, 24.95673 60.3265)";
+const std::string ILHK_clockwise =
+    "(24.95674 60.3266, 24.95674 60.3268, 24.95676 60.3268, 24.95676 60.3266, 24.95674 60.3266)";
+const std::string ILHK_EFHK_counterclockwise =
+    "(24.90695 60.31581, 24.95676 60.31581, 24.95676 60.3268, 24.90695 60.3268, 24.90695 60.31581)";
+const std::string ILHK_EFHK_clockwise =
+    "(24.90695 60.31581, 24.90695 60.3268, 24.95676 60.3268, 24.95676 60.31581, 24.90695 60.31581)";
+const std::string EFHK_clockwise =
+    "(24.90695 60.31581, 24.90695 60.31583, 24.90697 60.31583, 24.90697 60.31581, 24.90695 "
+    "60.31581)";
+const std::string EFHK_counterclockwise =
+    "(24.90694 60.31580, 24.90698 60.31580, 24.90698 60.31584, 24.90694 60.31584, 24.90694 "
+    "60.31580)";
+
 BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_wkt_polygon,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
   BOOST_CHECK(engine != nullptr);
+
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
 
   // Counterclockwise polygon around EFHK station.
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.90695 60.31581, 24.90697 60.31581, 24.90697 60.31583, 24.90695 60.31583, "
-      "24.90695 60.31581))");
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + EFHK_counterclockwise +
+                                                            ")");
   StationQueryData stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
 
   // Counterclockwise polygon around EFHK and ILHK stations.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.90695 60.31581, 24.95676 60.31581, 24.95676 60.3268, 24.90695 60.3268, "
-      "24.90695 60.31581))");
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" +
+                                                            ILHK_EFHK_counterclockwise + ")");
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
@@ -533,12 +547,10 @@ BOOST_AUTO_TEST_CASE(
 
   // Two counterclockwise polygons. See the input and output order.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.95674 60.3266, 24.95676 60.3266, 24.95676 60.3268, 24.95674 60.3268, "
-      "24.95674 60.3266))");  //!< ILHK
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.90695 60.31581, 24.90697 60.31581, 24.90697 60.31583, 24.90695 60.31583, "
-      "24.90695 60.31581))");  //!< EFHK
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + ILHK_counterclockwise +
+                                                            ")");
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + EFHK_counterclockwise +
+                                                            ")");
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 30);  //!< ILHK
@@ -547,28 +559,22 @@ BOOST_AUTO_TEST_CASE(
   // This should not be representable as a single instance of Polygon.
   // See Figure 12 of OGC 06-103rc4 Simple feature access - Part 1: Common Architecture v1.2.1
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.95674 60.3266, 24.95676 60.3266, 24.95676 60.3268, 24.95674 60.3268, "
-      "24.95674 60.3266),(24.90695 60.31581, 24.90697 60.31581, 24.90697 60.31583, 24.90695 "
-      "60.31583, 24.90695 60.31581))");  //!< ILHK and EFHK
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + ILHK_counterclockwise +
+                                                            "," + EFHK_counterclockwise + ")");
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 30);  //!< ILHK
 
   // Clockwise polygon around EFHK station.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.90695 60.31581, 24.90695 60.31583, 24.90697 60.31583, 24.90697 60.31581, "
-      "24.90695 60.31581))");
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + EFHK_clockwise + ")");
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
 
   // Clockwise polygon around EFHK and ILHK stations.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.90695 60.31581, 24.90695 60.3268, 24.95676 60.3268, 24.95676 60.31581, "
-      "24.90695 60.31581))");
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + ILHK_EFHK_clockwise + ")");
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
@@ -576,12 +582,8 @@ BOOST_AUTO_TEST_CASE(
 
   // Two clockwise polygons. See the input and output order.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.95674 60.3266, 24.95674 60.3268, 24.95676 60.3268, 24.95676 60.3266, "
-      "24.95674 60.3266))");  //!< ILHK
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.90695 60.31581, 24.90695 60.31583, 24.90697 60.31583, 24.90697 60.31581, "
-      "24.90695 60.31581))");  //!< EFHK
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + ILHK_clockwise + ")");
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + EFHK_clockwise + ")");
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 7);  //!< EFHK
@@ -590,12 +592,9 @@ BOOST_AUTO_TEST_CASE(
   // Select station with a counterclockwise polygon and select the same also with
   // a clocwise polygon which is inside the first polygon.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.90694 60.31580, 24.90698 60.31580, 24.90698 60.31584, 24.90694 60.31584, "
-      "24.90694 60.31580))");  //!< counterclockwise
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.90695 60.31581, 24.90695 60.31583, 24.90697 60.31583, 24.90697 60.31581, "
-      "24.90695 60.31581))");  //!< clockwise
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + EFHK_counterclockwise +
+                                                            ")");
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + EFHK_clockwise + ")");
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
 
@@ -605,17 +604,14 @@ BOOST_AUTO_TEST_CASE(
   // access - Part 1: Common Architecture v1.2.1
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.90694 60.31580, 24.90698 60.31580, 24.90698 60.31584, 24.90694 60.31584, "
-      "24.90694 60.31580),(24.90695 60.31581, 24.90695 60.31583, 24.90697 60.31583, 24.90697 "
-      "60.31581, 24.90695 60.31581))");  //!< counterclockwise (exterior) and clockwise (interior)
+      "POLYGON(" + EFHK_counterclockwise + "," + EFHK_clockwise + ")");  //!< exterior) and interior
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
 
   // Two polygons intersect with each others.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.90694 60.31580, 24.90698 60.31580, 24.90698 60.31584, 24.90694 60.31584, "
-      "24.90694 60.31580))");  //!< counterclockwise
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + EFHK_counterclockwise +
+                                                            ")");
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
       "POLYGON((24.90693 60.31579, 24.90695 60.31583, 24.90697 60.31583, 24.90697 60.31581, "
       "24.90693 60.31579))");  //!< clockwise polygon intersects with the counterclockwise polygon
@@ -646,10 +642,8 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters.push_back("stationid");
 
   // One polygon, with two loops: the first around EFHK and the second around ILHK station.
-  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "POLYGON((24.90695 60.31581, 24.90697 60.31581, 24.90697 60.31583, 24.90695 60.31583, "
-      "24.90695 60.31581),(24.95674 60.3266, 24.95674 60.3268, 24.95676 60.3268, 24.95676 60.3266, "
-      "24.95674 60.3266))");
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + EFHK_counterclockwise +
+                                                            "," + ILHK_counterclockwise + ")");
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
 }
 
@@ -662,9 +656,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters.push_back("stationid");
   // The first polygon around EFHK and the second around ILHK station.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
-      "MULTIPOLYGON(((24.90695 60.31581, 24.90697 60.31581, 24.90697 60.31583, 24.90695 60.31583, "
-      "24.90695 60.31581)),((24.95674 60.3266, 24.95674 60.3268, 24.95676 60.3268, 24.95676 "
-      "60.3266, 24.95674 60.3266)))");
+      "MULTIPOLYGON((" + EFHK_counterclockwise + "),(" + ILHK_counterclockwise + "))");
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
 }
 
