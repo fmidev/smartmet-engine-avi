@@ -740,6 +740,18 @@ BOOST_AUTO_TEST_CASE(
   stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 4);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_wkt_multilinestring_fail,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
+      "MULTILINESTRING((18.5 57.5, 25.7 62.4),(25.7 62.4, 29.7 62.6))");
+  BOOST_CHECK_THROW(engine->queryStations(queryOptions), Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
