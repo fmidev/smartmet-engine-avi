@@ -417,6 +417,30 @@ BOOST_AUTO_TEST_CASE(
 }
 
 BOOST_AUTO_TEST_CASE(
+    engine_queryStations_with_locationoption_queryoption_place_with_special_chars,
+    *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsPlaces.push_back(
+      "Cabo 1° Juan Román Airport");  //!< SCAS id=5162
+  queryOptions.itsLocationOptions.itsPlaces.push_back(
+      "RIOgaleão ¿ Tom Jobim International Airport");                          //!< SBGL id=5028
+  queryOptions.itsLocationOptions.itsPlaces.push_back("YUMA/88D");             //!< KYUX id=442
+  queryOptions.itsLocationOptions.itsPlaces.push_back("R & R Farms Airport");  //!< 80NE id=14691
+  queryOptions.itsLocationOptions.itsPlaces.push_back(
+      "Ürümqi Diwopu International Airport");                          //!< ZWWW id=8059
+  queryOptions.itsLocationOptions.itsPlaces.push_back("FRESNO(VOR)");  //!< KCZQ id=497
+  queryOptions.itsLocationOptions.itsPlaces.push_back(
+      "Bia¿ystok-Krywlany Airport");  //!< EPBK id=16592
+
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 7);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 5162);
+}
+
+BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_invalid_place_sql_injection_fail,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
