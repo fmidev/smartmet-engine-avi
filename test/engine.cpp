@@ -757,7 +757,9 @@ BOOST_AUTO_TEST_CASE(
   //!< ILJY id=32
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.back(), 16852);  //!< ESVB id=16852
 
-  // Two LineString parts
+  // Two LineString parts. This is not a route. A route has only one LineString and
+  // all the other LocationOptions must be empty. The engine sets the value of
+  // itsLocationOptions.itsWKTs.isRoute setting.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.clear();
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("LINESTRING(29.7 62.6, 25.7 62.4)");
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("LINESTRING(25.7 62.4, 18.5 57.5)");
