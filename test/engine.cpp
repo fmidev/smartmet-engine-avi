@@ -686,7 +686,7 @@ BOOST_AUTO_TEST_CASE(
 }
 
 BOOST_AUTO_TEST_CASE(
-    engine_queryStations_with_locationoption_queryoption_wkt_multipoint,
+    engine_queryStations_with_locationoption_queryoption_wkt_multipoint_fail,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
   BOOST_CHECK(engine != nullptr);
