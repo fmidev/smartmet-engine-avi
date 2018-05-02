@@ -778,6 +778,19 @@ BOOST_AUTO_TEST_CASE(
       "MULTILINESTRING((18.5 57.5, 25.7 62.4),(25.7 62.4, 29.7 62.6))");
   BOOST_CHECK_THROW(engine->queryStations(queryOptions), Spine::Exception);
 }
+
+//
+// Tests for Engine::queryStations method with parameter list query option
+//
+
+BOOST_AUTO_TEST_CASE(engine_querymessages_stationidlist_and_queryoptions_empty_fail,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+  const StationIdList stationIdList;
+  const QueryOptions queryOptions;
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
