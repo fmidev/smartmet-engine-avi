@@ -844,6 +844,16 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_allvalidparameters_fail,
   queryOptions.itsParameters = allValidParameters;
   BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_parameter_locationparameter_fail,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+  const StationIdList stationIdList;
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back(allLocationParameters.front());
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
