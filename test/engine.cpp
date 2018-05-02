@@ -18,6 +18,39 @@ namespace Avi
 {
 Engine *engine;
 
+const std::list<std::string> allLocationParameters({"stationid",
+                                                    "icao",
+                                                    "name",
+                                                    "latitude",
+                                                    "longitude",
+                                                    "lonlat",
+                                                    "latlon",
+                                                    "distance",
+                                                    "bearing",
+                                                    "elevation",
+                                                    "stationvalidfrom",
+                                                    "stationvalidto",
+                                                    "stationmodified",
+                                                    "iso2"});
+
+const std::list<std::string> allMessageTypesParameters({"messagetype",
+                                                        "messagetypedescription",
+                                                        "messagetypemodified"});
+
+const std::list<std::string> allMessageSourceParameters({"route",
+                                                         "routedescription",
+                                                         "routemodified"});
+
+const std::list<std::string> allMessageParameters({"messageid",
+                                                   "message",
+                                                   "messagetime",
+                                                   "messagevalidfrom",
+                                                   "messagevalidto",
+                                                   "messagecreated",
+                                                   "messagefilemodified",
+                                                   "messirheading",
+                                                   "messageversion"});
+
 const std::list<std::string> allValidParameters({"stationid",
                                                  "icao",
                                                  "name",
