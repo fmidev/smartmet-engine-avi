@@ -864,6 +864,27 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_parameter_messagetypepara
   queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
   BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_iso_fail,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+  const StationIdList stationIdList = {1};
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
+
+  queryOptions.itsTimeOptions.itsObservationTime = "2018-01-01";
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "20180101T000000Z";
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "2018-01-01T00:00:00Z";
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "2018-01-01T00:00:00+00:00";
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
