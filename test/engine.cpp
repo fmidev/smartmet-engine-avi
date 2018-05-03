@@ -950,6 +950,19 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_timestamp
   stationQueryData = engine->queryMessages(stationIdList, queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
 }
+
+BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_current_timestamp,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+  const StationIdList stationIdList = {7};  //!< EFHK
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
+
+  queryOptions.itsTimeOptions.itsObservationTime = "current_timestamp";
+  StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
