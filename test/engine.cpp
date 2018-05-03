@@ -885,6 +885,71 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_iso_fail,
   queryOptions.itsTimeOptions.itsObservationTime = "2018-01-01T00:00:00+00:00";
   BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_timestamptz,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+  const StationIdList stationIdList = {7};  //!< EFHK
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '2015-11-17'";
+  StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '2015-11-17T00:20'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '2015-11-17T00:20:00'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '2015-11-17T00:20:00Z'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '2015-11-17T00:20:00+00'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '2015-11-17 00:20'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '2015-11-17 00:20:00'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '2015-11-17 00:20:00Z'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '2015-11-17 00:20:00+00'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '20151117'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '20151117T0020'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '20151117T002000'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '20151117T002000Z'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+
+  queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '20151117T002000+0000'";
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
