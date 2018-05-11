@@ -7,6 +7,7 @@
 #include <boost/test/included/unit_test.hpp>
 #include <spine/Options.h>
 #include <spine/Reactor.h>
+#include <spine/TimeSeriesOutput.h>
 #include <memory>
 #include <typeinfo>
 
@@ -989,6 +990,101 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_starttime_endtime,
   queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T00:21:00Z'";
   stationQueryData = engine->queryMessages(stationIdList, queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+}
+
+BOOST_AUTO_TEST_CASE(
+    engine_querymessages_timerange_return_one_metar_message,
+    *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
+{
+  BOOST_CHECK(engine != nullptr);
+  const StationIdList stationIdList = {7};  //!< EFHK
+  QueryOptions queryOptions;
+
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:20:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T00:21:00Z'";
+
+  std::copy(
+      allMessageParameters.begin(),
+      allMessageParameters.end(),
+      std::inserter(queryOptions.itsParameters, std::next(queryOptions.itsParameters.begin())));
+
+  StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+  if (stationQueryData.itsValues.size() == 1)
+  {
+    StationQueryValues::const_iterator valuesIt = stationQueryData.itsValues.begin();
+    BOOST_CHECK_EQUAL(valuesIt->first, stationIdList.front());
+    BOOST_CHECK_EQUAL(valuesIt->second.size(), 9);
+    if (valuesIt->second.size() == 9)
+    {
+      Spine::ValueFormatter vf{SmartMet::Spine::ValueFormatterParam()};
+      Spine::TimeSeries::StringVisitor sv(vf, 1);
+
+      // Test the value of each requested message parameter
+      for (QueryValues::const_iterator qvIt = valuesIt->second.begin();
+           qvIt != valuesIt->second.end();
+           ++qvIt)
+      {
+        BOOST_CHECK_EQUAL(qvIt->second.size(), 1);
+        auto name = qvIt->first;
+        auto vvIt = qvIt->second.begin();
+        if (name == "messageid")
+        {
+          std::string value = boost::apply_visitor(sv, *vvIt);
+          BOOST_CHECK_EQUAL(value, "34867711");
+        }
+        else if (name == "message")
+        {
+          std::string value = boost::apply_visitor(sv, *vvIt);
+          BOOST_CHECK_EQUAL(value, "METAR EFHK 170020Z 15012KT 9999 -RA BKN008 06/05 Q1004 NOSIG=");
+        }
+        else if (name == "messagetime")
+        {
+          std::string value = boost::apply_visitor(sv, *vvIt);
+          BOOST_CHECK_EQUAL(value, "2015-11-17T00:20:00");
+        }
+        else if (name == "messagevalidfrom")
+        {
+          // For METAR messagevalidfrom is missing
+          // Throws "[Out of range] Year is out of valid range: 1400..10000"
+          BOOST_CHECK_THROW(boost::apply_visitor(sv, *vvIt), Spine::Exception);
+        }
+        else if (name == "messagevalidto")
+        {
+          // For METAR messagevalidto is missing
+          //  [Out of range] Year is out of valid range: 1400..10000
+          BOOST_CHECK_THROW(boost::apply_visitor(sv, *vvIt), Spine::Exception);
+        }
+        else if (name == "messagecreated")
+        {
+          std::string value = boost::apply_visitor(sv, *vvIt);
+          BOOST_CHECK_EQUAL(value, "2015-11-17T00:18:02,130243");
+        }
+        else if (name == "messagefilemodified")
+        {
+          std::string value = boost::apply_visitor(sv, *vvIt);
+          BOOST_CHECK_EQUAL(value, "2015-11-17T00:17:20");
+        }
+        else if (name == "messirheading")
+        {
+          std::string value = boost::apply_visitor(sv, *vvIt);
+          BOOST_CHECK_EQUAL(value, "SAFI31 EFHK 170020");
+        }
+        else if (name == "messageversion")
+        {
+          std::string value = boost::apply_visitor(sv, *vvIt);
+          BOOST_CHECK_EQUAL(value, "");
+        }
+        else
+        {
+          std::string msg = "Unknown response parameter name '";
+          msg.append(name).append("'.");
+          BOOST_FAIL(msg);
+        }
+      }
+    }
+  }
 }
 }  // namespace Avi
 }  // namespace Engine
