@@ -1086,6 +1086,71 @@ BOOST_AUTO_TEST_CASE(
     }
   }
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_querymessages_stations_filtered_out,
+    *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
+{
+  BOOST_CHECK(engine != nullptr);
+
+  const StationIdList stationIdList = {6, 27};  //!< EFHF and EFUT
+  QueryOptions queryOptions;
+
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:20:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T00:21:00Z'";
+  queryOptions.itsDebug = true;
+  queryOptions.itsParameters.push_back(allMessageParameters.front());
+  queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
+  queryOptions.itsMessageTypes.push_back("METAR");
+
+  // We get two messages, even though the METAR messages from the stations are exculuded.
+  // So, the engine does not do what it should.
+  StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 2);
+  if (stationQueryData.itsValues.size() == 2)
+  {
+    for (const auto &id : stationIdList)
+    {
+      auto valuesIt = stationQueryData.itsValues.find(id);
+      if (valuesIt == stationQueryData.itsValues.end())
+      {
+        std::string msg = "Result does not contain data for the stationId '";
+        msg.append(std::to_string(stationIdList.front())).append("'.");
+        BOOST_FAIL(msg);
+      }
+
+      // We requested two parameters
+      BOOST_CHECK_EQUAL(valuesIt->second.size(), 2);
+
+      Spine::ValueFormatter vf{SmartMet::Spine::ValueFormatterParam()};
+      Spine::TimeSeries::StringVisitor sv(vf, 1);
+
+      // The result contains only METARs.
+      for (QueryValues::const_iterator qvIt = valuesIt->second.begin();
+           qvIt != valuesIt->second.end();
+           ++qvIt)
+      {
+        BOOST_CHECK_EQUAL(qvIt->second.size(), 1);
+        auto name = qvIt->first;
+        auto vvIt = qvIt->second.begin();
+        if (name == "messagetype")
+        {
+          std::string value = boost::apply_visitor(sv, *vvIt);
+          BOOST_CHECK_EQUAL(value, "METAR");
+        }
+        else if (name == "messageid")
+        {
+        }
+        else
+        {
+          std::string msg = "Unknown response parameter name '";
+          msg.append(name).append("'.");
+          BOOST_FAIL(msg);
+        }
+      }
+    }
+  }
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
