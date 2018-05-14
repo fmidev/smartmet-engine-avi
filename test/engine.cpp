@@ -1098,7 +1098,6 @@ BOOST_AUTO_TEST_CASE(
 
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:20:00Z'";
   queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T00:21:00Z'";
-  queryOptions.itsDebug = true;
   queryOptions.itsParameters.push_back(allMessageParameters.front());
   queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
   queryOptions.itsMessageTypes.push_back("METAR");
