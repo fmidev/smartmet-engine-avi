@@ -1131,11 +1131,13 @@ BOOST_AUTO_TEST_CASE(
       {
         BOOST_CHECK_EQUAL(qvIt->second.size(), 1);
         auto name = qvIt->first;
-        auto vvIt = qvIt->second.begin();
         if (name == "messagetype")
         {
-          std::string value = boost::apply_visitor(sv, *vvIt);
-          BOOST_CHECK_EQUAL(value, "METAR");
+          for (const auto &value : qvIt->second)
+          {
+            std::string valueStr = boost::apply_visitor(sv, value);
+            BOOST_CHECK_EQUAL(valueStr, "METAR");
+          }
         }
         else if (name == "messageid")
         {
