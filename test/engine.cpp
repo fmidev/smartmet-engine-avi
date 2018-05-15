@@ -1235,6 +1235,23 @@ BOOST_AUTO_TEST_CASE(
   StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_querymessages_messagetype_gafor,
+    *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
+{
+  BOOST_CHECK(engine != nullptr);
+  const StationIdList stationIdList = {7};  //!< EFHK
+  QueryOptions queryOptions;
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T02:00:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T02:01:00Z'";
+  queryOptions.itsParameters.push_back(allMessageParameters.front());
+  queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
+  queryOptions.itsMessageTypes.push_back("GAFOR");
+
+  StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
