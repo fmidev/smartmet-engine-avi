@@ -1252,6 +1252,65 @@ BOOST_AUTO_TEST_CASE(
   StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_querymessages_messagetype_ars_and_wrng,
+    *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
+{
+  BOOST_CHECK(engine != nullptr);
+  const StationIdList stationIdList = {7};  //!< EFHK
+  QueryOptions queryOptions;
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T08:42:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T08:44:00Z'";
+  queryOptions.itsParameters.push_back(allMessageParameters.front());
+  queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
+
+  queryOptions.itsMessageTypes.push_back("ARS");
+  queryOptions.itsMessageTypes.push_back("WRNG");
+
+  StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+  if (stationQueryData.itsValues.size() == 1)
+  {
+    auto valuesIt = stationQueryData.itsValues.begin();
+    BOOST_CHECK_EQUAL(valuesIt->second.size(), 2);
+    if (valuesIt->second.size() == 2)
+    {
+      Spine::ValueFormatter vf{SmartMet::Spine::ValueFormatterParam()};
+      Spine::TimeSeries::StringVisitor sv(vf, 1);
+
+      for (QueryValues::const_iterator qvIt = valuesIt->second.begin();
+           qvIt != valuesIt->second.end();
+           ++qvIt)
+      {
+        BOOST_CHECK_EQUAL(qvIt->second.size(), 2);
+        auto name = qvIt->first;
+        if (name == "messagetype")
+        {
+          for (const auto &value : qvIt->second)
+          {
+            std::string valueStr = boost::apply_visitor(sv, value);
+            if (valueStr != "ARS" and valueStr != "WRNG")
+            {
+              std::string msg = "Unexpected messagetype '";
+              msg.append(valueStr).append("'.");
+              BOOST_FAIL(msg);
+            }
+          }
+        }
+        else if (name == "messageid")
+        {
+        }
+        else
+        {
+          std::string msg = "Unknown response parameter name '";
+          msg.append(name).append("'.");
+          BOOST_FAIL(msg);
+        }
+      }
+    }
+  }
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
