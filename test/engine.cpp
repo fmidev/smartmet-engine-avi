@@ -1313,6 +1313,21 @@ BOOST_AUTO_TEST_CASE(
     }
   }
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_querymessages_stationidlist_with_multiple_stations,
+    *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
+{
+  BOOST_CHECK(engine != nullptr);
+  StationIdList stationIdList = {8,9,10,11,-1}; //!< EFIV,EFJO,EFJY,EFKE,DUMMY
+  QueryOptions queryOptions;
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T00:30:00Z'";
+  queryOptions.itsParameters.push_back(allMessageParameters.front());
+
+  StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 4);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
