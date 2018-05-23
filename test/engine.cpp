@@ -1407,6 +1407,21 @@ BOOST_AUTO_TEST_CASE(
                                                             ")");
   BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_querymessages_locationsoptions_places_fail,
+    *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
+{
+  BOOST_CHECK(engine != nullptr);
+  StationIdList stationIdList;
+  QueryOptions queryOptions;
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T00:30:00Z'";
+  queryOptions.itsParameters.push_back(allMessageParameters.front());
+  queryOptions.itsLocationOptions.itsPlaces.push_back("Inari Ivalo lentoasema");
+
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
