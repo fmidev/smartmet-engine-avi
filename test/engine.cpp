@@ -1456,6 +1456,56 @@ BOOST_AUTO_TEST_CASE(
 
   BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_querymessages_queryoptions_maxmessagerows,
+    *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
+{
+  BOOST_CHECK(engine != nullptr);
+  StationIdList stationIdList = {8};
+  QueryOptions queryOptions;
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T01:10:00Z'";
+  queryOptions.itsParameters.push_back(allMessageParameters.front());
+
+  // Negative value is ignored and the value from the configuration is used.
+  queryOptions.itsMaxMessageRows = -1;
+  StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+  if (stationQueryData.itsValues.size() > 0)
+  {
+    // One parameter requested
+    StationQueryValues::const_iterator valuesIt = stationQueryData.itsValues.begin();
+    BOOST_CHECK_EQUAL(valuesIt->second.size(), 1);
+    if (valuesIt->second.size() > 0)
+    {
+      // Two messages between time interval
+      QueryValues::const_iterator qvIt = valuesIt->second.begin();
+      BOOST_CHECK_EQUAL(qvIt->second.size(), 2);
+    }
+  }
+
+  // The zero value does not limit messages in the result
+  queryOptions.itsMaxMessageRows = 0;
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+  if (stationQueryData.itsValues.size() > 0)
+  {
+    // One parameter requested
+    StationQueryValues::const_iterator valuesIt = stationQueryData.itsValues.begin();
+    BOOST_CHECK_EQUAL(valuesIt->second.size(), 1);
+    if (valuesIt->second.size() > 0)
+    {
+      // Two messages between time interval
+      QueryValues::const_iterator qvIt = valuesIt->second.begin();
+      BOOST_CHECK_EQUAL(qvIt->second.size(), 2);
+    }
+  }
+
+  // Greater than 0 value limits the number of messages in result
+  queryOptions.itsMaxMessageRows = 1;
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
