@@ -1330,6 +1330,25 @@ BOOST_AUTO_TEST_CASE(
 }
 
 BOOST_AUTO_TEST_CASE(
+    engine_querymessages_stationidlist_and_maxmessagestations,
+    *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
+{
+  BOOST_CHECK(engine != nullptr);
+  StationIdList stationIdList = {8, 9, 10, 11, -1};  //!< EFIV,EFJO,EFJY,EFKE,DUMMY
+  QueryOptions queryOptions;
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T00:30:00Z'";
+  queryOptions.itsParameters.push_back(allMessageParameters.front());
+  queryOptions.itsMaxMessageStations = 5;
+
+  StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 4);
+
+  queryOptions.itsMaxMessageStations = 4;
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+}
+
+BOOST_AUTO_TEST_CASE(
     engine_querymessages_locationsoptions_stationids_with_multiple_stations_fail,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
