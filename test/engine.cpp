@@ -1506,6 +1506,51 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsMaxMessageRows = 1;
   BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_querymessages_queryoptions_distinctmessages,
+    *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
+{
+  BOOST_CHECK(engine != nullptr);
+  StationIdList stationIdList = {7};
+  QueryOptions queryOptions;
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T01:10:00Z'";
+  queryOptions.itsParameters.push_back(allMessageParameters.front());
+
+  // Remove duplicates from the result. This is the default setting.
+  queryOptions.itsDistinctMessages = true;
+  StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+  if (stationQueryData.itsValues.size() > 0)
+  {
+    // One parameter requested
+    StationQueryValues::const_iterator valuesIt = stationQueryData.itsValues.begin();
+    BOOST_CHECK_EQUAL(valuesIt->second.size(), 1);
+    if (valuesIt->second.size() > 0)
+    {
+      // Two messages between time interval
+      QueryValues::const_iterator qvIt = valuesIt->second.begin();
+      BOOST_CHECK_EQUAL(qvIt->second.size(), 2);
+    }
+  }
+
+  // Request also the duplicates
+  queryOptions.itsDistinctMessages = false;
+  stationQueryData = engine->queryMessages(stationIdList, queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+  if (stationQueryData.itsValues.size() > 0)
+  {
+    StationQueryValues::const_iterator valuesIt = stationQueryData.itsValues.begin();
+    BOOST_CHECK_EQUAL(valuesIt->second.size(), 1);
+    if (valuesIt->second.size() > 0)
+    {
+      // Four messages between time interval
+      QueryValues::const_iterator qvIt = valuesIt->second.begin();
+      BOOST_CHECK_EQUAL(qvIt->second.size(), 4);
+    }
+  }
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
