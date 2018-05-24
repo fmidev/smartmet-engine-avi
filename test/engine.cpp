@@ -1575,29 +1575,6 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 2);
 }
 
-BOOST_AUTO_TEST_CASE(
-    engine_querymessages_queryoptions_,
-    *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
-{
-  BOOST_CHECK(engine != nullptr);
-  StationIdList stationIdList = {8, 27};  //!< EFHK, EFUT
-
-  // In the configuration there is filtering settings for EFHF and EFHK.
-  // Here the itsFilterMETARs setting does not have any effect to the result.
-  // The filtering is not supported when itsTimeOptions.itsObservationTime is used.
-  // The filtering is not supported when itsTimeOptions.itsQueryValidRangeMessages is true.
-  QueryOptions queryOptions;
-  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
-  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T01:10:00Z'";
-  queryOptions.itsParameters.push_back(allMessageParameters.front());
-  queryOptions.itsFilterMETARs = true;
-  queryOptions.itsTimeOptions.itsQueryValidRangeMessages = false;
-  queryOptions.itsMessageTypes.push_back("METAR");
-
-  StationQueryData stationQueryData = engine->queryMessages(stationIdList, queryOptions);
-  BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 2);
-}
-
 //
 // Tests for Engine::queryStationsAndMessages method
 //
