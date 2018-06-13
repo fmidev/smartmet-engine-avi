@@ -22,7 +22,7 @@ find_path(MacGyver_INCLUDE_DIR TypeName.h ${CMAKE_INSTALL_PREFIX} /usr/include/s
 if (NOT MacGyver_INCLUDE_DIR)
   message(FATAL_ERROR "SmartMet MacGyver include directory not found")
 endif()
-find_library(Avi_LIBRARY avi ${Avi_SOURCE_DIR})
+find_library(Avi_LIBRARY avi.so ${Avi_SOURCE_DIR})
 if (NOT Avi_LIBRARY)
   message(FATAL_ERROR "SmartMet Avi Engine library not found")
 endif()
