@@ -120,6 +120,7 @@ $(LIBFILE): $(OBJS)
 	$(CXX) $(CFLAGS) -shared -rdynamic -o $(LIBFILE) $(OBJS) $(LIBS)
 
 clean:
+	if [ -h lib$(LIBFILE) ] && [ -e $(LIBFILE) ]; then rm lib$(LIBFILE); fi
 	rm -f $(LIBFILE) $(OBJS) *~ $(SUBNAME)/*~ $(objdir)/*.d
 
 format:
@@ -137,9 +138,8 @@ install:
 	$(INSTALL_PROG) $(LIBFILE) $(enginedir)/$(LIBFILE)
 
 test:
-	if [ ! -e libavi.so ] && [ -e avi.so ]; then ln -s avi.so libavi.so; fi
+	if [ ! -e lib$(LIBFILE) ] && [ -e $(LIBFILE) ]; then ln -s $(LIBFILE) lib$(LIBFILE); fi
 	mkdir -p build && cd build && cmake ../ && make && make test && cd ..
-	if [ -h libavi.so ] && [ -e avi.so ]; then rm libavi.so; fi
 
 objdir:
 	@mkdir -p $(objdir)
