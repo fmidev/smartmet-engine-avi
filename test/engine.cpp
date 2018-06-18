@@ -1657,6 +1657,94 @@ BOOST_AUTO_TEST_CASE(
   StationQueryData stationQueryData = engine->queryStationsAndMessages(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
 }
+
+//
+// Tests for Engine::joinStationAndMessageData method
+//
+
+BOOST_AUTO_TEST_CASE(
+    engine_joinstationandmessagedata_empty_inputs,
+    *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_stationid"))
+{
+  BOOST_CHECK(engine != nullptr);
+  const StationQueryData stationQueryData1;
+  StationQueryData stationQueryData2;
+  StationQueryData joinedStationQueryData;
+  joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsValues.size(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(
+    engine_joinstationandmessagedata_the_first_has_station,
+    *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_stationid"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsStationIds.push_back(10);  //!< EFJY
+
+  const StationQueryData stationQueryData1 = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData1.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData1.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData1.itsStationIds.front(), 10);
+
+  StationQueryData stationQueryData2;
+  StationQueryData joinedStationQueryData;
+  joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsColumns.size(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(
+    engine_joinstationandmessagedata_the_second_has_station,
+    *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_stationid"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsStationIds.push_back(10);  //!< EFJY
+
+  const StationQueryData stationQueryData1;
+
+  StationQueryData stationQueryData2 = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.front(), 10);
+
+  StationQueryData joinedStationQueryData;
+  joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.front(), 10);
+}
+
+BOOST_AUTO_TEST_CASE(
+    engine_joinstationandmessagedata_the_both_have_station,
+    *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_stationid"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back("stationid");
+  queryOptions.itsLocationOptions.itsStationIds.push_back(10);  //!< EFJY
+
+  const StationQueryData stationQueryData1 = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData1.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData1.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData1.itsStationIds.front(), 10);
+
+  queryOptions.itsLocationOptions.itsStationIds.clear();
+  queryOptions.itsLocationOptions.itsStationIds.push_back(27);  //!< EFUT
+  StationQueryData stationQueryData2 = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.front(), 27);
+
+  // Only the station of second stationQueryData is picked to the joined container.
+  StationQueryData joinedStationQueryData;
+  joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.front(), 27);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
