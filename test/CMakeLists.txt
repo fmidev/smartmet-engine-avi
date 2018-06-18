@@ -55,7 +55,6 @@ foreach(testSrc ${UNIT_TEST_SRCS})
   target_link_libraries(
     ${testName}
     ${CMAKE_STANDARD_LIBRARIES}
-    ${AVI_LIBRARIES}
     ${Boost_LIBRARIES}
     ${SmartTools_LIBRARIES}
     ${BZIP2_LIBRARIES}
