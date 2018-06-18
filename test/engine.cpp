@@ -1745,6 +1745,52 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.front(), 27);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_joinstationandmessagedata_the_first_has_message,
+    *boost::unit_test::depends_on("engine_querymessages_timerange_return_one_metar_message"))
+{
+  BOOST_CHECK(engine != nullptr);
+
+  const StationIdList stationIdList = {7};  //!< EFHK
+  QueryOptions queryOptions1;
+  queryOptions1.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:20:00Z'";
+  queryOptions1.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T00:21:00Z'";
+  std::copy(
+      allMessageParameters.begin(),
+      allMessageParameters.end(),
+      std::inserter(queryOptions1.itsParameters, std::next(queryOptions1.itsParameters.begin())));
+  const StationQueryData stationQueryData1 = engine->queryMessages(stationIdList, queryOptions1);
+  BOOST_CHECK_EQUAL(stationQueryData1.itsValues.size(), 1);
+
+  StationQueryData stationQueryData2;
+  StationQueryData joinedStationQueryData;
+  joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsValues.size(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(
+    engine_joinstationandmessagedata_the_second_has_message,
+    *boost::unit_test::depends_on("engine_querymessages_timerange_return_one_metar_message"))
+{
+  BOOST_CHECK(engine != nullptr);
+
+  const StationQueryData stationQueryData1;
+  const StationIdList stationIdList = {7};  //!< EFHK
+  QueryOptions queryOptions2;
+  queryOptions2.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:20:00Z'";
+  queryOptions2.itsTimeOptions.itsEndTime = "timestamptz '2015-11-17T00:21:00Z'";
+  std::copy(
+      allMessageParameters.begin(),
+      allMessageParameters.end(),
+      std::inserter(queryOptions2.itsParameters, std::next(queryOptions2.itsParameters.begin())));
+  StationQueryData stationQueryData2 = engine->queryMessages(stationIdList, queryOptions2);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsValues.size(), 1);
+
+  StationQueryData joinedStationQueryData;
+  joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsValues.size(), 1);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
