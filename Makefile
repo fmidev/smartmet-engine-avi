@@ -137,7 +137,9 @@ install:
 	$(INSTALL_PROG) $(LIBFILE) $(enginedir)/$(LIBFILE)
 
 test:
-	cd test && make test
+	if [ ! -e libavi.so ] && [ -e avi.so ]; then ln -s avi.so libavi.so; fi
+	mkdir -p build && cd build && cmake ../ && make && make test && cd ..
+	if [ -h libavi.so ] && [ -e avi.so ]; then rm libavi.so; fi
 
 objdir:
 	@mkdir -p $(objdir)
