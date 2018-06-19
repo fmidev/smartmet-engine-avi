@@ -1671,7 +1671,9 @@ BOOST_AUTO_TEST_CASE(
   StationQueryData stationQueryData2;
   StationQueryData joinedStationQueryData;
   joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsColumns.size(), 0);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsValues.size(), 0);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.size(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1692,6 +1694,13 @@ BOOST_AUTO_TEST_CASE(
   StationQueryData joinedStationQueryData;
   joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsColumns.size(), 0);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsValues.size(), 0);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.size(), 0);
+
+  // The type of second argument is not const, so its content must be checked.
+  BOOST_CHECK_EQUAL(stationQueryData2.itsColumns.size(), 0);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsValues.size(), 0);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1707,14 +1716,22 @@ BOOST_AUTO_TEST_CASE(
 
   StationQueryData stationQueryData2 = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData2.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsValues.size(), 1);
   BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.front(), 10);
 
   StationQueryData joinedStationQueryData;
   joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsValues.size(), 1);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.front(), 10);
+
+  // The type of second argument is not const, so its content must be checked.
+  BOOST_CHECK_EQUAL(stationQueryData2.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsValues.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.front(), 10);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1728,6 +1745,7 @@ BOOST_AUTO_TEST_CASE(
 
   const StationQueryData stationQueryData1 = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData1.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData1.itsValues.size(), 1);
   BOOST_CHECK_EQUAL(stationQueryData1.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(stationQueryData1.itsStationIds.front(), 10);
 
@@ -1735,6 +1753,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsLocationOptions.itsStationIds.push_back(27);  //!< EFUT
   StationQueryData stationQueryData2 = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData2.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsValues.size(), 1);
   BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.front(), 27);
 
@@ -1742,8 +1761,15 @@ BOOST_AUTO_TEST_CASE(
   StationQueryData joinedStationQueryData;
   joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsValues.size(), 1);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.front(), 27);
+
+  // The type of second argument is not const, so its content must be checked.
+  BOOST_CHECK_EQUAL(stationQueryData2.itsColumns.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsValues.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.front(), 27);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1761,12 +1787,22 @@ BOOST_AUTO_TEST_CASE(
       allMessageParameters.end(),
       std::inserter(queryOptions1.itsParameters, std::next(queryOptions1.itsParameters.begin())));
   const StationQueryData stationQueryData1 = engine->queryMessages(stationIdList, queryOptions1);
+  BOOST_CHECK_EQUAL(stationQueryData1.itsColumns.size(), 11);
   BOOST_CHECK_EQUAL(stationQueryData1.itsValues.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData1.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData1.itsStationIds.front(), 7);
 
   StationQueryData stationQueryData2;
   StationQueryData joinedStationQueryData;
   joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsColumns.size(), 0);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsValues.size(), 0);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.size(), 0);
+
+  // The type of second argument is not const, so its content must be checked.
+  BOOST_CHECK_EQUAL(stationQueryData2.itsColumns.size(), 0);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsValues.size(), 0);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1785,11 +1821,17 @@ BOOST_AUTO_TEST_CASE(
       allMessageParameters.end(),
       std::inserter(queryOptions2.itsParameters, std::next(queryOptions2.itsParameters.begin())));
   StationQueryData stationQueryData2 = engine->queryMessages(stationIdList, queryOptions2);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsColumns.size(), 11);
   BOOST_CHECK_EQUAL(stationQueryData2.itsValues.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.front(), 7);
 
   StationQueryData joinedStationQueryData;
   joinedStationQueryData = engine->joinStationAndMessageData(stationQueryData1, stationQueryData2);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsColumns.size(), 11);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsValues.size(), 1);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.size(), 1);
+  BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.front(), 7);
 }
 }  // namespace Avi
 }  // namespace Engine
