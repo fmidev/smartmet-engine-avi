@@ -1958,6 +1958,18 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(joinedStationQueryData.itsStationIds.front(), 7);
 }
+
+//
+// Tests for QueryData queryRejectedMessages method
+//
+
+BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_empty_fail,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+  QueryOptions queryOptions;
+  BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
