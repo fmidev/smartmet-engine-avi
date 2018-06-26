@@ -1981,6 +1981,21 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_two_parameters_fa
   queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.back());
   BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_starttime_endtime,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.front());
+  queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.back());
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-20T22:00:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2016-11-20T22:00:00Z'";
+  QueryData queryData = engine->queryRejectedMessages(queryOptions);
+  BOOST_CHECK_EQUAL(queryData.itsColumns.size(), 2);
+  BOOST_CHECK_EQUAL(queryData.itsValues.size(), 2);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
