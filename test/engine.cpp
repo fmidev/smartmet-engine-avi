@@ -102,6 +102,7 @@ BOOST_AUTO_TEST_CASE(engine_constructor, *boost::unit_test::depends_on(""))
 BOOST_AUTO_TEST_CASE(engine_singleton, *boost::unit_test::depends_on("engine_constructor"))
 {
   SmartMet::Spine::Options opts;
+  opts.defaultlogging = false;
   opts.configfile = "cnf/reactor.conf";
   opts.parseConfig();
 
