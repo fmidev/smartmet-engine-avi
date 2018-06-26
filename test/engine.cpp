@@ -1970,6 +1970,17 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_empty_fail,
   QueryOptions queryOptions;
   BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Spine::Exception);
 }
+
+BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_two_parameters_fail,
+                     *boost::unit_test::depends_on("engine_singleton"))
+{
+  BOOST_CHECK(engine != nullptr);
+
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.front());
+  queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.back());
+  BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
