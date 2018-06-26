@@ -1996,6 +1996,31 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_starttime_endtime
   BOOST_CHECK_EQUAL(queryData.itsColumns.size(), 2);
   BOOST_CHECK_EQUAL(queryData.itsValues.size(), 2);
 }
+
+BOOST_AUTO_TEST_CASE(
+    engine_queryrejectedmessages_queryoptions_produce_valid_response,
+    *boost::unit_test::depends_on("engine_queryrejectedmessages_queryoptions_starttime_endtime"))
+{
+  BOOST_CHECK(engine != nullptr);
+
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.front());
+  queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.back());
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-20T22:00:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2016-11-20T22:00:00Z'";
+  QueryData queryData = engine->queryRejectedMessages(queryOptions);
+
+  auto f = queryData.itsValues.find(allValidRejectedMessagesParameters.front());
+  auto b = queryData.itsValues.find(allValidRejectedMessagesParameters.back());
+
+  BOOST_CHECK_EQUAL(queryData.itsColumns.size(), 2);
+  BOOST_CHECK(f != queryData.itsValues.end());
+  BOOST_CHECK(b != queryData.itsValues.end());
+  BOOST_CHECK_EQUAL(f->second.size(), 580);
+  BOOST_CHECK_EQUAL(b->second.size(), 580);
+  BOOST_CHECK(queryData.itsColumns.front() == f->first);
+  BOOST_CHECK(queryData.itsColumns.back() == b->first);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
