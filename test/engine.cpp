@@ -2039,6 +2039,27 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_messagetype_metar
   BOOST_CHECK(f != queryData.itsValues.end());
   BOOST_CHECK_EQUAL(f->second.size(), 11);
 }
+
+BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_maxmessagerows,
+                     *boost::unit_test::depends_on(
+                         "engine_queryrejectedmessages_queryoptions_produce_valid_response"))
+{
+  BOOST_CHECK(engine != nullptr);
+
+  QueryOptions queryOptions;
+  queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.front());
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-20T22:00:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-20T22:10:00Z'";
+  queryOptions.itsMaxMessageRows = 12;
+
+  QueryData queryData = engine->queryRejectedMessages(queryOptions);
+  auto f = queryData.itsValues.find(allValidRejectedMessagesParameters.front());
+  BOOST_CHECK(f != queryData.itsValues.end());
+  BOOST_CHECK_EQUAL(f->second.size(), 12);
+
+  queryOptions.itsMaxMessageRows = 5;
+  BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Spine::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
