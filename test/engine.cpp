@@ -2023,6 +2023,20 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK(queryData.itsColumns.back() == b->first);
 }
 
+BOOST_AUTO_TEST_CASE(
+    engine_queryrejectedmessages_queryoptions_allvalidrejectedmessagesparameters_fail,
+    *boost::unit_test::depends_on(
+        "engine_queryrejectedmessages_queryoptions_produce_valid_response"))
+{
+  BOOST_CHECK(engine != nullptr);
+
+  QueryOptions queryOptions;
+  queryOptions.itsParameters = allValidRejectedMessagesParameters;
+  queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-20T22:00:00Z'";
+  queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-20T22:10:00Z'";
+  BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Spine::Exception);
+}
+
 BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_messagetype_metar,
                      *boost::unit_test::depends_on(
                          "engine_queryrejectedmessages_queryoptions_produce_valid_response"))
