@@ -120,13 +120,13 @@ Column stationQueryColumns[] = {
     // Type		 Derived column    Query column				   f(Table column)
     // f(Table column)
     //
-    {Double, dfLongitude, "longitude", derivedExpression, NULL},
-    {Double, dfLatitude, "latitude", derivedExpression, NULL},
-    {TS_LonLat, dfLonLat, stationLonLatQueryColumn, derivedExpression, NULL},
-    {TS_LatLon, dfLatLon, stationLatLonQueryColumn, derivedExpression, NULL},
-    {Double, dfDistance, stationDistanceQueryColumn, NULL, derivedExpression},
-    {Double, dfBearing, stationBearingQueryColumn, NULL, derivedExpression},
-    {None, "", "", NULL, NULL}};
+    {Double, dfLongitude, "longitude", derivedExpression, nullptr},
+    {Double, dfLatitude, "latitude", derivedExpression, nullptr},
+    {TS_LonLat, dfLonLat, stationLonLatQueryColumn, derivedExpression, nullptr},
+    {TS_LatLon, dfLatLon, stationLatLonQueryColumn, derivedExpression, nullptr},
+    {Double, dfDistance, stationDistanceQueryColumn, nullptr, derivedExpression},
+    {Double, dfBearing, stationBearingQueryColumn, nullptr, derivedExpression},
+    {None, "", "", nullptr, nullptr}};
 
 Column messageTypeQueryColumns[] = {
     //
@@ -194,7 +194,7 @@ QueryTable messageQueryTables[] = {
      messageRouteQueryColumns,
      messageRouteTableJoin},
     {stationTableName, stationTableAlias, stationQueryColumns, stationTableJoin},
-    {"", "", NULL, ""}};
+    {"", "", nullptr, ""}};
 
 Column noQueryColumns[] = {};
 
@@ -214,7 +214,7 @@ QueryTable rejectedMessageQueryTables[] = {
      messageRouteTableAlias,
      messageRouteQueryColumns,
      rejectedMessageRouteTableJoin},
-    {"", "", NULL, ""}};
+    {"", "", nullptr, ""}};
 
 // ----------------------------------------------------------------------
 /*!
@@ -267,7 +267,7 @@ void buildStationQueryFromWhereClause(const LocationOptions& locationOptions,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -298,7 +298,7 @@ void buildStationQueryWhereClause(const StationIdList& stationIdList, ostringstr
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -337,7 +337,7 @@ void buildStationQueryWhereClause(const string& columnExpression,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -420,7 +420,7 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -459,7 +459,7 @@ void buildStationQueryWhereClause(const BBoxList& bboxList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -490,7 +490,7 @@ void buildMessageQueryWhereStationIdInClause(const StationIdList& stationIdList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -538,7 +538,7 @@ string buildRequestStationsWithClause(const StationIdList& stationIdList, bool r
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -606,7 +606,7 @@ string buildMessageTypeValidityWithClause(const StringList messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -669,7 +669,7 @@ string buildMessageTypeInClause(const StringList& messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -686,7 +686,7 @@ string buildMessageTypeInClause(const StringList& messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -752,7 +752,7 @@ string buildRecordSetWithClause(bool routeQuery,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -850,7 +850,7 @@ string buildMessageTypeGroupByExpr(const StringList& messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -954,7 +954,7 @@ string buildMessirHeadingGroupByExpr(const StringList& messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -977,7 +977,7 @@ string getStringList(const list<string>& stringList)
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1247,7 +1247,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1359,7 +1359,7 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1645,7 +1645,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1750,7 +1750,7 @@ void buildRejectedMessageQueryFromWhereOrderByClause(int maxMessageRows,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1768,7 +1768,7 @@ void sortColumnList(Columns& columns)
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1800,7 +1800,7 @@ void Engine::init()
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Init failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Init failed!");
   }
 }
 
@@ -1851,17 +1851,17 @@ const Column* Engine::getQueryColumn(const ColumnTable tableColumns,
 
             duplicate = true;
 
-            return NULL;
+            return nullptr;
           }
 
         return column;
       }
     }
-    return NULL;
+    return nullptr;
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1890,7 +1890,7 @@ string Engine::buildStationQueryCoordinateExpressions(const Columns& columns) co
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2007,7 +2007,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2268,7 +2268,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2444,7 +2444,7 @@ void Engine::executeQuery(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2499,7 +2499,7 @@ void Engine::queryStationsWithCoordinates(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2530,7 +2530,7 @@ void Engine::queryStationsWithIds(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2561,7 +2561,7 @@ void Engine::queryStationsWithIcaos(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2592,7 +2592,7 @@ void Engine::queryStationsWithCountries(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2623,7 +2623,7 @@ void Engine::queryStationsWithPlaces(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2652,7 +2652,7 @@ void Engine::queryStationsWithWKTs(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2684,7 +2684,7 @@ void Engine::queryStationsWithBBoxes(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2791,7 +2791,7 @@ void Engine::validateParameters(const StringList& paramList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2842,7 +2842,7 @@ void Engine::validateStationIds(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2895,7 +2895,7 @@ void Engine::validateIcaos(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2951,7 +2951,7 @@ void Engine::validateCountries(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3090,7 +3090,7 @@ void Engine::validateWKTs(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3218,7 +3218,7 @@ StationQueryData Engine::queryStations(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 //
@@ -3239,7 +3239,7 @@ StationQueryData Engine::queryStations(QueryOptions& queryOptions) const
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3297,7 +3297,7 @@ void Engine::validateMessageTypes(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3325,7 +3325,7 @@ const Column* Engine::getMessageTableTimeColumn(const string& timeColumn) const
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3356,7 +3356,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
               Fmi::to_string(stationIdList.size()) + "), limit the query");
 
     bool messageColumnSelected;
-    const Column* timeRangeColumn = NULL;
+    const Column* timeRangeColumn = nullptr;
 
     validateParameters(queryOptions.itsParameters, AcceptedMessages, messageColumnSelected);
 
@@ -3636,7 +3636,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 //
@@ -3658,7 +3658,7 @@ StationQueryData Engine::queryMessages(const StationIdList& stationIdList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3737,7 +3737,7 @@ StationQueryData& Engine::joinStationAndMessageData(const StationQueryData& stat
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3791,7 +3791,7 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3872,7 +3872,7 @@ QueryData Engine::queryRejectedMessages(const QueryOptions& queryOptions) const
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 

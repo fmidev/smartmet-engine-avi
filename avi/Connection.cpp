@@ -29,7 +29,7 @@ Connection::Connection(const std::string& theHost,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -65,17 +65,16 @@ bool Connection::open(const std::string& theHost,
     }
     catch (...)
     {
-      SmartMet::Spine::Exception exception(BCP, "Connection to the database failed!", NULL);
-      exception.addParameter("Database", theDatabase);
-      exception.addParameter("User", theUser);
-      throw exception;
+      throw SmartMet::Spine::Exception::Trace(BCP, "Connection to the database failed!")
+          .addParameter("Database", theDatabase)
+          .addParameter("User", theUser);
     }
 
     return itsConnection->is_open();
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -99,7 +98,7 @@ void Connection::close()
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -117,14 +116,13 @@ pqxx::result Connection::executeNonTransaction(const std::string& theSQLStatemen
     }
     catch (...)
     {
-      SmartMet::Spine::Exception exception(BCP, "Execution of the SQL statement failed!", NULL);
-      exception.addParameter("SQL statement", theSQLStatement);
-      throw exception;
+      throw SmartMet::Spine::Exception(BCP, "Execution of the SQL statement failed!")
+          .addParameter("SQL statement", theSQLStatement);
     }
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
 

@@ -353,7 +353,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
                                              {"messagevalidtime", MessageValidTimeRange, true},
                                              {"messagetime", MessageTimeRange, true},
                                              {"creationtime", CreationValidTimeRange, true},
-                                             {NULL, NullTimeRange, false}};
+                                             {nullptr, NullTimeRange, false}};
 
       KnownTimeRangeType *r = timeRangeTypes;
       std::string timeRangeType =
@@ -521,7 +521,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Configuration failed!", NULL);
+    throw SmartMet::Spine::Exception::Trace(BCP, "Configuration failed!");
   }
 }
 

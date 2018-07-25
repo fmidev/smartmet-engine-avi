@@ -167,8 +167,8 @@ struct Column
   Column(ColumnType theType,
          const std::string &theTableColumnName,
          const std::string &theQueryColumnName = "",
-         ColumnExpression theExpression = NULL,
-         ColumnExpression theCoordinateExpression = NULL)
+         ColumnExpression theExpression = nullptr,
+         ColumnExpression theCoordinateExpression = nullptr)
       : itsType(theType),
         itsName(theQueryColumnName.empty() ? theTableColumnName : theQueryColumnName),
         itsTableColumnName(theTableColumnName),
