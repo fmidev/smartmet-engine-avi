@@ -90,7 +90,7 @@ const std::list<std::string> allValidRejectedMessagesParameters({"message",
                                                                  "messagefilemodified",
                                                                  "messirheading",
                                                                  "messageversion",
-                                                                 "messagerejectreason",
+                                                                 "messagerejectedreason",
                                                                  "messagerejectedicao"});
 
 BOOST_AUTO_TEST_CASE(engine_constructor, *boost::unit_test::depends_on(""))
@@ -2023,10 +2023,9 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK(queryData.itsColumns.back() == b->first);
 }
 
-BOOST_AUTO_TEST_CASE(
-    engine_queryrejectedmessages_queryoptions_allvalidrejectedmessagesparameters_fail,
-    *boost::unit_test::depends_on(
-        "engine_queryrejectedmessages_queryoptions_produce_valid_response"))
+BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_allvalidrejectedmessagesparameters,
+                     *boost::unit_test::depends_on(
+                         "engine_queryrejectedmessages_queryoptions_produce_valid_response"))
 {
   BOOST_CHECK(engine != nullptr);
 
@@ -2034,7 +2033,8 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters = allValidRejectedMessagesParameters;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-20T22:00:00Z'";
   queryOptions.itsTimeOptions.itsEndTime = "timestamptz '2015-11-20T22:10:00Z'";
-  BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Spine::Exception);
+  QueryData queryData = engine->queryRejectedMessages(queryOptions);
+  BOOST_CHECK_EQUAL(queryData.itsColumns.size(), allValidRejectedMessagesParameters.size());
 }
 
 BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_messagetype_metar,
