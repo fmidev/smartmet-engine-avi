@@ -1555,25 +1555,6 @@ void buildRejectedMessageQueryFromWhereOrderByClause(int maxMessageRows,
     throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
   }
 }
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Sort columns by their position in the 'param=' list of the request
- */
-// ----------------------------------------------------------------------
-
-void sortColumnList(Columns& columns)
-{
-  try
-  {
-    columns.sort(columns.front().columnNumberSort);
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
 }  // anonymous namespace
 
 // ----------------------------------------------------------------------

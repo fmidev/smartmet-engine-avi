@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <spine/Exception.h>
 #include <string>
 
 namespace SmartMet
@@ -75,6 +76,27 @@ struct Column
 
 typedef std::list<Column> Columns;
 typedef Column *ColumnTable;
+
+namespace
+{
+// ----------------------------------------------------------------------
+/*!
+ * \brief Sort columns by their position in the 'param=' list of the request
+ */
+// ----------------------------------------------------------------------
+
+void sortColumnList(Columns &columns)
+{
+  try
+  {
+    columns.sort(columns.front().columnNumberSort);
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+};  // namespace
 
 }  // namespace Avi
 }  // namespace Engine
