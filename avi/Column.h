@@ -74,7 +74,6 @@ struct Column
   bool hasExpression() const { return (itsExpression != nullptr); }
   bool hasCoordinateExpression() const { return (itsCoordinateExpression != nullptr); }
   const ColumnSelection &getSelection() const { return itsSelection; }
-  friend class Engine;
 
  private:
   std::string itsTableColumnName;
