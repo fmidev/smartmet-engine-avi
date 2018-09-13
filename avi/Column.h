@@ -59,6 +59,11 @@ struct Column
   {
     return (first.itsNumber < second.itsNumber);
   }
+  std::string getExpression() const { return itsExpression(itsTableColumnName, itsName); }
+  std::string getCoordinateExpression() const
+  {
+    return itsCoordinateExpression(itsTableColumnName, itsName);
+  }
   void setNumber(const int &number) { itsNumber = number; }
   void setSelection(const ColumnSelection &selection) { itsSelection = selection; }
 
@@ -66,6 +71,8 @@ struct Column
   std::string itsName;
 
   const std::string &getTableColumnName() const { return itsTableColumnName; }
+  bool hasExpression() const { return (itsExpression != nullptr); }
+  bool hasCoordinateExpression() const { return (itsCoordinateExpression != nullptr); }
   const ColumnSelection &getSelection() const { return itsSelection; }
   friend class Engine;
 

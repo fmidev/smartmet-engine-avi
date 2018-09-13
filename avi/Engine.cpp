@@ -1664,10 +1664,8 @@ string Engine::buildStationQueryCoordinateExpressions(const Columns& columns) co
     ostringstream selectExpressions;
 
     for (auto const& column : columns)
-      if (column.itsCoordinateExpression)
-        selectExpressions << ","
-                          << column.itsCoordinateExpression(column.getTableColumnName(),
-                                                            column.itsName);
+      if (column.hasCoordinateExpression())
+        selectExpressions << "," << column.getCoordinateExpression();
 
     return selectExpressions.str();
   }
@@ -1745,9 +1743,9 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
       auto queryColumn =
           getQueryColumn(stationQueryColumns, columns, param, duplicate, columnNumber);
 
-      if (queryColumn && ((!selectStationListOnly) || queryColumn->itsCoordinateExpression))
+      if (queryColumn && ((!selectStationListOnly) || queryColumn->hasCoordinateExpression()))
       {
-        if (queryColumn->itsExpression)
+        if (queryColumn->hasExpression())
         {
           // ST_X(geom) AS longitudes
           // ST_Y(geom) AS latitude
@@ -1755,10 +1753,9 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
           // ST_Y(geom) || ',' || ST_X(geom) AS latlon
           //
           selectClause +=
-              (string(selectClause.empty() ? "SELECT " : ",") +
-               queryColumn->itsExpression(queryColumn->getTableColumnName(), queryColumn->itsName));
+              (string(selectClause.empty() ? "SELECT " : ",") + queryColumn->getExpression());
         }
-        else if (queryColumn->itsCoordinateExpression)
+        else if (queryColumn->hasCoordinateExpression())
         {
           // Parametrized expression for each given coordinate
           //
@@ -1930,13 +1927,12 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
 
           table.leftOuter = leftOuter;
 
-          if (queryColumn->itsExpression)
+          if (queryColumn->hasExpression())
           {
-            selectClause += (string(selectClause.empty() ? "" : ",") +
-                             queryColumn->itsExpression(queryColumn->getTableColumnName(),
-                                                        queryColumn->itsName));
+            selectClause +=
+                (string(selectClause.empty() ? "" : ",") + queryColumn->getExpression());
           }
-          else if (queryColumn->itsCoordinateExpression)
+          else if (queryColumn->hasCoordinateExpression())
           {
             // Select NULL for distance and bearing columns; they will be set after the query by
             // searching from station data
