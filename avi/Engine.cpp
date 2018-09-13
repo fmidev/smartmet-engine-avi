@@ -1626,9 +1626,9 @@ const Column* Engine::getQueryColumn(const ColumnTable tableColumns,
         for (auto& column : columns)
           if (column.itsName == theQueryColumnName)
           {
-            if (column.itsSelection == Automatic)
+            if (column.getSelection() == Automatic)
             {
-              column.itsSelection = AutomaticRequested;
+              column.setSelection(AutomaticRequested);
               column.setNumber(columnNumber);
             }
 
@@ -1710,7 +1710,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
           BCP, "buildStationQuerySelectClause(): internal: Unable to get id column");
 
     Column column(*queryColumn);
-    column.itsSelection = Automatic;
+    column.setSelection(Automatic);
     columns.push_back(column);
 
     selectClause =
@@ -1728,7 +1728,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
             BCP, "buildStationQuerySelectClause(): internal: Unable to get distance column");
 
       Column column(*queryColumn);
-      column.itsSelection = Automatic;
+      column.setSelection(Automatic);
       columns.push_back(column);
     }
 
@@ -1866,7 +1866,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
                 BCP, "buildMessageQuerySelectClause(): internal: Unable to get station id column");
 
           Column column(*queryColumn);
-          column.itsSelection = Automatic;
+          column.setSelection(Automatic);
           table.itsSelectedColumns.push_back(column);
 
           selectClause = queryTable.itsAlias + "." + queryColumn->getTableColumnName() + " AS " +
@@ -1887,7 +1887,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
                 "buildMessageQuerySelectClause(): internal: Unable to get station icao column");
 
           Column column(*queryColumn);
-          column.itsSelection = Automatic;
+          column.setSelection(Automatic);
           table.itsSelectedColumns.push_back(column);
 
           // NOTE: Generate select expression if icao is requested by the caller too. When looping
@@ -2000,7 +2000,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
             BCP, "buildMessageQuerySelectClause(): internal: Unable to get message column");
 
       Column column(*queryColumn);
-      column.itsSelection = Automatic;
+      column.setSelection(Automatic);
       table.itsSelectedColumns.push_back(column);
 
       selectClause += (string(",") + messageTableAlias + "." + queryColumn->getTableColumnName() +
@@ -2116,7 +2116,7 @@ void Engine::executeQuery(const Connection& connection,
         // messages
         // by icao code
         //
-        if (column.itsSelection == Automatic)
+        if (column.getSelection() == Automatic)
           // Column was not requested by the caller, skip it
           //
           continue;
@@ -2989,7 +2989,7 @@ StationQueryData Engine::queryStations(const Connection& connection,
         for (Columns::iterator it = stationQueryData.itsColumns.begin();
              (it != stationQueryData.itsColumns.end());)
         {
-          if (it->itsSelection == Automatic)
+          if (it->getSelection() == Automatic)
             it = stationQueryData.itsColumns.erase(it);
           else
             it++;

@@ -60,11 +60,13 @@ struct Column
     return (first.itsNumber < second.itsNumber);
   }
   void setNumber(const int &number) { itsNumber = number; }
+  void setSelection(const ColumnSelection &selection) { itsSelection = selection; }
 
   ColumnType itsType;
   std::string itsName;
 
   const std::string &getTableColumnName() const { return itsTableColumnName; }
+  const ColumnSelection &getSelection() const { return itsSelection; }
   friend class Engine;
 
  private:
