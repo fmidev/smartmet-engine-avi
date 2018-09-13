@@ -1666,7 +1666,7 @@ string Engine::buildStationQueryCoordinateExpressions(const Columns& columns) co
     for (auto const& column : columns)
       if (column.itsCoordinateExpression)
         selectExpressions << ","
-                          << column.itsCoordinateExpression(column.itsTableColumnName,
+                          << column.itsCoordinateExpression(column.getTableColumnName(),
                                                             column.itsName);
 
     return selectExpressions.str();
@@ -1714,7 +1714,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
     columns.push_back(column);
 
     selectClause =
-        string("SELECT ") + queryColumn->itsTableColumnName + " AS " + queryColumn->itsName;
+        string("SELECT ") + queryColumn->getTableColumnName() + " AS " + queryColumn->itsName;
 
     // distance is automatically selected to apply max # of nearest stations
 
@@ -1756,7 +1756,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
           //
           selectClause +=
               (string(selectClause.empty() ? "SELECT " : ",") +
-               queryColumn->itsExpression(queryColumn->itsTableColumnName, queryColumn->itsName));
+               queryColumn->itsExpression(queryColumn->getTableColumnName(), queryColumn->itsName));
         }
         else if (queryColumn->itsCoordinateExpression)
         {
@@ -1769,13 +1769,13 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
         else
         {
           selectClause +=
-              (string(selectClause.empty() ? "SELECT " : ",") + queryColumn->itsTableColumnName);
+              (string(selectClause.empty() ? "SELECT " : ",") + queryColumn->getTableColumnName());
 
           if (queryColumn->itsType == DateTime)
             selectClause += string(" AT TIME ZONE 'UTC'");
 
           if ((queryColumn->itsType == DateTime) ||
-              (queryColumn->itsName != queryColumn->itsTableColumnName))
+              (queryColumn->itsName != queryColumn->getTableColumnName()))
             selectClause += (string(" AS ") + queryColumn->itsName);
         }
 
@@ -1869,7 +1869,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
           column.itsSelection = Automatic;
           table.itsSelectedColumns.push_back(column);
 
-          selectClause = queryTable.itsAlias + "." + queryColumn->itsTableColumnName + " AS " +
+          selectClause = queryTable.itsAlias + "." + queryColumn->getTableColumnName() + " AS " +
                          queryColumn->itsName;
         }
         else if ((!routeQuery) && (queryTable.itsName == stationTableName))
@@ -1900,7 +1900,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
           if (find(paramList.begin(), paramList.end(), stationIcaoQueryColumn) != paramList.end())
           {
             selectClause += (string(selectClause.empty() ? "" : ",") + queryTable.itsAlias + "." +
-                             queryColumn->itsTableColumnName + " AS " + queryColumn->itsName);
+                             queryColumn->getTableColumnName() + " AS " + queryColumn->itsName);
             icaoSelected = true;
           }
         }
@@ -1932,9 +1932,9 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
 
           if (queryColumn->itsExpression)
           {
-            selectClause +=
-                (string(selectClause.empty() ? "" : ",") +
-                 queryColumn->itsExpression(queryColumn->itsTableColumnName, queryColumn->itsName));
+            selectClause += (string(selectClause.empty() ? "" : ",") +
+                             queryColumn->itsExpression(queryColumn->getTableColumnName(),
+                                                        queryColumn->itsName));
           }
           else if (queryColumn->itsCoordinateExpression)
           {
@@ -1946,13 +1946,13 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
           else
           {
             selectClause += (string(selectClause.empty() ? "" : ",") + queryTable.itsAlias + "." +
-                             queryColumn->itsTableColumnName);
+                             queryColumn->getTableColumnName());
 
             if (queryColumn->itsType == DateTime)
               selectClause += string(" AT TIME ZONE 'UTC'");
 
             if ((queryColumn->itsType == DateTime) ||
-                (queryColumn->itsName != queryColumn->itsTableColumnName))
+                (queryColumn->itsName != queryColumn->getTableColumnName()))
               selectClause += (string(" AS ") + queryColumn->itsName);
           }
 
@@ -2003,7 +2003,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
       column.itsSelection = Automatic;
       table.itsSelectedColumns.push_back(column);
 
-      selectClause += (string(",") + messageTableAlias + "." + queryColumn->itsTableColumnName +
+      selectClause += (string(",") + messageTableAlias + "." + queryColumn->getTableColumnName() +
                        " AS " + queryColumn->itsName);
     }
 
