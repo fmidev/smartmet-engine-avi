@@ -1,7 +1,7 @@
 #pragma once
 
-#include <list>
 #include <spine/Exception.h>
+#include <list>
 #include <string>
 
 namespace SmartMet
