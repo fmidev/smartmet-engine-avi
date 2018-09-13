@@ -1629,7 +1629,7 @@ const Column* Engine::getQueryColumn(const ColumnTable tableColumns,
             if (column.itsSelection == Automatic)
             {
               column.itsSelection = AutomaticRequested;
-              column.itsNumber = columnNumber;
+              column.setNumber(columnNumber);
             }
 
             duplicate = true;
@@ -1780,7 +1780,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
         }
 
         columns.push_back(*queryColumn);
-        columns.back().itsNumber = columnNumber;
+        columns.back().setNumber(columnNumber);
       }
 
       columnNumber++;
@@ -1974,7 +1974,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
           }
 
           table.itsSelectedColumns.push_back(*queryColumn);
-          table.itsSelectedColumns.back().itsNumber = columnNumber;
+          table.itsSelectedColumns.back().setNumber(columnNumber);
 
           break;
         }

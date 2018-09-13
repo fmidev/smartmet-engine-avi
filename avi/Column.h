@@ -59,6 +59,7 @@ struct Column
   {
     return (first.itsNumber < second.itsNumber);
   }
+  void setNumber(const int &number) { itsNumber = number; }
 
   ColumnType itsType;
   std::string itsName;
