@@ -1,9 +1,9 @@
 #pragma once
 
 #include "ColumnList.h"
-#include <string>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <string>
 
 namespace SmartMet
 {
@@ -50,50 +50,51 @@ std::string nullExpression(const Column* queryColumn)
 
 // Derived column expressions
 
-const char* dfLongitude = "ST_X(geom)";
-const char* dfLatitude = "ST_Y(geom)";
-const char* dfLonLat = "('' || ST_X(geom) || ',' || ST_Y(geom))";
-const char* dfLatLon = "('' || ST_Y(geom) || ',' || ST_X(geom))";
-const char* dfDistance =
+const char* const dfLongitude = "ST_X(geom)";
+const char* const dfLatitude = "ST_Y(geom)";
+const char* const dfLonLat = "('' || ST_X(geom) || ',' || ST_Y(geom))";
+const char* const dfLatLon = "('' || ST_Y(geom) || ',' || ST_X(geom))";
+const char* const dfDistance =
     "ST_Distance(geom::geography,ST_SetSRID(coordinates.coordinate,4326)::geography) / 1000";
-const char* dfBearing = "DEGREES(ST_Azimuth(geom,ST_SetSRID(coordinates.coordinate,4326)))";
+const char* const dfBearing = "DEGREES(ST_Azimuth(geom,ST_SetSRID(coordinates.coordinate,4326)))";
 
 // Some table/column etc. names/joins
 
-const char* stationTableName = "avidb_stations";
-const char* stationTableAlias = "st";
-const char* stationTableJoin = "st.station_id = me.station_id";
-const char* stationIcaoTableColumn = "icao_code";
-const char* stationIcaoQueryColumn = "icao";
-const char* stationDistanceQueryColumn = "distance";
-const char* stationBearingQueryColumn = "bearing";
-const char* stationCoordinateColumn = "coordinate";
-const char* stationLonLatQueryColumn = "lonlat";
-const char* stationLatLonQueryColumn = "latlon";
-const char* messageIdTableColumn = "message_id";
-const char* messageTableColumn = messageQueryColumn;
-const char* rejectedMessageIcaoTableColumn = "icao_code";
-const char* recordSetTableName = "record_set";
-const char* messageTableName = "avidb_messages";
-const char* messageTableAlias = "me";
-const char* messageTypeTableName = "avidb_message_types";
-const char* messageTypeTableAlias = "mt";
-const char* messageTypeTableJoin = "me.type_id = mt.type_id";
-const char* messageRouteTableName = "avidb_message_routes";
-const char* messageRouteTableAlias = "mr";
-const char* messageRouteTableJoin = "me.route_id = mr.route_id";
-const char* rejectedMessageTableName = "avidb_rejected_messages";
-const char* rejectedMessageTableAlias = messageTableAlias;
-const char* rejectedMessageTypeTableJoin = messageTypeTableJoin;
-const char* rejectedMessageRouteTableJoin = messageRouteTableJoin;
-const char* latestMessagesTableJoin = "me.message_id IN (SELECT message_id FROM latest_messages)";
-const char* requestStationsTableAlias = "rs";
-const char* requestStationsPositionColumn = "position";
-const char* requestStationsTableJoin = "rs.station_id = me.station_id";
-const char* messageValidityTableName = "message_validity";
-const char* messageValidityTableAlias = "mv";
-const char* messageValidityTableJoin = "mv.type = mt.type";
-const char* messageTimeRangeLatestMessagesTableName = "messagetimerangelatest_messages";
+const char* const stationTableName = "avidb_stations";
+const char* const stationTableAlias = "st";
+const char* const stationTableJoin = "st.station_id = me.station_id";
+const char* const stationIcaoTableColumn = "icao_code";
+const char* const stationIcaoQueryColumn = "icao";
+const char* const stationDistanceQueryColumn = "distance";
+const char* const stationBearingQueryColumn = "bearing";
+const char* const stationCoordinateColumn = "coordinate";
+const char* const stationLonLatQueryColumn = "lonlat";
+const char* const stationLatLonQueryColumn = "latlon";
+const char* const messageIdTableColumn = "message_id";
+const char* const messageTableColumn = messageQueryColumn;
+const char* const rejectedMessageIcaoTableColumn = "icao_code";
+const char* const recordSetTableName = "record_set";
+const char* const messageTableName = "avidb_messages";
+const char* const messageTableAlias = "me";
+const char* const messageTypeTableName = "avidb_message_types";
+const char* const messageTypeTableAlias = "mt";
+const char* const messageTypeTableJoin = "me.type_id = mt.type_id";
+const char* const messageRouteTableName = "avidb_message_routes";
+const char* const messageRouteTableAlias = "mr";
+const char* const messageRouteTableJoin = "me.route_id = mr.route_id";
+const char* const rejectedMessageTableName = "avidb_rejected_messages";
+const char* const rejectedMessageTableAlias = messageTableAlias;
+const char* const rejectedMessageTypeTableJoin = messageTypeTableJoin;
+const char* const rejectedMessageRouteTableJoin = messageRouteTableJoin;
+const char* const latestMessagesTableJoin =
+    "me.message_id IN (SELECT message_id FROM latest_messages)";
+const char* const requestStationsTableAlias = "rs";
+const char* const requestStationsPositionColumn = "position";
+const char* const requestStationsTableJoin = "rs.station_id = me.station_id";
+const char* const messageValidityTableName = "message_validity";
+const char* const messageValidityTableAlias = "mv";
+const char* const messageValidityTableJoin = "mv.type = mt.type";
+const char* const messageTimeRangeLatestMessagesTableName = "messagetimerangelatest_messages";
 
 // Table/query column mapping
 
