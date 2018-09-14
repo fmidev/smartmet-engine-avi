@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Column.h"
+#include "ColumnList.h"
 #include "Config.h"
 #include "QueryData.h"
 #include "QueryOptions.h"
@@ -62,16 +62,16 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   const Column *getMessageTableTimeColumn(const std::string &timeColumn) const;
 
   const Column *getQueryColumn(const ColumnTable tableColumns,
-                               Columns &columnList,
+                               ColumnList &columnList,
                                const std::string &theQueryColumnName,
                                bool &duplicate,
                                int columnNumber = -1) const;
 
-  std::string buildStationQueryCoordinateExpressions(const Columns &columns) const;
-  Columns buildStationQuerySelectClause(const StringList &paramList,
-                                        bool selectStationListOnly,
-                                        bool autoSelectDistance,
-                                        std::string &selectClause) const;
+  std::string buildStationQueryCoordinateExpressions(const ColumnList &columns) const;
+  ColumnList buildStationQuerySelectClause(const StringList &paramList,
+                                           bool selectStationListOnly,
+                                           bool autoSelectDistance,
+                                           std::string &selectClause) const;
   TableMap buildMessageQuerySelectClause(QueryTable *queryTables,
                                          const StringList &messageTypeList,
                                          const StringList &paramList,

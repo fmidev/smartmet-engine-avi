@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(table_membervariable_type, *boost::unit_test::depends_on("t
 {
   bool boolVariable = true;
   std::string stringVariable;
-  std::list<Column> columnListVariable;
+  ColumnList columnListVariable;
 
   Table table;
   BOOST_CHECK(typeid(table.itsAlias) == typeid(stringVariable));
@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(table_membervariable_initial_value,
 {
   bool boolVariable = true;
   std::string stringVariable;
-  std::list<Column> columnListVariable;
+  ColumnList columnListVariable;
 
   Table table;
   BOOST_CHECK_EQUAL(table.itsAlias, stringVariable);

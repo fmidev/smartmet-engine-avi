@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Column.h"
+#include "ColumnList.h"
 #include "LocationOptions.h"
 
 #include <spine/TimeSeries.h>
@@ -33,7 +33,7 @@ struct QueryData
     return itsValues;
   }
 
-  Columns itsColumns;
+  ColumnList itsColumns;
   QueryValues itsValues;
   bool itsCheckDuplicateMessages;  // Always false; no check for duplicates for rejected messages
 };
@@ -74,7 +74,7 @@ struct StationQueryData
     return stationQueryValues.first->second;
   }
 
-  Columns itsColumns;
+  ColumnList itsColumns;
   StationQueryValues itsValues;
   StationIdList itsStationIds;     // Station id's in the order returned by database query
   bool itsCheckDuplicateMessages;  // If set when querying messages, only the 1'st copy of duplicate

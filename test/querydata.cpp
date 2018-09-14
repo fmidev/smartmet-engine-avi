@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(querydata_constructor_default)
 BOOST_AUTO_TEST_CASE(querydata_member_itsColumns,
                      *boost::unit_test::depends_on("querydata_constructor_default"))
 {
-  std::list<Column> columnsVariable;
+  ColumnList columnsVariable;
 
   QueryData queryData;
   BOOST_CHECK(typeid(queryData.itsColumns) == typeid(columnsVariable));

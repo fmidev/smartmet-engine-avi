@@ -1,7 +1,5 @@
 #pragma once
 
-#include <spine/Exception.h>
-#include <list>
 #include <string>
 
 namespace SmartMet
@@ -34,6 +32,8 @@ typedef std::string (*ColumnExpression)(const std::string &tableColumnName,
 
 struct Column
 {
+  using Number = int;
+
   Column(ColumnType theType,
          const std::string &theTableColumnName,
          const std::string &theQueryColumnName = "",
@@ -55,16 +55,14 @@ struct Column
     return itsName == theQueryColumnName;
   }
   bool operator==(const Column &theOtherColumn) const { return itsName == theOtherColumn.itsName; }
-  static bool columnNumberSort(const Column &first, const Column &second)
-  {
-    return (first.itsNumber < second.itsNumber);
-  }
+  bool operator<(const Column &other) const { return itsNumber < other.getNumber(); }
   std::string getExpression() const { return itsExpression(itsTableColumnName, itsName); }
   std::string getCoordinateExpression() const
   {
     return itsCoordinateExpression(itsTableColumnName, itsName);
   }
-  void setNumber(const int &number) { itsNumber = number; }
+  const Number &getNumber() const { return itsNumber; }
+  void setNumber(const Number &number) { itsNumber = number; }
   void setSelection(const ColumnSelection &selection) { itsSelection = selection; }
 
   ColumnType itsType;
@@ -79,34 +77,16 @@ struct Column
   std::string itsTableColumnName;
   ColumnExpression itsExpression;
   ColumnExpression itsCoordinateExpression;
-  int itsNumber;
+  Number itsNumber;
   ColumnSelection itsSelection;
 };
 
-typedef std::list<Column> Columns;
+struct ColumnNumberGreaterComparator
+{
+  bool operator()(const Column &a, const Column &b) { return a.getNumber() > b.getNumber(); }
+};
+
 typedef Column *ColumnTable;
-
-namespace
-{
-// ----------------------------------------------------------------------
-/*!
- * \brief Sort columns by their position in the 'param=' list of the request
- */
-// ----------------------------------------------------------------------
-
-void sortColumnList(Columns &columns)
-{
-  try
-  {
-    columns.sort(columns.front().columnNumberSort);
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-};  // namespace
-
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet

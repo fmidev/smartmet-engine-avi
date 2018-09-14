@@ -1605,7 +1605,7 @@ void Engine::shutdown()
 // ----------------------------------------------------------------------
 
 const Column* Engine::getQueryColumn(const ColumnTable tableColumns,
-                                     Columns& columns,
+                                     ColumnList& columns,
                                      const string& theQueryColumnName,
                                      bool& duplicate,
                                      int columnNumber) const
@@ -1654,7 +1654,7 @@ const Column* Engine::getQueryColumn(const ColumnTable tableColumns,
  */
 // ----------------------------------------------------------------------
 
-string Engine::buildStationQueryCoordinateExpressions(const Columns& columns) const
+string Engine::buildStationQueryCoordinateExpressions(const ColumnList& columns) const
 {
   try
   {
@@ -1681,10 +1681,10 @@ string Engine::buildStationQueryCoordinateExpressions(const Columns& columns) co
  */
 // ----------------------------------------------------------------------
 
-Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
-                                              bool selectStationListOnly,
-                                              bool autoSelectDistance,
-                                              string& selectClause) const
+ColumnList Engine::buildStationQuerySelectClause(const StringList& paramList,
+                                                 bool selectStationListOnly,
+                                                 bool autoSelectDistance,
+                                                 string& selectClause) const
 {
   try
   {
@@ -1693,7 +1693,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
 
     // Selected columns
 
-    Columns columns;
+    ColumnList columns;
     bool duplicate;
 
     selectClause.clear();
@@ -2490,7 +2490,7 @@ void Engine::validateParameters(const StringList& paramList,
     if (paramList.empty())
       throw SmartMet::Spine::Exception(BCP, "The 'param'option is missing or empty!");
 
-    Columns columns;
+    ColumnList columns;
     bool paramKnown, duplicate;
 
     for (auto const& param : paramList)
@@ -2980,9 +2980,9 @@ StationQueryData Engine::queryStations(const Connection& connection,
       //
       if (autoSelectDistance)
       {
-        sortColumnList(stationQueryData.itsColumns);
+        stationQueryData.itsColumns.ascendingNumberOrder();
 
-        for (Columns::iterator it = stationQueryData.itsColumns.begin();
+        for (ColumnList::iterator it = stationQueryData.itsColumns.begin();
              (it != stationQueryData.itsColumns.end());)
         {
           if (it->getSelection() == Automatic)
@@ -3091,7 +3091,7 @@ const Column* Engine::getMessageTableTimeColumn(const string& timeColumn) const
 {
   try
   {
-    Columns columns;
+    ColumnList columns;
     bool duplicate;
 
     auto queryColumn = getQueryColumn(messageQueryColumns, columns, timeColumn, duplicate);
@@ -3175,7 +3175,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
         stationQueryData.itsColumns.push_back(column);
     }
 
-    sortColumnList(stationQueryData.itsColumns);
+    stationQueryData.itsColumns.ascendingNumberOrder();
 
     string withClause;
 
@@ -3626,7 +3626,7 @@ QueryData Engine::queryRejectedMessages(const QueryOptions& queryOptions) const
         queryData.itsColumns.push_back(column);
     }
 
-    sortColumnList(queryData.itsColumns);
+    queryData.itsColumns.sort();
 
     // Max row count for the query; if exceeded, an error is thrown; if <= 0, unlimited
 

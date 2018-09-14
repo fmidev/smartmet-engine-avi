@@ -44,22 +44,19 @@ BOOST_AUTO_TEST_CASE(column_public_operator_equalto_column,
   BOOST_CHECK(not(column == otherColumn2));
 }
 
-BOOST_AUTO_TEST_CASE(column_public_member_method_columnNumberSort,
+BOOST_AUTO_TEST_CASE(column_public_less_operator,
                      *boost::unit_test::depends_on("column_constructor"))
 {
-  const Column column(columnTypeNone, tableColumnNameEmpty);
-  const Column otherColumn(columnTypeInteger, tableColumnNameEmpty);
-  const Column otherColumn2(columnTypeInteger, tableColumnNameNotEmpty);
+  Column column(columnTypeNone, tableColumnNameEmpty);
+  BOOST_CHECK((column < column) != boolVariable);
 
-  BOOST_CHECK(typeid(column.columnNumberSort(column, column)) == typeid(boolVariable));
-  BOOST_CHECK(not column.columnNumberSort(column, column));
-  BOOST_CHECK(not column.columnNumberSort(column, otherColumn));
-  BOOST_CHECK(not column.columnNumberSort(column, otherColumn2));
+  // Default number is -1
+  Column otherColumn(columnTypeInteger, tableColumnNameEmpty);
+  otherColumn.setNumber(-1);
+  BOOST_CHECK(not(column < otherColumn));
 
-  BOOST_CHECK(typeid(Column::columnNumberSort(column, column)) == typeid(boolVariable));
-  BOOST_CHECK(not Column::columnNumberSort(column, column));
-  BOOST_CHECK(not Column::columnNumberSort(column, otherColumn));
-  BOOST_CHECK(not Column::columnNumberSort(column, otherColumn2));
+  otherColumn.setNumber(0);
+  BOOST_CHECK(column < otherColumn);
 }
 
 BOOST_AUTO_TEST_CASE(column_public_member_variable_itsType,
@@ -140,6 +137,45 @@ BOOST_AUTO_TEST_CASE(column_constructor_with_expression,
                        tableColumnNameEmpty,
                        &catenateExpression,
                        &catenateExpression);
+}
+
+BOOST_AUTO_TEST_CASE(columns_constructor, *boost::unit_test::depends_on("column_constructor"))
+{
+  ColumnList columns;
+  BOOST_CHECK_EQUAL(columns.size(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(columns_sort_by_number, *boost::unit_test::depends_on("columns_constructor"))
+{
+  Column column1(columnTypeNone, tableColumnNameEmpty);
+  column1.setNumber(1);
+  Column column2(columnTypeNone, tableColumnNameEmpty);
+  column2.setNumber(2);
+  Column column3(columnTypeNone, tableColumnNameEmpty);
+  column3.setNumber(3);
+
+  ColumnList columns;
+  columns.push_back(column2);
+  columns.push_back(column1);
+  columns.push_back(column3);
+
+  BOOST_CHECK_EQUAL(columns.size(), 3);
+  BOOST_CHECK_EQUAL(columns.front().getNumber(), 2);
+  BOOST_CHECK_EQUAL(columns.back().getNumber(), 3);
+
+  columns.sort();
+  BOOST_CHECK_EQUAL(columns.front().getNumber(), 1);
+  BOOST_CHECK_EQUAL(columns.back().getNumber(), 3);
+
+  columns.descendingNumberOrder();
+  BOOST_CHECK_EQUAL(columns.front().getNumber(), 3);
+  BOOST_CHECK_EQUAL(columns.back().getNumber(), 1);
+
+  columns.ascendingNumberOrder();
+  BOOST_CHECK_EQUAL(columns.front().getNumber(), 1);
+  BOOST_CHECK_EQUAL(columns.back().getNumber(), 3);
+
+  BOOST_CHECK_EQUAL(columns.size(), 3);
 }
 }  // namespace Avi
 }  // namespace Engine

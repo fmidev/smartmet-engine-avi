@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Column.h"
+#include "ColumnList.h"
 
 namespace SmartMet
 {
@@ -25,7 +25,7 @@ struct Table
   }
 
   std::string itsAlias;
-  Columns itsSelectedColumns;
+  ColumnList itsSelectedColumns;
   std::string itsJoin;
 
   // If set, generating only join condition (not FROM clause) for the table.

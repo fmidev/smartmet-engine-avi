@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(stationquerydata_constructor_default_not_checkDuplicateMess
 BOOST_AUTO_TEST_CASE(stationquerydata_itsColumns,
                      *boost::unit_test::depends_on("stationquerydata_constructor_default"))
 {
-  std::list<Column> columnsVariable;
+  ColumnList columnsVariable;
   StationQueryData stationQueryData;
   BOOST_CHECK(typeid(stationQueryData.itsColumns) == typeid(columnsVariable));
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.size(), 0);
