@@ -20,6 +20,7 @@ typedef enum
   DateTime,
   None
 } ColumnType;
+
 typedef enum
 {
   Requested,
@@ -27,6 +28,7 @@ typedef enum
   AutomaticRequested,
   AutomaticOnly
 } ColumnSelection;
+
 typedef std::string (*ColumnExpression)(const std::string &tableColumnName,
                                         const std::string &queryColumnName);
 
@@ -38,40 +40,27 @@ struct Column
          const std::string &theTableColumnName,
          const std::string &theQueryColumnName = "",
          ColumnExpression theExpression = nullptr,
-         ColumnExpression theCoordinateExpression = nullptr)
-      : itsType(theType),
-        itsName(theQueryColumnName.empty() ? theTableColumnName : theQueryColumnName),
-        itsTableColumnName(theTableColumnName),
-        itsExpression(theExpression),
-        itsCoordinateExpression(theCoordinateExpression),
-        itsNumber(-1),
-        itsSelection(Requested)
-  {
-  }
+         ColumnExpression theCoordinateExpression = nullptr);
   Column() = delete;
 
-  bool operator==(const std::string &theQueryColumnName) const
-  {
-    return itsName == theQueryColumnName;
-  }
-  bool operator==(const Column &theOtherColumn) const { return itsName == theOtherColumn.itsName; }
-  bool operator<(const Column &other) const { return itsNumber < other.getNumber(); }
-  std::string getExpression() const { return itsExpression(itsTableColumnName, itsName); }
-  std::string getCoordinateExpression() const
-  {
-    return itsCoordinateExpression(itsTableColumnName, itsName);
-  }
-  const Number &getNumber() const { return itsNumber; }
-  void setNumber(const Number &number) { itsNumber = number; }
-  void setSelection(const ColumnSelection &selection) { itsSelection = selection; }
+  bool operator==(const std::string &theQueryColumnName) const;
+  bool operator==(const Column &theOtherColumn) const;
+  bool operator<(const Column &other) const;
+
+  std::string getCoordinateExpression() const;
+  std::string getExpression() const;
+  const Number &getNumber() const;
+  const ColumnSelection &getSelection() const;
+  const std::string &getTableColumnName() const;
+
+  void setNumber(const Number &number);
+  void setSelection(const ColumnSelection &selection);
+
+  bool hasExpression() const;
+  bool hasCoordinateExpression() const;
 
   ColumnType itsType;
   std::string itsName;
-
-  const std::string &getTableColumnName() const { return itsTableColumnName; }
-  bool hasExpression() const { return (itsExpression != nullptr); }
-  bool hasCoordinateExpression() const { return (itsCoordinateExpression != nullptr); }
-  const ColumnSelection &getSelection() const { return itsSelection; }
 
  private:
   std::string itsTableColumnName;
