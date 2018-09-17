@@ -2,7 +2,7 @@ get_filename_component(ENGINE_CMAKE_DIR ${CMAKE_BINARY_DIR} DIRECTORY)
 get_filename_component(ENGINE_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR} DIRECTORY)
 
 
-find_package(Boost QUIET COMPONENTS date_time thread filesystem iostreams unit_test_framework REQUIRED)
+find_package(Boost QUIET COMPONENTS date_time thread filesystem iostreams REQUIRED)
 find_package (Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 QUIET)
