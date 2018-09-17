@@ -45,7 +45,7 @@ std::string nullExpression(const Column* queryColumn)
   // NULL AS distance
   // NULL AS bearing
 
-  return std::string("NULL AS ") + queryColumn->itsName;
+  return std::string("NULL AS ") + queryColumn->getName();
 }
 
 // Derived column expressions

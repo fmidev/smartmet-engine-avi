@@ -59,41 +59,27 @@ BOOST_AUTO_TEST_CASE(column_public_less_operator,
   BOOST_CHECK(column < otherColumn);
 }
 
-BOOST_AUTO_TEST_CASE(column_public_member_variable_itsType,
+BOOST_AUTO_TEST_CASE(column_public_member_variable_getType,
                      *boost::unit_test::depends_on("column_constructor"))
 {
   const Column column(columnTypeNone, tableColumnNameEmpty);
   const Column otherColumn(columnTypeInteger, tableColumnNameEmpty);
-  Column nonConstColumn(columnTypeNone, tableColumnNameEmpty);
 
-  BOOST_CHECK_EQUAL(column.itsType, columnTypeNone);
-  BOOST_CHECK(column.itsType != columnTypeInteger);
-  BOOST_CHECK_EQUAL(otherColumn.itsType, columnTypeInteger);
-
-  // Change the value
-  BOOST_CHECK(nonConstColumn.itsType == columnTypeNone);
-  nonConstColumn.itsType = columnTypeInteger;
-  BOOST_CHECK(nonConstColumn.itsType != columnTypeNone);
-  BOOST_CHECK(nonConstColumn.itsType == columnTypeInteger);
+  BOOST_CHECK_EQUAL(column.getType(), columnTypeNone);
+  BOOST_CHECK(column.getType() != columnTypeInteger);
+  BOOST_CHECK_EQUAL(otherColumn.getType(), columnTypeInteger);
 }
 
-BOOST_AUTO_TEST_CASE(column_public_member_variable_itsName,
+BOOST_AUTO_TEST_CASE(column_public_member_variable_getName,
                      *boost::unit_test::depends_on("column_constructor"))
 {
   const Column column(columnTypeNone, tableColumnNameEmpty);
   const Column otherColumn2(columnTypeInteger, tableColumnNameNotEmpty);
-  Column nonConstColumn(columnTypeNone, tableColumnNameEmpty);
 
-  BOOST_CHECK_EQUAL(column.itsName, tableColumnNameEmpty);
-  BOOST_CHECK(column.itsName != tableColumnNameNotEmpty);
-  BOOST_CHECK_EQUAL(otherColumn2.itsName, tableColumnNameNotEmpty);
-  BOOST_CHECK(otherColumn2.itsName != tableColumnNameEmpty);
-
-  // Change the value
-  BOOST_CHECK(nonConstColumn.itsName == tableColumnNameEmpty);
-  nonConstColumn.itsName = tableColumnNameNotEmpty;
-  BOOST_CHECK(nonConstColumn.itsName != tableColumnNameEmpty);
-  BOOST_CHECK(nonConstColumn.itsName == tableColumnNameNotEmpty);
+  BOOST_CHECK_EQUAL(column.getName(), tableColumnNameEmpty);
+  BOOST_CHECK(column.getName() != tableColumnNameNotEmpty);
+  BOOST_CHECK_EQUAL(otherColumn2.getName(), tableColumnNameNotEmpty);
+  BOOST_CHECK(otherColumn2.getName() != tableColumnNameEmpty);
 }
 
 BOOST_AUTO_TEST_CASE(column_member_method_getTableColumnName,

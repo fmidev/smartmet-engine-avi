@@ -1619,12 +1619,12 @@ const Column* Engine::getQueryColumn(const ColumnTable tableColumns,
 
     duplicate = false;
 
-    for (const Column* column = tableColumns; (!(column->itsName.empty())); column++)
+    for (const Column* column = tableColumns; (!(column->getName().empty())); column++)
     {
-      if (column->itsName == theQueryColumnName)
+      if (column->getName() == theQueryColumnName)
       {
         for (auto& column : columns)
-          if (column.itsName == theQueryColumnName)
+          if (column.getName() == theQueryColumnName)
           {
             if (column.getSelection() == Automatic)
             {
@@ -1712,7 +1712,7 @@ ColumnList Engine::buildStationQuerySelectClause(const StringList& paramList,
     columns.push_back(column);
 
     selectClause =
-        string("SELECT ") + queryColumn->getTableColumnName() + " AS " + queryColumn->itsName;
+        string("SELECT ") + queryColumn->getTableColumnName() + " AS " + queryColumn->getName();
 
     // distance is automatically selected to apply max # of nearest stations
 
@@ -1768,12 +1768,12 @@ ColumnList Engine::buildStationQuerySelectClause(const StringList& paramList,
           selectClause +=
               (string(selectClause.empty() ? "SELECT " : ",") + queryColumn->getTableColumnName());
 
-          if (queryColumn->itsType == DateTime)
+          if (queryColumn->getType() == DateTime)
             selectClause += string(" AT TIME ZONE 'UTC'");
 
-          if ((queryColumn->itsType == DateTime) ||
-              (queryColumn->itsName != queryColumn->getTableColumnName()))
-            selectClause += (string(" AS ") + queryColumn->itsName);
+          if ((queryColumn->getType() == DateTime) ||
+              (queryColumn->getName() != queryColumn->getTableColumnName()))
+            selectClause += (string(" AS ") + queryColumn->getName());
         }
 
         columns.push_back(*queryColumn);
@@ -1867,7 +1867,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
           table.itsSelectedColumns.push_back(column);
 
           selectClause = queryTable.itsAlias + "." + queryColumn->getTableColumnName() + " AS " +
-                         queryColumn->itsName;
+                         queryColumn->getName();
         }
         else if ((!routeQuery) && (queryTable.itsName == stationTableName))
         {
@@ -1897,7 +1897,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
           if (find(paramList.begin(), paramList.end(), stationIcaoQueryColumn) != paramList.end())
           {
             selectClause += (string(selectClause.empty() ? "" : ",") + queryTable.itsAlias + "." +
-                             queryColumn->getTableColumnName() + " AS " + queryColumn->itsName);
+                             queryColumn->getTableColumnName() + " AS " + queryColumn->getName());
             icaoSelected = true;
           }
         }
@@ -1944,12 +1944,12 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
             selectClause += (string(selectClause.empty() ? "" : ",") + queryTable.itsAlias + "." +
                              queryColumn->getTableColumnName());
 
-            if (queryColumn->itsType == DateTime)
+            if (queryColumn->getType() == DateTime)
               selectClause += string(" AT TIME ZONE 'UTC'");
 
-            if ((queryColumn->itsType == DateTime) ||
-                (queryColumn->itsName != queryColumn->getTableColumnName()))
-              selectClause += (string(" AS ") + queryColumn->itsName);
+            if ((queryColumn->getType() == DateTime) ||
+                (queryColumn->getName() != queryColumn->getTableColumnName()))
+              selectClause += (string(" AS ") + queryColumn->getName());
           }
 
           if (queryTable.itsName != stationTableName)
@@ -1958,7 +1958,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
             {
               distinct = false;
 
-              if (distinctMessages && (queryColumn->itsName == messageQueryColumn))
+              if (distinctMessages && (queryColumn->getName() == messageQueryColumn))
                 // Clear flag forcing automatic 'message' column selection
                 //
                 distinctMessages = false;
@@ -2000,7 +2000,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
       table.itsSelectedColumns.push_back(column);
 
       selectClause += (string(",") + messageTableAlias + "." + queryColumn->getTableColumnName() +
-                       " AS " + queryColumn->itsName);
+                       " AS " + queryColumn->getName());
     }
 
     // SELECT [DISTINCT] ...
@@ -2117,7 +2117,7 @@ void Engine::executeQuery(const Connection& connection,
           //
           continue;
 
-        if (column.itsType == Integer)
+        if (column.getType() == Integer)
         {
           // Currently can't handle NULLs properly, but by setting kFloatMissing for NULL,
           // TableFeeder (used by avi plugin) produces 'missing' (by default, 'nan') column value.
@@ -2126,12 +2126,12 @@ void Engine::executeQuery(const Connection& connection,
           // (in practice through, only stationid or messageid could have value 32700).
           //
           SmartMet::Spine::TimeSeries::Value return_value = SmartMet::Spine::TimeSeries::None();
-          if (!row[column.itsName].is_null())
-            return_value = row[column.itsName].as<int>();
+          if (!row[column.getName()].is_null())
+            return_value = row[column.getName()].as<int>();
 
-          queryValues[column.itsName].push_back(return_value);
+          queryValues[column.getName()].push_back(return_value);
         }
-        else if (column.itsType == Double)
+        else if (column.getType() == Double)
         {
           // Note: try/catch; With station query distance and bearing are available only when
           // querying
@@ -2141,17 +2141,17 @@ void Engine::executeQuery(const Connection& connection,
           SmartMet::Spine::TimeSeries::Value return_value = SmartMet::Spine::TimeSeries::None();
           try
           {
-            if (!row[column.itsName].is_null())
-              return_value = row[column.itsName].as<double>();
+            if (!row[column.getName()].is_null())
+              return_value = row[column.getName()].as<double>();
           }
           catch (...)
           {
             return_value = SmartMet::Spine::TimeSeries::None();
           }
 
-          queryValues[column.itsName].push_back(return_value);
+          queryValues[column.getName()].push_back(return_value);
         }
-        else if (column.itsType == String)
+        else if (column.getType() == String)
         {
           string strValue;
 
@@ -2159,7 +2159,7 @@ void Engine::executeQuery(const Connection& connection,
 
           try
           {
-            isNull = row[column.itsName].is_null();
+            isNull = row[column.getName()].is_null();
           }
           catch (...)
           {
@@ -2167,27 +2167,27 @@ void Engine::executeQuery(const Connection& connection,
           }
 
           if (isNull)
-            queryValues[column.itsName].push_back(SmartMet::Spine::TimeSeries::None());
+            queryValues[column.getName()].push_back(SmartMet::Spine::TimeSeries::None());
           else
-            queryValues[column.itsName].push_back(
-                boost::algorithm::trim_copy(row[column.itsName].as<string>()));
+            queryValues[column.getName()].push_back(
+                boost::algorithm::trim_copy(row[column.getName()].as<string>()));
         }
-        else if ((column.itsType == TS_LonLat) || (column.itsType == TS_LatLon))
+        else if ((column.getType() == TS_LonLat) || (column.getType() == TS_LatLon))
         {
           // 'latlon' and 'lonlat' are selected as comma separated strings. Return them as
           // SmartMet::Spine::TimeSeries::LonLat for formatted
           // output with TableFeeder
           //
           SmartMet::Spine::TimeSeries::LonLat lonlat(0, 0);
-          string llStr(boost::algorithm::trim_copy(row[column.itsName].as<string>()));
+          string llStr(boost::algorithm::trim_copy(row[column.getName()].as<string>()));
           vector<string> flds;
           boost::split(flds, llStr, boost::is_any_of(","));
           bool lonlatValid = false;
 
           if (flds.size() == 2)
           {
-            string& lon = ((column.itsName == stationLonLatQueryColumn) ? flds[0] : flds[1]);
-            string& lat = ((column.itsName == stationLonLatQueryColumn) ? flds[1] : flds[0]);
+            string& lon = ((column.getName() == stationLonLatQueryColumn) ? flds[0] : flds[1]);
+            string& lat = ((column.getName() == stationLonLatQueryColumn) ? flds[1] : flds[0]);
 
             boost::algorithm::trim(lon);
             boost::algorithm::trim(lat);
@@ -2205,18 +2205,19 @@ void Engine::executeQuery(const Connection& connection,
 
           if (!lonlatValid)
             throw SmartMet::Spine::Exception(
-                BCP, string("Query returned invalid ") + column.itsName + " value '" + llStr + "'");
+                BCP,
+                string("Query returned invalid ") + column.getName() + " value '" + llStr + "'");
 
-          queryValues[column.itsName].push_back(lonlat);
+          queryValues[column.getName()].push_back(lonlat);
         }
         else
         {
           boost::local_time::local_date_time utcTime(
-              row[column.itsName].is_null()
+              row[column.getName()].is_null()
                   ? boost::posix_time::ptime()
-                  : boost::posix_time::time_from_string(row[column.itsName].as<string>()),
+                  : boost::posix_time::time_from_string(row[column.getName()].as<string>()),
               tzUTC);
-          queryValues[column.itsName].push_back(utcTime);
+          queryValues[column.getName()].push_back(utcTime);
         }
       }
     }
@@ -3096,7 +3097,7 @@ const Column* Engine::getMessageTableTimeColumn(const string& timeColumn) const
 
     auto queryColumn = getQueryColumn(messageQueryColumns, columns, timeColumn, duplicate);
 
-    if ((!queryColumn) || (queryColumn->itsType != DateTime))
+    if ((!queryColumn) || (queryColumn->getType() != DateTime))
       throw SmartMet::Spine::Exception(
           BCP, string("Column '") + timeColumn + "' is not a datetime column in message table");
 

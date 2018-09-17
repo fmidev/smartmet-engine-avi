@@ -165,8 +165,8 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_s
   queryOptions.itsParameters.push_back("stationid");
   StationQueryData stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.size(), 1);
-  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().itsName, "stationid");
-  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().itsType, ColumnType::Integer);
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().getName(), "stationid");
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().getType(), ColumnType::Integer);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }
@@ -179,10 +179,10 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_n
   queryOptions.itsParameters.push_back("name");
   StationQueryData stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.size(), 2);
-  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().itsName, "stationid");
-  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().itsType, ColumnType::Integer);
-  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.back().itsName, "name");
-  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.back().itsType, ColumnType::String);
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().getName(), "stationid");
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.front().getType(), ColumnType::Integer);
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.back().getName(), "name");
+  BOOST_CHECK_EQUAL(stationQueryData.itsColumns.back().getType(), ColumnType::String);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }
@@ -202,17 +202,17 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_order,
   StationQueryData stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsColumns.size(), 4);
   auto it = stationQueryData.itsColumns.begin();
-  BOOST_CHECK_EQUAL(it->itsName, "stationid");
-  BOOST_CHECK_EQUAL(it->itsType, ColumnType::Integer);
+  BOOST_CHECK_EQUAL(it->getName(), "stationid");
+  BOOST_CHECK_EQUAL(it->getType(), ColumnType::Integer);
   ++it;
-  BOOST_CHECK_EQUAL(it->itsName, "elevation");
-  BOOST_CHECK_EQUAL(it->itsType, ColumnType::Integer);
+  BOOST_CHECK_EQUAL(it->getName(), "elevation");
+  BOOST_CHECK_EQUAL(it->getType(), ColumnType::Integer);
   ++it;
-  BOOST_CHECK_EQUAL(it->itsName, "name");
-  BOOST_CHECK_EQUAL(it->itsType, ColumnType::String);
+  BOOST_CHECK_EQUAL(it->getName(), "name");
+  BOOST_CHECK_EQUAL(it->getType(), ColumnType::String);
   ++it;
-  BOOST_CHECK_EQUAL(it->itsName, "icao");
-  BOOST_CHECK_EQUAL(it->itsType, ColumnType::String);
+  BOOST_CHECK_EQUAL(it->getName(), "icao");
+  BOOST_CHECK_EQUAL(it->getType(), ColumnType::String);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }

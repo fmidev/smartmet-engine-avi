@@ -34,6 +34,7 @@ typedef std::string (*ColumnExpression)(const std::string &tableColumnName,
 
 struct Column
 {
+  using Name = std::string;
   using Number = int;
 
   Column(ColumnType theType,
@@ -52,6 +53,8 @@ struct Column
   const Number &getNumber() const;
   const ColumnSelection &getSelection() const;
   const std::string &getTableColumnName() const;
+  const ColumnType &getType() const;
+  const Name &getName() const;
 
   void setNumber(const Number &number);
   void setSelection(const ColumnSelection &selection);
@@ -59,10 +62,9 @@ struct Column
   bool hasExpression() const;
   bool hasCoordinateExpression() const;
 
-  ColumnType itsType;
-  std::string itsName;
-
  private:
+  ColumnType itsType;
+  Name itsName;
   std::string itsTableColumnName;
   ColumnExpression itsExpression;
   ColumnExpression itsCoordinateExpression;

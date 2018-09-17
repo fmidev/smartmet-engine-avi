@@ -41,9 +41,17 @@ std::string Column::getCoordinateExpression() const
 {
   return itsCoordinateExpression(itsTableColumnName, itsName);
 }
+const Column::Name &Column::getName() const
+{
+  return itsName;
+}
 const Column::Number &Column::getNumber() const
 {
   return itsNumber;
+}
+const ColumnType &Column::getType() const
+{
+  return itsType;
 }
 void Column::setNumber(const Number &number)
 {
