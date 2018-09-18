@@ -2,6 +2,8 @@
 
 #include "ColumnList.h"
 
+#include <map>
+
 namespace SmartMet
 {
 namespace Engine
