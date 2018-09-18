@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ColumnList.h"
+#include "ConstantValues.h"
 #include "LocationOptions.h"
 
 #include <spine/TimeSeries.h>
@@ -12,9 +13,6 @@ namespace Engine
 {
 namespace Avi
 {
-#define stationIdQueryColumn "stationid"
-#define messageQueryColumn "message"
-
 // Types for returning query results
 
 typedef std::vector<SmartMet::Spine::TimeSeries::Value> ValueVector;

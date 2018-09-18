@@ -1,8 +1,19 @@
 // ======================================================================
 
 #include "Engine.h"
+
+#include "BuildLatestMessages.h"
+#include "BuildMessageQuery.h"
+#include "BuildMessageTimeRangeMessages.h"
+#include "BuildMessageType.h"
+#include "BuildRecordSet.h"
+#include "BuildRejectedMessageQuery.h"
+#include "BuildRequestStations.h"
+#include "BuildStationQuery.h"
 #include "Connection.h"
 #include "ConstantValues.h"
+#include "Utils.h"
+
 #include <boost/algorithm/string/trim.hpp>
 #include <macgyver/StringConversion.h>
 #include <spine/Exception.h>
@@ -18,1543 +29,6 @@ namespace Avi
 {
 namespace
 {
-// ----------------------------------------------------------------------
-/*!
- * \brief Build from and where clause with given coordinates and max distance
- *		  for querying stations
- */
-// ----------------------------------------------------------------------
-
-void buildStationQueryFromWhereClause(const LocationOptions& locationOptions,
-                                      const StringList& messageTypes,
-                                      ostringstream& fromWhereClause)
-{
-  try
-  {
-    if (locationOptions.itsLonLats.empty())
-      return;
-
-    size_t n = 0;
-
-    fromWhereClause << "FROM avidb_stations,(VALUES" << fixed << setprecision(10);
-
-    for (auto const& lonlat : locationOptions.itsLonLats)
-    {
-      fromWhereClause << ((n == 0) ? " " : ")),") << "(ST_Point(" << lonlat.itsLon << ","
-                      << lonlat.itsLat;
-      n++;
-    }
-
-    fromWhereClause << "))) AS coordinates (" << stationCoordinateColumn
-                    << ") WHERE ST_DWithin(geom::geography,ST_SetSRID(coordinates."
-                    << stationCoordinateColumn << ",4326)::geography," << setprecision(0)
-                    << locationOptions.itsMaxDistance << ")";
-
-    // Note: When querying for given max # of nearest stations, stations having certain icaos codes
-    // (starting with 'IL') are
-    //		 ignored if messages of the only message type (AWSMETAR) originating from them will
-    // be
-    // ignored when querying messages
-    //		 (when messages types were given but AWSMETAR was not included).
-    //
-    //		 This is to exclude nonapplicable stations when querying for TAFs, METARs etc
-
-    const char* messageTypeSpecialToNearestStationSearch = "AWSMETAR";
-    const char* stationIcaosSpecialToNearestStationSearch = "UPPER(icao_code) NOT LIKE 'IL%'";
-
-    if ((locationOptions.itsNumberOfNearestStations > 0) && (!messageTypes.empty()) &&
-        (find(messageTypes.begin(), messageTypes.end(), messageTypeSpecialToNearestStationSearch) ==
-         messageTypes.end()))
-      fromWhereClause << " AND (" << stationIcaosSpecialToNearestStationSearch << ")";
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build where clause with given station id's for querying stations
- */
-// ----------------------------------------------------------------------
-
-void buildStationQueryWhereClause(const StationIdList& stationIdList, ostringstream& whereClause)
-{
-  try
-  {
-    if (stationIdList.empty())
-      return;
-
-    whereClause << (whereClause.str().empty() ? "WHERE (" : " OR (");
-
-    size_t n = 0;
-
-    for (auto const& stationId : stationIdList)
-    {
-      whereClause << ((n == 0) ? "station_id IN (" : ",") << stationId;
-      n++;
-    }
-
-    whereClause << "))";
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build where clause with given icao codes or places (station names) for querying stations
- */
-// ----------------------------------------------------------------------
-
-void buildStationQueryWhereClause(const string& columnExpression,
-                                  bool quoteLiteral,
-                                  const StringList& stringList,
-                                  ostringstream& whereClause)
-{
-  try
-  {
-    if (stringList.empty())
-      return;
-
-    whereClause << (whereClause.str().empty() ? "WHERE (" : " OR (");
-
-    size_t n = 0;
-
-    for (auto const& str : stringList)
-    {
-      if (quoteLiteral)
-        whereClause << ((n == 0) ? ("quote_literal(" + columnExpression + ") IN (") : ",")
-                    << "UPPER(quote_literal('" << str << "'))";
-      else
-        whereClause << ((n == 0) ? (columnExpression + " IN (") : ",") << "UPPER('" << str << "')";
-
-      n++;
-    }
-
-    whereClause << "))";
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build from and where (and order by for route query) clause with given wkts for querying
- * stations
- */
-// ----------------------------------------------------------------------
-
-void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOptions,
-                                             ostringstream& fromWhereOrderByClause)
-{
-  try
-  {
-    if (locationOptions.itsWKTs.itsWKTs.empty())
-      return;
-
-    fromWhereOrderByClause << " FROM avidb_stations";
-
-    if (locationOptions.itsWKTs.isRoute)
-      // For route query the route segments (stations shortest distance to them) are used for
-      // selecting the stations,
-      // and segment indexes and starting points (stations distance to them) are used for ordering
-      // the
-      // stations along the route
-      //
-      // SELECT station_id[,...]
-      // FROM avidb_stations,
-      // (SELECT segindex,segstart,ST_SetSRID(ST_MakeLine(segstart,segend),4326) as segment
-      //	FROM (SELECT ST_PointN(route,generate_series(1,ST_NPoints(route)-1)) as segstart,
-      //		  ST_PointN(route,generate_series(2,ST_NPoints(route))) as segend,
-      //		  generate_series(1,ST_NPoints(route)-1) as segindex
-      //		  FROM (SELECT wkt::geometry as route) AS route
-      //	     ) AS segpoints
-      // ) AS segments
-      //
-      fromWhereOrderByClause
-          << ",(SELECT segindex,segstart,ST_SetSRID(ST_MakeLine(segstart,segend),4326) as segment "
-          << "FROM (SELECT ST_PointN(route,generate_series(1,ST_NPoints(route)-1)) as segstart,"
-          << "ST_PointN(route,generate_series(2,ST_NPoints(route))) as segend,"
-          << "generate_series(1,ST_NPoints(route)-1) as segindex "
-          << "FROM (SELECT '" << locationOptions.itsWKTs.itsWKTs.front()
-          << "'::geometry as route) AS route) AS segpoints) AS segments";
-
-    fromWhereOrderByClause << " WHERE (";
-
-    size_t n = 0;
-
-    for (auto const& wkt : locationOptions.itsWKTs.itsWKTs)
-    {
-      ostringstream condition;
-
-      if (locationOptions.itsWKTs.isRoute)
-        // For a route (a single linestring), limit the stations by their shortest distance to route
-        // segments
-        //
-        condition << "ST_DWithin(geom::geography,ST_ClosestPoint(segment,geom)::geography," << fixed
-                  << setprecision(0) << locationOptions.itsMaxDistance << ")";
-      else
-        // Limit by distance between geometries
-        //
-        condition << "ST_Length(ST_ShortestLine(geom,ST_GeogFromText('SRID=4326;" << wkt
-                  << "')::geometry)::geography) <= " << fixed << setprecision(0)
-                  << locationOptions.itsMaxDistance;
-
-      fromWhereOrderByClause << ((n == 0) ? "(" : ") OR (") << condition.str();
-
-      n++;
-    }
-
-    fromWhereOrderByClause << "))";
-
-    // For a route (a single linestring), order the stations by route segment index and station's
-    // distance to the start of the segment
-
-    if (locationOptions.itsWKTs.isRoute)
-      fromWhereOrderByClause
-          << " ORDER BY segindex,ST_Distance(segstart::geography,geom::geography)";
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build where clause with given bboxes for querying stations
- */
-// ----------------------------------------------------------------------
-
-void buildStationQueryWhereClause(const BBoxList& bboxList,
-                                  double maxDistance,
-                                  ostringstream& whereClause)
-{
-  try
-  {
-    if (bboxList.empty())
-      return;
-
-    whereClause << (whereClause.str().empty() ? "WHERE " : " OR ");
-
-    size_t n = 0;
-
-    for (auto const& bbox : bboxList)
-    {
-      ostringstream condition;
-
-      condition << "(ST_Length(ST_ShortestLine(geom,ST_SetSRID(ST_MakeBox2D(ST_Point("
-                << setprecision(10) << bbox.itsWest << "," << bbox.itsSouth << "),ST_Point("
-                << bbox.itsEast << "," << bbox.itsNorth << ")),4326))::geography) <= " << fixed
-                << setprecision(0) << maxDistance << ")";
-
-      whereClause << ((n == 0) ? "" : " OR ") << condition.str();
-
-      n++;
-    }
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build where clause for station id's for message query
- */
-// ----------------------------------------------------------------------
-
-void buildMessageQueryWhereStationIdInClause(const StationIdList& stationIdList,
-                                             ostringstream& whereClause)
-{
-  try
-  {
-    // { WHERE | AND } me.station_id IN (stationIdList)
-
-    string whereStationIdIn = (string(whereClause.str().empty() ? " WHERE " : " AND ") +
-                               messageTableAlias + ".station_id IN (");
-    size_t n = 0;
-
-    for (auto stationId : stationIdList)
-    {
-      whereClause << ((n == 0) ? whereStationIdIn : ",") << stationId;
-      n++;
-    }
-
-    whereClause << ")";
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build 'request_stations' table (WITH clause) for request station id's
- * 		  (and position/order) for message query
- */
-// ----------------------------------------------------------------------
-
-string buildRequestStationsWithClause(const StationIdList& stationIdList, bool routeQuery)
-{
-  try
-  {
-    /*
-    WITH request_stations AS (
-            SELECT request_stations.station_id[,request_stations.position]
-            FROM (VALUES ((),...)) AS request_stations (station_id[,position])
-    )
-    */
-
-    ostringstream withClause;
-
-    withClause << "WITH " << requestStationsTable.itsName
-               << " AS (SELECT request_stations.station_id"
-               << (routeQuery ? string(",request_stations.") + requestStationsPositionColumn : "")
-               << " FROM (VALUES ";
-
-    size_t n = 0;
-
-    for (auto stationId : stationIdList)
-    {
-      withClause << ((n == 0) ? "(" : "),(") << stationId;
-
-      if (routeQuery)
-        withClause << "," << n;
-
-      n++;
-    }
-
-    withClause << ")) AS request_stations (station_id"
-               << (routeQuery ? string(",") + requestStationsPositionColumn : "") << "))";
-
-    return withClause.str();
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build 'message_validity' table (WITH clause) for requested message
- * 		  types and their configured validity in hours
- */
-// ----------------------------------------------------------------------
-
-string buildMessageTypeValidityWithClause(const StringList messageTypeList,
-                                          const MessageTypes& knownMessageTypes)
-{
-  try
-  {
-    /*
-    WITH message_validity AS (
-            SELECT message_validity.type,message_validity.validityhours
-            FROM (VALUES ((),...)) AS message_validity (type,validityhours)
-    )
-    */
-
-    ostringstream withClause;
-
-    withClause << messageValidityTable.itsName
-               << " AS (SELECT message_validity.type,message_validity.validityhours"
-               << " FROM (VALUES ";
-
-    size_t n = 0;
-
-    if (messageTypeList.empty())
-    {
-      // Get all types with configured validity hours
-      //
-      for (auto const& knownType : knownMessageTypes)
-        if (knownType.hasValidityHours())
-        {
-          auto const& knownTypes = knownType.getMessageTypes();
-
-          for (list<string>::const_iterator it = knownTypes.begin(); (it != knownTypes.end());
-               it++, n++)
-            withClause << ((n == 0) ? "('" : "),('") << *it << "',INTERVAL '"
-                       << knownType.getValidityHours() << " hours'";
-        }
-    }
-    else
-    {
-      // Get given message types with configured validity hours
-      //
-      for (auto const& messageType : messageTypeList)
-        for (auto const& knownType : knownMessageTypes)
-          if (knownType.hasValidityHours() && (knownType == messageType))
-          {
-            withClause << ((n == 0) ? "('" : "),('") << messageType << "',INTERVAL '"
-                       << knownType.getValidityHours() << " hours'";
-            n++;
-
-            break;
-          }
-    }
-
-    withClause << ")) AS message_validity (type,validityhours))";
-
-    return ((n > 0) ? withClause.str() : "");
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build message type IN clause with given message and time range type(s)
- */
-// ----------------------------------------------------------------------
-
-string buildMessageTypeInClause(const StringList& messageTypeList,
-                                const MessageTypes& knownMessageTypes,
-                                list<TimeRangeType> timeRangeTypes)
-{
-  try
-  {
-    // mt.type IN (messageTypeList)
-
-    ostringstream whereClause;
-    string messageTypeIn = (string("UPPER(") + messageTypeTableAlias + ".type) IN ('");
-    size_t n = 0;
-    bool getAll = timeRangeTypes.empty();
-
-    if (messageTypeList.empty())
-    {
-      // Get all message types or all types matching timeRangeType(s)
-      //
-      for (auto const& knownType : knownMessageTypes)
-        if (getAll ||
-            (find(timeRangeTypes.begin(), timeRangeTypes.end(), knownType.getTimeRangeType()) !=
-             timeRangeTypes.end()))
-        {
-          auto const& knownTypes = knownType.getMessageTypes();
-
-          for (list<string>::const_iterator it = knownTypes.begin(); (it != knownTypes.end());
-               it++, n++)
-            whereClause << ((n == 0) ? messageTypeIn : "','") << *it;
-        }
-    }
-    else
-    {
-      // Get all given message types or given types matching timeRangeType(s)
-      //
-      for (auto const& messageType : messageTypeList)
-        for (auto const& knownType : knownMessageTypes)
-          if ((knownType == messageType) &&
-              (getAll ||
-               (find(timeRangeTypes.begin(), timeRangeTypes.end(), knownType.getTimeRangeType()) !=
-                timeRangeTypes.end())))
-          {
-            whereClause << ((n == 0) ? messageTypeIn : "','") << messageType;
-            n++;
-
-            break;
-          }
-    }
-
-    whereClause << "')";
-
-    return ((n > 0) ? whereClause.str() : "");
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-string buildMessageTypeInClause(const StringList& messageTypeList,
-                                const MessageTypes& knownMessageTypes,
-                                TimeRangeType timeRangeType)
-{
-  try
-  {
-    list<TimeRangeType> timeRangeTypes;
-    timeRangeTypes.push_back(timeRangeType);
-
-    return buildMessageTypeInClause(messageTypeList, knownMessageTypes, timeRangeTypes);
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build 'record_set' table (WITH clause) for querying accepted messages
- * 		 for given observation time or time range
- */
-// ----------------------------------------------------------------------
-
-string buildRecordSetWithClause(bool routeQuery,
-                                const StationIdList& stationIdList,
-                                unsigned int startTimeOffsetHours,
-                                unsigned int endTimeOffsetHours,
-                                const string& obsOrRangeStartTime,
-                                const string& rangeEndTimeOrEmpty = "")
-{
-  try
-  {
-    /*
-    record_set AS (
-             SELECT *
-             FROM avidb_messages me
-             WHERE { me.station_id IN (stationIdList | SELECT station_id FROM request_stations) }
-    AND
-                       {
-                         me.message_time >= observation time - INTERVAL 'n hours' AND
-    me.message_time
-    <= observation time + INTERVAL 'n hours' |
-                         me.message_time >= starttime - INTERVAL 'n hours' AND me.message_time <=
-    endtime + INTERVAL 'n hours'
-                       }
-    )
-    */
-
-    ostringstream withClause;
-    string whereStationIdIn;
-
-    if (!routeQuery)
-      buildMessageQueryWhereStationIdInClause(stationIdList, withClause);
-    else
-      withClause << " WHERE " << messageTableAlias << ".station_id IN (SELECT station_id FROM "
-                 << requestStationsTable.itsName << ")";
-
-    whereStationIdIn = withClause.str();
-    withClause.str("");
-    withClause.clear();
-
-    withClause << recordSetTableName << " AS (SELECT * FROM " << messageTableName << " "
-               << messageTableAlias << whereStationIdIn;
-
-    const string& obsOrRangeEndTime =
-        (rangeEndTimeOrEmpty.empty() ? obsOrRangeStartTime : rangeEndTimeOrEmpty);
-
-    withClause << " AND " << messageTableAlias << ".message_time >= (" << obsOrRangeStartTime
-               << " - INTERVAL '" << startTimeOffsetHours << " hours')"
-               << " AND " << messageTableAlias << ".message_time <= (" << obsOrRangeEndTime
-               << " + INTERVAL '" << endTimeOffsetHours << " hours')";
-
-    withClause << ")";
-
-    return withClause.str();
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build GROUP BY expression for message type with given message types
- *		  (e.g. METREP,SPECIAL) and time range type for querying latest accepted messages
- */
-// ----------------------------------------------------------------------
-
-string buildMessageTypeGroupByExpr(const StringList& messageTypeList,
-                                   const MessageTypes& knownMessageTypes,
-                                   TimeRangeType timeRangeType)
-{
-  try
-  {
-    // [CASE mt.type WHEN type1 OR type2 [ .. ] THEN type1 [ WHEN .. ] ELSE ] mt.type [ END ]
-
-    ostringstream groupBy;
-    string whenMessageTypeIn = string(" WHEN UPPER(") + messageTypeTableAlias + ".type) IN ('";
-    size_t n = 0;
-
-    groupBy << "CASE";
-
-    if (messageTypeList.empty())
-    {
-      // Get all message types matching timeRangeType
-      //
-      for (auto const& knownType : knownMessageTypes)
-        if (knownType.getTimeRangeType() == timeRangeType)
-        {
-          auto const& knownTypes = knownType.getMessageTypes();
-
-          if (knownTypes.size() > 1)
-          {
-            size_t nn = 0;
-
-            for (list<string>::const_iterator it = knownTypes.begin(); (it != knownTypes.end());
-                 it++, n++, nn++)
-              groupBy << ((nn == 0) ? whenMessageTypeIn : "','") << *it;
-
-            groupBy << "') THEN '" << knownTypes.front() << "'";
-          }
-        }
-    }
-    else
-    {
-      // Get given message types matching timeRangeType
-      //
-      StringList handledMessageTypes;
-
-      for (auto const& messageType : messageTypeList)
-        if (find(handledMessageTypes.begin(), handledMessageTypes.end(), messageType) ==
-            handledMessageTypes.end())
-          for (auto const& knownType : knownMessageTypes)
-            if (knownType.getTimeRangeType() == timeRangeType)
-            {
-              // If all group's types are given, return the latest message for the group
-              //
-              auto const& knownTypes = knownType.getMessageTypes();
-
-              if ((knownTypes.size() > 1) && (knownType == messageType))
-              {
-                list<string>::const_iterator it = knownTypes.begin();
-
-                for (; (it != knownTypes.end()); it++)
-                  if (find(messageTypeList.begin(), messageTypeList.end(), *it) ==
-                      messageTypeList.end())
-                    break;
-
-                if (it == knownTypes.end())
-                {
-                  size_t nn = 0;
-
-                  for (list<string>::const_iterator it = knownTypes.begin();
-                       (it != knownTypes.end());
-                       it++, n++, nn++)
-                    groupBy << ((nn == 0) ? whenMessageTypeIn : "','") << *it;
-
-                  groupBy << "') THEN '" << knownTypes.front() << "'";
-
-                  handledMessageTypes.insert(
-                      handledMessageTypes.end(), knownTypes.begin(), knownTypes.end());
-
-                  break;
-                }
-              }
-            }
-    }
-
-    if (n > 0)
-      groupBy << " ELSE " << messageTypeTableAlias << ".type END";
-
-    return ((n > 0) ? groupBy.str() : (string(messageTypeTableAlias) + ".type"));
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build GROUP BY expression for messir_heading with given message types
- *		  (e.g. GAFOR) and time range type for querying latest accepted messages
- */
-// ----------------------------------------------------------------------
-
-string buildMessirHeadingGroupByExpr(const StringList& messageTypeList,
-                                     const MessageTypes& knownMessageTypes,
-                                     TimeRangeType timeRangeType)
-{
-  try
-  {
-    // [
-    //	CASE WHEN UPPER(mt.type) = 'type1'
-    //			THEN CASE WHEN me.messir_heading LIKE 't1pat1' THEN 1 [WHEN
-    // me.messir_heading
-    // LIKE
-    //'t1pat2' THEN 2 ... ] ELSE 0 END
-    //	   [ WHEN UPPER(mt.type) = 'type2'
-    //			...
-    //		 ...
-    //	   ]
-    //		 ELSE 0
-    //	END
-    // ]
-
-    ostringstream groupBy;
-    string whenMessageTypeIs = string(" WHEN UPPER(") + messageTypeTableAlias + ".type) = '";
-    string whenMessirHeadingLike =
-        string(" WHEN UPPER(") + messageTableAlias + ".messir_heading) LIKE '";
-    size_t n = 0;
-
-    groupBy << ",CASE";
-
-    if (messageTypeList.empty())
-    {
-      // Get all message types matching timeRangeType
-      //
-      for (auto const& knownType : knownMessageTypes)
-        if (timeRangeType == knownType.getTimeRangeType())
-        {
-          auto const& knownTypes = knownType.getMessageTypes();
-          auto const& messirPatterns = knownType.getMessirPatterns();
-
-          if (messirPatterns.size() >= 1)
-          {
-            // We don't expect/support 'grouped' messagetypes (e.g. METREP,SPECIAL) currently
-            //
-            size_t nn = 1;
-
-            groupBy << whenMessageTypeIs << knownTypes.front() << "' THEN CASE";
-
-            for (list<string>::const_iterator it = messirPatterns.begin();
-                 (it != messirPatterns.end());
-                 it++, nn++)
-              groupBy << whenMessirHeadingLike << *it << "' THEN " << nn;
-
-            groupBy << " ELSE 0 END";
-            n++;
-          }
-        }
-    }
-    else
-    {
-      // Get given message types matching timeRangeType
-      //
-      for (auto const& messageType : messageTypeList)
-        for (auto const& knownType : knownMessageTypes)
-          if (knownType.getTimeRangeType() == timeRangeType)
-          {
-            if (knownType.getMessageTypes().front() == messageType)
-            {
-              auto const& messirPatterns = knownType.getMessirPatterns();
-
-              if (messirPatterns.size() >= 1)
-              {
-                size_t nn = 1;
-
-                groupBy << whenMessageTypeIs << messageType << "' THEN CASE";
-
-                for (list<string>::const_iterator it = messirPatterns.begin();
-                     (it != messirPatterns.end());
-                     it++, nn++)
-                  groupBy << whenMessirHeadingLike << *it << "' THEN " << nn;
-
-                groupBy << " ELSE 0 END";
-                n++;
-              }
-            }
-          }
-    }
-
-    if (n > 0)
-      groupBy << " ELSE 0 END";
-
-    return ((n > 0) ? groupBy.str() : "");
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Get list<string> as 's1,'s2',...
- */
-// ----------------------------------------------------------------------
-
-string getStringList(const list<string>& stringList)
-{
-  try
-  {
-    string slist;
-
-    for (auto const& s : stringList)
-      slist.append(slist.empty() ? "'" : "','").append(s);
-
-    return slist.empty() ? slist : (slist + "'");
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build 'latest_messages' table (WITH clause) for querying latest
- *		  accepted messages for given observation time
- */
-// ----------------------------------------------------------------------
-
-string buildLatestMessagesWithClause(const StringList& messageTypes,
-                                     const MessageTypes& knownMessageTypes,
-                                     const string& observationTime,
-                                     bool filterFIMETARxxx,
-                                     const list<string>& filterFIMETARxxxExcludeIcaos)
-{
-  try
-  {
-    /*
-    latest_messages AS (
-             SELECT MAX(message_id) AS message_id
-             FROM record_set me,avidb_message_types mt
-             WHERE mt.type IN (ValidTimeRangeLatestTypes) AND
-                       observation time BETWEEN me.valid_from AND me.valid_to AND observation time
-    >=
-    me.created
-             GROUP BY me.station_id,[CASE mt.type WHEN type1 OR type2 [ .. ] THEN type1 [ WHEN .. ]
-    ELSE ] mt.type [ END ]
-                          [,CASE WHEN UPPER(mt.type) = 'type1' THEN CASE WHEN me.messir_heading LIKE
-    't1pat1' THEN 1 [WHEN me.messir_heading LIKE 't1pat2' THEN 2 ... ] ELSE 0 END
-                                       [ WHEN ... ]
-                                         ELSE 0
-                                    END]
-             UNION ALL
-             SELECT MAX(message_id) AS message_id
-             FROM record_set me,avidb_message_types mt,message_validity mv
-             WHERE mt.type IN (MessageValidTimeRangeLatestTypes) AND
-                       mv.type = mt.type AND (
-                        (observation time BETWEEN me.message_time AND me.valid_to) OR
-                        (me.valid_from IS NULL AND me.valid_to IS NULL AND observation time BETWEEN
-    me.message_time AND me.message_time + mv.validityhours)
-                       ) AND
-                       observation time >= me.created
-             GROUP BY me.station_id,[CASE mt.type WHEN type1 OR type2 [ .. ] THEN type1 [ WHEN .. ]
-    ELSE ] mt.type [ END ]
-                          [,CASE WHEN UPPER(mt.type) = 'type1' THEN CASE WHEN me.messir_heading LIKE
-    't1pat1' THEN 1 [WHEN me.messir_heading LIKE 't1pat2' THEN 2 ... ] ELSE 0 END
-                                       [ WHEN ... ]
-                                         ELSE 0
-                                    END]
-             UNION ALL
-             SELECT MAX(message_id) AS message_id
-             FROM record_set me,avidb_message_types mt,message_validity mv[,avidb_stations st]
-             WHERE [ st.station_id = me.station_id AND ((st.country_code != 'FI' OR mt.type !=
-    'METAR'
-    OR me.message LIKE 'METAR%')
-                             [ OR st.icao_code IN (ExcludedIcaoList) ]
-                             ) AND
-                       ]
-                       mt.type IN (MessageTimeRangeLatestTypes) AND
-                       mv.type = mt.type AND
-                       observation time BETWEEN me.message_time AND me.message_time +
-    mv.validityhours
-    AND observation time >= me.created
-             GROUP BY me.station_id,[CASE mt.type WHEN type1 OR type2 [ .. ] THEN type1 [ WHEN .. ]
-    ELSE ] mt.type [ END ]
-                          [,CASE WHEN UPPER(mt.type) = 'type1' THEN CASE WHEN me.messir_heading LIKE
-    't1pat1' THEN 1 [WHEN me.messir_heading LIKE 't1pat2' THEN 2 ... ] ELSE 0 END
-                                       [ WHEN ... ]
-                                         ELSE 0
-                                    END]
-             UNION ALL
-             SELECT MAX(message_id) AS message_id
-             FROM record_set me,avidb_message_types mt
-             WHERE mt.type IN (CreationValidTimeRangeLatestTypes) AND
-                       observation time BETWEEN me.created AND me.valid_to
-             GROUP BY me.station_id,[CASE mt.type WHEN type1 OR type2 [ .. ] THEN type1 [ WHEN .. ]
-    ELSE ] mt.type [ END ]
-                          [,CASE WHEN UPPER(mt.type) = 'type1' THEN CASE WHEN me.messir_heading LIKE
-    't1pat1' THEN 1 [WHEN me.messir_heading LIKE 't1pat2' THEN 2 ... ] ELSE 0 END
-                                       [ WHEN ... ]
-                                         ELSE 0
-                                    END]
-             UNION ALL
-             SELECT message_id
-             FROM record_set me,avidb_message_types mt
-             WHERE mt.type IN (ValidTimeRangeTypes) AND
-                       observation time BETWEEN me.valid_from AND me.valid_to AND observation time
-    >=
-    me.created
-             UNION ALL
-             SELECT message_id
-             FROM record_set me,avidb_message_types mt,message_validity mv
-             WHERE mt.type IN (MessageTimeRangeTypes) AND
-                       mv.type = mt.type AND
-                       observation time BETWEEN me.message_time AND me.message_time +
-    mv.validityhours
-    AND observation time >= me.created
-             UNION ALL
-             SELECT message_id
-             FROM record_set me,avidb_message_types mt
-             WHERE mt.type IN (CreationValidTimeRangeTypes) AND
-                       observation time BETWEEN creation_time AND me.valid_to
-    )
-    */
-
-    ostringstream withClause;
-    string unionOrEmpty = "";
-
-    withClause << latestMessagesTable.itsName << " AS (";
-
-    string messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, ValidTimeRangeLatest);
-
-    if (!messageTypeIn.empty())
-    {
-      // Depending on configuration the latest message for group(s) of types might be returned
-      //
-      string messageTypeGroupByExpr =
-          buildMessageTypeGroupByExpr(messageTypes, knownMessageTypes, ValidTimeRangeLatest);
-
-      // Depending on configuration messir_heading LIKE pattern(s) might be used for additional
-      // grouping
-
-      string messirHeadingGroupByExpr =
-          buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, ValidTimeRangeLatest);
-
-      withClause << "SELECT MAX(message_id) AS message_id FROM record_set " << messageTableAlias
-                 << ",avidb_message_types mt"
-                 << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << observationTime << " BETWEEN " << messageTableAlias << ".valid_from AND "
-                 << messageTableAlias << ".valid_to"
-                 << " AND " << observationTime << " >= " << messageTableAlias << ".created"
-                 << " GROUP BY " << messageTableAlias << ".station_id," << messageTypeGroupByExpr
-                 << messirHeadingGroupByExpr;
-
-      unionOrEmpty = " UNION ALL ";
-    }
-
-    messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, MessageValidTimeRangeLatest);
-
-    if (!messageTypeIn.empty())
-    {
-      string messirHeadingGroupByExpr =
-          buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
-
-      withClause << unionOrEmpty << "SELECT MAX(message_id) AS message_id FROM record_set "
-                 << messageTableAlias << ",avidb_message_types mt"
-                 << "," << messageValidityTable.itsName << " " << messageValidityTableAlias
-                 << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND (("
-                 << observationTime << " BETWEEN " << messageTableAlias << ".message_time AND "
-                 << messageTableAlias << ".valid_to) OR (" << messageTableAlias
-                 << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
-                 << observationTime << " BETWEEN " << messageTableAlias << ".message_time AND "
-                 << messageTableAlias << ".message_time + " << messageValidityTableAlias
-                 << ".validityhours)) AND " << observationTime << " >= " << messageTableAlias
-                 << ".created"
-                 << " GROUP BY " << messageTableAlias << ".station_id,mt.type_id"
-                 << messirHeadingGroupByExpr;
-
-      unionOrEmpty = " UNION ALL ";
-    }
-
-    messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
-
-    if (!messageTypeIn.empty())
-    {
-      string messageTypeGroupByExpr =
-          buildMessageTypeGroupByExpr(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
-      string messirHeadingGroupByExpr =
-          buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
-      string whereOrAnd = " WHERE ";
-
-      withClause << unionOrEmpty << "SELECT MAX(message_id) AS message_id FROM record_set "
-                 << messageTableAlias << ",avidb_message_types mt"
-                 << "," << messageValidityTable.itsName << " " << messageValidityTableAlias;
-
-      if (filterFIMETARxxx && (messageTypeIn.find("'METAR") != string::npos))
-      {
-        withClause << "," << stationTableName << " " << stationTableAlias << " WHERE "
-                   << stationTableJoin << " AND ((st.country_code != 'FI' OR mt.type != 'METAR' OR "
-                   << messageTableAlias << ".message LIKE 'METAR%')";
-
-        if (!filterFIMETARxxxExcludeIcaos.empty())
-          withClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos)
-                     << ")";
-
-        withClause << ")";
-
-        whereOrAnd = " AND ";
-      }
-
-      withClause << whereOrAnd << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << messageValidityTableJoin << " AND " << observationTime << " BETWEEN "
-                 << messageTableAlias << ".message_time AND " << messageTableAlias
-                 << ".message_time + " << messageValidityTableAlias << ".validityhours"
-                 << " AND " << observationTime << " >= " << messageTableAlias << ".created"
-                 << " GROUP BY " << messageTableAlias << ".station_id," << messageTypeGroupByExpr
-                 << messirHeadingGroupByExpr;
-
-      unionOrEmpty = " UNION ALL ";
-    }
-
-    messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, CreationValidTimeRangeLatest);
-
-    if (!messageTypeIn.empty())
-    {
-      string messirHeadingGroupByExpr = buildMessirHeadingGroupByExpr(
-          messageTypes, knownMessageTypes, CreationValidTimeRangeLatest);
-
-      withClause << unionOrEmpty << "SELECT MAX(message_id) AS message_id FROM record_set "
-                 << messageTableAlias << ",avidb_message_types mt"
-                 << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << observationTime << " BETWEEN " << messageTableAlias << ".created AND "
-                 << messageTableAlias << ".valid_to"
-                 << " GROUP BY " << messageTableAlias << ".station_id" << messirHeadingGroupByExpr;
-
-      unionOrEmpty = " UNION ALL ";
-    }
-
-    messageTypeIn = buildMessageTypeInClause(messageTypes, knownMessageTypes, ValidTimeRange);
-
-    if (!messageTypeIn.empty())
-    {
-      withClause << unionOrEmpty << "SELECT message_id FROM record_set " << messageTableAlias
-                 << ",avidb_message_types mt"
-                 << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << observationTime << " BETWEEN " << messageTableAlias << ".valid_from AND "
-                 << messageTableAlias << ".valid_to"
-                 << " AND " << observationTime << " >= " << messageTableAlias << ".created";
-
-      unionOrEmpty = " UNION ALL ";
-    }
-
-    messageTypeIn = buildMessageTypeInClause(messageTypes, knownMessageTypes, MessageTimeRange);
-
-    if (!messageTypeIn.empty())
-    {
-      withClause << unionOrEmpty << "SELECT message_id FROM record_set " << messageTableAlias
-                 << ",avidb_message_types mt"
-                 << "," << messageValidityTable.itsName << " " << messageValidityTableAlias
-                 << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << messageValidityTableJoin << " AND " << observationTime << " BETWEEN "
-                 << messageTableAlias << ".message_time AND " << messageTableAlias
-                 << ".message_time + " << messageValidityTableAlias << ".validityhours"
-                 << " AND " << observationTime << " >= " << messageTableAlias << ".created";
-
-      unionOrEmpty = " UNION ALL ";
-    }
-
-    messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, CreationValidTimeRange);
-
-    if (!messageTypeIn.empty())
-      withClause << unionOrEmpty << "SELECT message_id FROM record_set " << messageTableAlias
-                 << ",avidb_message_types mt"
-                 << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << observationTime << " BETWEEN " << messageTableAlias << ".created AND "
-                 << messageTableAlias << ".valid_to";
-
-    withClause << ")";
-
-    return withClause.str();
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build 'messagetimerangelatest_messages' table (WITH clause) for
- *		  querying accepted messages having MessageTimeRangeLatest time
- *		  restriction with given time range
- */
-// ----------------------------------------------------------------------
-
-string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
-                                               const MessageTypes& knownMessageTypes,
-                                               const string& startTime,
-                                               const string& endTime,
-                                               bool filterFIMETARxxx,
-                                               const list<string>& filterFIMETARxxxExcludeIcaos)
-{
-  try
-  {
-    /*
-    messagetimerangelatest_messages AS (
-            SELECT me.message_id
-            FROM record_set me,avidb_message_types mt[,avidb_stations st]
-            WHERE [ st.station_id = me.station_id AND ((st.country_code != 'FI' OR mt.type !=
-    'METAR'
-    OR " << messageTableAlias << ".message LIKE 'METAR%')
-                            [ OR st.icao_code IN (ExcludedIcaoList) ]
-                            ) AND
-                      ]
-                      me.type_id = mt.type_id AND
-                      UPPER(mt.type) IN (MessageTimeRangeLatestTypes) AND
-                      me.message_time >= starttime AND me.message_time < endtime
-            UNION ALL
-            SELECT MAX(message_id) AS message_id
-            FROM record_set me,avidb_message_types mt,message_validity mv[,avidb_stations st]
-            WHERE [ st.station_id = me.station_id AND ((st.country_code != 'FI' OR mt.type !=
-    'METAR'
-    OR " << messageTableAlias << ".message LIKE 'METAR%')
-                            [ OR st.icao_code IN (ExcludedIcaoList) ]
-                            ) AND
-                      ]
-                      me.type_id = mt.type_id AND
-                      UPPER(mt.type) IN (MessageTimeRangeLatestTypes) AND
-                      mv.type = mt.type AND
-                      me.message_time < starttime AND me.message_time + mv.validityhours > starttime
-            GROUP BY me.station_id,mt.type
-    )
-
-    Note: For grouped types (like METREP/SPECIAL, currently such don't exist with
-    MessageTimeRangeLatest time restriction)
-              latest message would be returned for each group's type
-    */
-
-    string messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
-
-    if (messageTypeIn.empty())
-      return "";
-
-    ostringstream withClause;
-    string whereOrAnd = " WHERE ";
-
-    withClause << "," << messageTimeRangeLatestMessagesTableName << " AS ("
-               << "SELECT me.message_id "
-               << "FROM record_set me,avidb_message_types mt";
-
-    if (filterFIMETARxxx && (messageTypeIn.find("'METAR") != string::npos))
-    {
-      withClause << "," << stationTableName << " " << stationTableAlias << " WHERE "
-                 << stationTableJoin << " AND ((st.country_code != 'FI' OR mt.type != 'METAR' OR "
-                 << messageTableAlias << ".message LIKE 'METAR%')";
-
-      if (!filterFIMETARxxxExcludeIcaos.empty())
-        withClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos) << ")";
-
-      withClause << ")";
-
-      whereOrAnd = " AND ";
-    }
-    else
-      filterFIMETARxxx = false;
-
-    withClause << whereOrAnd << "me.type_id = mt.type_id AND " << messageTypeIn
-               << " AND me.message_time >= " << startTime << " AND me.message_time < " << endTime
-               << " UNION "
-               << "SELECT MAX(message_id) AS message_id "
-               << "FROM record_set me,avidb_message_types mt,message_validity mv";
-
-    if (filterFIMETARxxx)
-    {
-      withClause << "," << stationTableName << " " << stationTableAlias << " WHERE "
-                 << stationTableJoin << " AND ((st.country_code != 'FI' OR mt.type != 'METAR' OR "
-                 << messageTableAlias << ".message LIKE 'METAR%')";
-
-      if (!filterFIMETARxxxExcludeIcaos.empty())
-        withClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos) << ")";
-
-      withClause << ")";
-    }
-
-    withClause << whereOrAnd << "me.type_id = mt.type_id AND " << messageTypeIn
-               << " AND mv.type = mt.type"
-               << " AND me.message_time < " << startTime
-               << " AND me.message_time + mv.validityhours > " << startTime
-               << " GROUP BY me.station_id,mt.type)";
-
-    return withClause.str();
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build from, where and order by clause with given station id's, message types,
- *		  tables and time instant/range for querying accepted messages
- */
-// ----------------------------------------------------------------------
-
-void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
-                                             const StationIdList& stationIdList,
-                                             const QueryOptions& queryOptions,
-                                             const TableMap& tableMap,
-                                             const Config& config,
-                                             const Column* timeRangeColumn,
-                                             bool distinct,
-                                             ostringstream& fromWhereOrderByClause)
-{
-  try
-  {
-    // 'record_set' or avidb_messages table is always selected by the query
-    //
-    // FROM { record_set | avidb_messages } me[,avidb_message_types mt][,avidb_message_routes
-    // mr][,latest_messages lm][,message_validity mv][,avidb_stations st][,request_stations rs]
-    //
-    // Because 'message_validity' contains data only for message types queried with
-    // MessageValidTimeRange[Latest] and MessageTimeRange[Latest] time restriction, it needs to be
-    // outer joined with avidb_message_types in the main query for querying messages for other time
-    // restriction types (when leftOuter is set for message_validity)
-
-    const auto& knownMessageTypes = config.getMessageTypes();
-    auto it = tableMap.find(messageValidityTableName);
-    Table validityTable((it != tableMap.end()) ? it->second : Table());
-    size_t n = 0;
-
-    for (auto const& from : tableMap)
-    {
-      // No FROM clause entry for subquerys (latest_messages)
-      //
-      if (!from.second.subQuery)
-      {
-        if ((from.first == recordSetTableName) || (from.first == messageTableName) ||
-            (((from.first != messageTypeTableName) || (!validityTable.leftOuter)) &&
-             (!from.second.leftOuter) && (!from.second.itsJoin.empty())))
-        {
-          fromWhereOrderByClause << ((n == 0) ? " FROM " : ",") << from.first << " "
-                                 << from.second.itsAlias;
-          n++;
-        }
-        else if ((from.first == messageTypeTableName) && (!from.second.itsJoin.empty()))
-        {
-          fromWhereOrderByClause << ((n == 0) ? " FROM " : ",") << from.first << " "
-                                 << from.second.itsAlias << " LEFT OUTER JOIN "
-                                 << messageValidityTableName << " " << validityTable.itsAlias
-                                 << " ON (" << validityTable.itsJoin << ")";
-          n++;
-        }
-      }
-    }
-
-    // [ WHERE|AND me.route_id = mr.route_id ]
-    // [ WHERE|AND me.type_id = mt.type_id ]
-    // [ WHERE|AND me.message_id IN (SELECT message_id FROM latest_messages) ]
-    // [ WHERE|AND mv.type = mt.type ]
-    // [ WHERE|AND st.station_id = me.station_id ]
-    // [ WHERE|AND me.station_id = rs.station_id ]
-
-    const char* whereOrAnd = " WHERE ";
-
-    for (auto const& where : tableMap)
-    {
-      if ((!where.second.leftOuter) && (!where.second.itsJoin.empty()))
-      {
-        fromWhereOrderByClause << whereOrAnd << where.second.itsJoin;
-        whereOrAnd = " AND ";
-      }
-    }
-
-    if (queryOptions.itsTimeOptions.itsObservationTime.empty())
-    {
-      if (queryOptions.itsTimeOptions.itsQueryValidRangeMessages)
-      {
-        // Querying valid messages within time range.
-        //
-        // Note: User given time range is taken as a half open range where start <= time < end. The
-        // valid_from-valid_to range and any range calculated
-        //		 with range start time and period length (here me.message_time +
-        // mv.validityhours) are taken as a closed range.
-        //
-        // AND
-        // (
-        //  [ (mt.type IN (ValidTimeRangeTypes,ValidTimeRangeLatestTypes) AND starttime <=
-        //  me.valid_to
-        //  AND endtime > me.valid_from) ]
-        //  [ [ OR ] (mt.type IN (MessageValidTimeRangeTypes,MessageValidTimeRangeLatestTypes) AND (
-        //			  (starttime <= me.valid_to AND endtime > me.message_time) OR
-        //			  (me.valid_from IS NULL AND me.valid_to IS NULL AND (starttime <=
-        // me.message_time + mv.validityhours AND endtime > me.message_time))
-        //			 ))
-        //	]
-        //  [ [ OR ] (mt.type IN (MessageTimeRangeTypes) AND (starttime <= me.message_time +
-        //  mv.validityhours AND endtime > me.message_time)) ]
-        //  [ [ OR ] ([mt.type IN (MessageTimeRangeLatestTypes) AND] (me.message_id IN (SELECT
-        //  message_id FROM messagetimerangelatest_messages))) ]
-        //  [ [ OR ] (mt.type IN (CreationValidTimeRangeTypes,CreationValidTimeRangeLatestTypes) AND
-        // (starttime <= me.valid_to AND endtime > me.creation_time)) ]
-        // )
-        //
-        fromWhereOrderByClause << whereOrAnd << "(";
-
-        list<TimeRangeType> timeRangeTypes;
-        timeRangeTypes.push_back(ValidTimeRange);
-        timeRangeTypes.push_back(ValidTimeRangeLatest);
-
-        string messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
-        string emptyOrOr = "";
-
-        if (!messageTypeIn.empty())
-        {
-          fromWhereOrderByClause << "(" << messageTypeIn << " AND "
-                                 << "(" << queryOptions.itsTimeOptions.itsStartTime
-                                 << " <= " << messageTableAlias << ".valid_to"
-                                 << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
-                                 << messageTableAlias << ".valid_from))";
-          emptyOrOr = " OR ";
-        }
-
-        timeRangeTypes.clear();
-        timeRangeTypes.push_back(MessageValidTimeRange);
-        timeRangeTypes.push_back(MessageValidTimeRangeLatest);
-
-        messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
-
-        if (!messageTypeIn.empty())
-        {
-          fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND "
-                                 << "((" << queryOptions.itsTimeOptions.itsStartTime
-                                 << " <= " << messageTableAlias << ".valid_to"
-                                 << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
-                                 << messageTableAlias << ".message_time) OR (" << messageTableAlias
-                                 << ".valid_from IS NULL AND " << messageTableAlias
-                                 << ".valid_to IS NULL"
-                                 << " AND "
-                                 << "(" << queryOptions.itsTimeOptions.itsStartTime << " <= ("
-                                 << messageTableAlias << ".message_time + "
-                                 << messageValidityTableAlias << ".validityhours)"
-                                 << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
-                                 << messageTableAlias << ".message_time))))";
-          emptyOrOr = " OR ";
-        }
-
-        messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, MessageTimeRange);
-
-        if (!messageTypeIn.empty())
-        {
-          fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND "
-                                 << "(" << queryOptions.itsTimeOptions.itsStartTime << " <= ("
-                                 << messageTableAlias << ".message_time + "
-                                 << messageValidityTableAlias << ".validityhours)"
-                                 << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
-                                 << messageTableAlias << ".message_time))";
-          emptyOrOr = " OR ";
-        }
-
-        // For MessageTimeRangeLatest restriction querying 'messagetimerangelatest_messages' for the
-        // id's of the latest valid messages
-        // having message_time earlier than starttime in addition to all messages having starttime
-        // <=
-        // message_time < endtime
-        //
-        // Note: Even through 'messagetimerangelatest_messages' contains message id's only for
-        // MessageTimeRangeLatest types, type restriction
-        //		 must be combined with IN clause below; otherwise query throughput
-        // drastically drops with longer time ranges
-        //		 (query planner is somehow fooled by the query)
-
-        messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, MessageTimeRangeLatest);
-
-        if (!messageTypeIn.empty())
-        {
-          fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND ("
-                                 << messageTableAlias << ".message_id IN (SELECT message_id FROM "
-                                 << messageTimeRangeLatestMessagesTableName << ")))";
-          emptyOrOr = " OR ";
-        }
-
-        timeRangeTypes.clear();
-        timeRangeTypes.push_back(CreationValidTimeRange);
-        timeRangeTypes.push_back(CreationValidTimeRangeLatest);
-
-        messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
-
-        if (!messageTypeIn.empty())
-          fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND "
-                                 << "(" << queryOptions.itsTimeOptions.itsStartTime
-                                 << " <= " << messageTableAlias << ".valid_to"
-                                 << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
-                                 << messageTableAlias << ".created))";
-
-        fromWhereOrderByClause << ")";
-      }
-      else
-      {
-        // Querying messages created within time range.
-        //
-        // Note: User given time range is taken as a half open range where start <= time < end
-        //
-        // AND me.statation_id IN (StationIdList)
-        // AND mt.type IN (MessageTypeList) ]
-        // AND me.message_time >= starttime AND me.message_time < endtime
-        //
-        if (!timeRangeColumn)
-          throw SmartMet::Spine::Exception(
-              BCP, "buildMessageQueryFromWhereOrderByClause(): internal: time column is NULL");
-
-        buildMessageQueryWhereStationIdInClause(stationIdList, fromWhereOrderByClause);
-        string messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, list<TimeRangeType>());
-
-        fromWhereOrderByClause << " AND " << messageTypeIn << " AND " << messageTableAlias << "."
-                               << timeRangeColumn->getTableColumnName()
-                               << " >= " << queryOptions.itsTimeOptions.itsStartTime << " AND "
-                               << messageTableAlias << "." << timeRangeColumn->getTableColumnName()
-                               << " < " << queryOptions.itsTimeOptions.itsEndTime;
-
-        if (queryOptions.itsFilterMETARs && config.getFilterFIMETARxxx() &&
-            (messageTypeIn.find("'METAR") != string::npos))
-        {
-          // AND (
-          //      (st.country_code != 'FI' OR mt.type != 'METAR' OR me.message LIKE 'METAR%')
-          //      [ OR st.icao_code IN (ExcludedIcaoList) ]
-          //     )
-
-          fromWhereOrderByClause << " AND ((" << stationTableAlias << ".country_code != 'FI' OR "
-                                 << messageTypeTableAlias << ".type != 'METAR' OR "
-                                 << messageTableAlias << ".message LIKE 'METAR%')";
-
-          auto const& filterFIMETARxxxExcludeIcaos = config.getFilterFIMETARxxxExcludeIcaos();
-
-          if (!filterFIMETARxxxExcludeIcaos.empty())
-            fromWhereOrderByClause << " OR st.icao_code IN ("
-                                   << getStringList(filterFIMETARxxxExcludeIcaos) << ")";
-
-          fromWhereOrderByClause << ")";
-        }
-      }
-    }
-    else
-    {
-      // Message restriction made by join to latest_messages.message_id
-    }
-
-    // ORDER BY { st.icao_code | rs.position } [,me.message] [,me.message_id]
-
-    if (!queryOptions.itsLocationOptions.itsWKTs.isRoute)
-      fromWhereOrderByClause << " ORDER BY " << stationTableAlias << "." << stationIcaoTableColumn;
-    else
-      fromWhereOrderByClause << " ORDER BY " << requestStationsTableAlias << "."
-                             << requestStationsPositionColumn;
-
-    if (!distinct)
-    {
-      if (queryOptions.itsDistinctMessages)
-        // Using message for ordering too (needed to check/skip duplicates)
-        //
-        fromWhereOrderByClause << "," << messageTableAlias << "." << messageTableColumn;
-
-      // Using message id for ordering too (needed to ensure regression tests can succeed)
-
-      fromWhereOrderByClause << "," << messageTableAlias << "." << messageIdTableColumn;
-    }
-
-    // [ LIMIT maxMessageRows ]
-
-    if (maxMessageRows > 0)
-      fromWhereOrderByClause << " LIMIT " << maxMessageRows + 1;
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
-
-// ----------------------------------------------------------------------
-/*!
- * \brief Build from, where and order by clause with given message types,
- *		  message tables and time range for querying rejected messages
- */
-// ----------------------------------------------------------------------
-
-void buildRejectedMessageQueryFromWhereOrderByClause(int maxMessageRows,
-                                                     const QueryOptions& queryOptions,
-                                                     const TableMap& tableMap,
-                                                     ostringstream& fromWhereOrderByClause)
-{
-  try
-  {
-    // 'avidb_rejected_messages' table is always joined into the query
-    //
-    // Join to 'avidb_message_routes' is always LEFT JOIN.
-    // Join to 'avidb_message_types' is LEFT JOIN (no message type restriction) or by WHERE
-    // condition
-    // (with message type restriction)
-    //
-    // FROM avidb_rejected_messages me
-    //		[LEFT JOIN avidb_message_routes mr ON (me.route_id = mr.route_id) ]
-    //		[LEFT JOIN avidb_message_types mt ON (me.type_id = mt.type_id) |
-    //,avidb_message_types
-    // mt
-    // WHERE me.type_id = mt.type_id ]
-
-    fromWhereOrderByClause << " FROM " << rejectedMessageTableName << " "
-                           << rejectedMessageTableAlias;
-
-    // First generate LEFT JOIN(s) if any
-
-    for (auto const& join : tableMap)
-      if (join.second.leftOuter && (!join.second.itsJoin.empty()))
-        fromWhereOrderByClause << " LEFT JOIN " << join.first << " " << join.second.itsAlias
-                               << " ON " << join.second.itsJoin;
-
-    // Then other FROM tables (avidb_message_types) if any
-
-    for (auto const& from : tableMap)
-      if ((from.first != rejectedMessageTableName) && (!from.second.leftOuter) &&
-          ((!from.second.itsSelectedColumns.empty()) || (!from.second.itsJoin.empty())))
-        fromWhereOrderByClause << "," << from.first << " " << from.second.itsAlias;
-
-    // Then WHERE join condition(s) if any;
-    //
-    // [ WHERE me.type_id = mt.type_id ]
-
-    size_t n = 0;
-
-    for (auto const& where : tableMap)
-    {
-      if ((!where.second.leftOuter) && (!where.second.itsJoin.empty()))
-      {
-        fromWhereOrderByClause << ((n == 0) ? " WHERE " : " AND ") << where.second.itsJoin;
-        n++;
-      }
-    }
-
-    // [ WHERE|AND mt.type IN (messageTypeList) ]
-
-    string whereOrAnd((n == 0) ? " WHERE " : " AND ");
-
-    if (!queryOptions.itsMessageTypes.empty())
-    {
-      string messageTypeIn = whereOrAnd + "UPPER(" + messageTypeTableAlias + ".type) IN ('";
-      n = 0;
-
-      for (auto const& messageType : queryOptions.itsMessageTypes)
-      {
-        fromWhereOrderByClause << ((n == 0) ? messageTypeIn : "','")
-                               << Fmi::ascii_toupper_copy(messageType);
-        n++;
-      }
-
-      fromWhereOrderByClause << "')";
-
-      whereOrAnd = " AND ";
-    }
-
-    // AND (me.created >= starttime AND me.created < endtime)
-
-    fromWhereOrderByClause << whereOrAnd << "(" << rejectedMessageTableAlias
-                           << ".created >= " << queryOptions.itsTimeOptions.itsStartTime << " AND "
-                           << rejectedMessageTableAlias << ".created < "
-                           << queryOptions.itsTimeOptions.itsEndTime << ")";
-
-    // ORDER BY me.icao_code,me.created
-
-    fromWhereOrderByClause << " ORDER BY " << rejectedMessageTableAlias << "."
-                           << rejectedMessageIcaoTableColumn << "," << rejectedMessageTableAlias
-                           << ".created";
-
-    // [ LIMIT maxMessageRows ]
-
-    if (maxMessageRows > 0)
-      fromWhereOrderByClause << " LIMIT " << maxMessageRows + 1;
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
-  }
-}
 }  // anonymous namespace
 
 // ----------------------------------------------------------------------
@@ -2252,7 +726,7 @@ void Engine::queryStationsWithCoordinates(const Connection& connection,
 
     ostringstream fromWhereClause;
 
-    buildStationQueryFromWhereClause(locationOptions, messageTypes, fromWhereClause);
+    BuildStationQuery::fromWhereClause(locationOptions, messageTypes, fromWhereClause);
 
     // Add 'SELECT FROM (...)' query level(s) to apply DISTINCT ON (station_id) and max # of nearest
     // stations
@@ -2301,7 +775,7 @@ void Engine::queryStationsWithIds(const Connection& connection,
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause(stationIdList, whereClause);
+    BuildStationQuery::whereClause(stationIdList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -2332,7 +806,7 @@ void Engine::queryStationsWithIcaos(const Connection& connection,
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause("UPPER(icao_code)", false, icaoList, whereClause);
+    BuildStationQuery::whereClause("UPPER(icao_code)", false, icaoList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -2363,7 +837,7 @@ void Engine::queryStationsWithCountries(const Connection& connection,
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause("UPPER(country_code)", false, countryList, whereClause);
+    BuildStationQuery::whereClause("UPPER(country_code)", false, countryList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -2394,7 +868,7 @@ void Engine::queryStationsWithPlaces(const Connection& connection,
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause("UPPER(BTRIM(name))", true, placeIdList, whereClause);
+    BuildStationQuery::whereClause("UPPER(BTRIM(name))", true, placeIdList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -2425,7 +899,7 @@ void Engine::queryStationsWithWKTs(const Connection& connection,
 
     ostringstream fromWhereOrderByClause;
 
-    buildStationQueryFromWhereOrderByClause(locationOptions, fromWhereOrderByClause);
+    BuildStationQuery::fromWhereOrderByClause(locationOptions, fromWhereOrderByClause);
 
     executeQuery<StationQueryData>(
         connection, selectClause + fromWhereOrderByClause.str(), debug, stationQueryData);
@@ -2454,7 +928,7 @@ void Engine::queryStationsWithBBoxes(const Connection& connection,
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause(
+    BuildStationQuery::whereClause(
         locationOptions.itsBBoxes, locationOptions.itsMaxDistance, whereClause);
 
     executeQuery<StationQueryData>(connection,
@@ -3185,8 +1659,8 @@ StationQueryData Engine::queryMessages(const Connection& connection,
       // Build 'request_stations' table ('WITH table AS ...') for input station id's',
       // containing 'position' column for sorting the stations to route order
       //
-      withClause = buildRequestStationsWithClause(stationIdList,
-                                                  queryOptions.itsLocationOptions.itsWKTs.isRoute);
+      withClause = BuildRequestStations::withClause(
+          stationIdList, queryOptions.itsLocationOptions.itsWKTs.isRoute);
 
       // Add 'request_stations' into tablemap for joining into main query
 
@@ -3217,19 +1691,19 @@ StationQueryData Engine::queryMessages(const Connection& connection,
 
       if (queryOptions.itsTimeOptions.itsObservationTime.empty())
         recordSetWithClause =
-            buildRecordSetWithClause(false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
-                                     stationIdList,
-                                     itsConfig->getRecordSetStartTimeOffsetHours(),
-                                     itsConfig->getRecordSetEndTimeOffsetHours(),
-                                     queryOptions.itsTimeOptions.itsStartTime,
-                                     queryOptions.itsTimeOptions.itsEndTime);
+            BuildRecordSet::withClause(false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
+                                       stationIdList,
+                                       itsConfig->getRecordSetStartTimeOffsetHours(),
+                                       itsConfig->getRecordSetEndTimeOffsetHours(),
+                                       queryOptions.itsTimeOptions.itsStartTime,
+                                       queryOptions.itsTimeOptions.itsEndTime);
       else
         recordSetWithClause =
-            buildRecordSetWithClause(false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
-                                     stationIdList,
-                                     itsConfig->getRecordSetStartTimeOffsetHours(),
-                                     itsConfig->getRecordSetEndTimeOffsetHours(),
-                                     queryOptions.itsTimeOptions.itsObservationTime);
+            BuildRecordSet::withClause(false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
+                                       stationIdList,
+                                       itsConfig->getRecordSetStartTimeOffsetHours(),
+                                       itsConfig->getRecordSetEndTimeOffsetHours(),
+                                       queryOptions.itsTimeOptions.itsObservationTime);
 
       withClause += ((withClause.empty() ? "WITH " : ",") + recordSetWithClause);
 
@@ -3237,7 +1711,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
       // validity length for message types having
       // MessageValidTimeRange[Latest] or MessageTimeRange[Latest] restriction
 
-      string messageValidityWithClause = buildMessageTypeValidityWithClause(
+      string messageValidityWithClause = BuildMessageType::validityWithClause(
           queryOptions.itsMessageTypes, itsConfig->getMessageTypes());
 
       if (!messageValidityWithClause.empty())
@@ -3259,7 +1733,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
           timeRangeTypes.push_back(MessageValidTimeRangeLatest);
           timeRangeTypes.push_back(MessageTimeRange);
 
-          string noMessageValidityTypesIn = buildMessageTypeInClause(
+          string noMessageValidityTypesIn = BuildMessageType::inClause(
               queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), timeRangeTypes);
 
           if (!noMessageValidityTypesIn.empty())
@@ -3279,7 +1753,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
             timeRangeTypes.pop_back();  //
             timeRangeTypes.pop_back();  //
 
-            noMessageValidityTypesIn = buildMessageTypeInClause(
+            noMessageValidityTypesIn = BuildMessageType::inClause(
                 queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), timeRangeTypes);
 
             table.leftOuter = (!noMessageValidityTypesIn.empty());
@@ -3305,7 +1779,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
       {
         // Build WITH clause for 'latest_messages' table
         //
-        withClause += ("," + buildLatestMessagesWithClause(
+        withClause += ("," + BuildLatestMessages::withClause(
                                  queryOptions.itsMessageTypes,
                                  itsConfig->getMessageTypes(),
                                  queryOptions.itsTimeOptions.itsObservationTime,
@@ -3321,7 +1795,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
         table.subQuery = true;
       }
       else
-        withClause += buildMessageTimeRangeMessagesWithClause(
+        withClause += BuildMessageTimeRangeMessages::withClause(
             queryOptions.itsMessageTypes,
             itsConfig->getMessageTypes(),
             queryOptions.itsTimeOptions.itsStartTime,
@@ -3355,7 +1829,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
         // Ensure station table is joined into main query for METAR filtering
         // (for nonroute query it's joined anyways for ordering the rows by icao code)
         //
-        string messageTypeIn = buildMessageTypeInClause(
+        string messageTypeIn = BuildMessageType::inClause(
             queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), list<TimeRangeType>());
 
         if (messageTypeIn.find("'METAR") != string::npos)
@@ -3396,14 +1870,14 @@ StationQueryData Engine::queryMessages(const Connection& connection,
 
     ostringstream fromWhereOrderByClause;
 
-    buildMessageQueryFromWhereOrderByClause(maxMessageRows,
-                                            stationIdList,
-                                            queryOptions,
-                                            tableMap,
-                                            *itsConfig,
-                                            timeRangeColumn,
-                                            distinct,
-                                            fromWhereOrderByClause);
+    BuildMessageQuery::fromWhereOrderByClause(maxMessageRows,
+                                              stationIdList,
+                                              queryOptions,
+                                              tableMap,
+                                              *itsConfig,
+                                              timeRangeColumn,
+                                              distinct,
+                                              fromWhereOrderByClause);
 
     executeQuery<StationQueryData>(connection,
                                    withClause + selectClause + fromWhereOrderByClause.str(),
@@ -3638,7 +2112,7 @@ QueryData Engine::queryRejectedMessages(const QueryOptions& queryOptions) const
 
     ostringstream fromWhereOrderByClause;
 
-    buildRejectedMessageQueryFromWhereOrderByClause(
+    BuildRejectedMessageQuery::fromWhereOrderByClause(
         maxMessageRows, queryOptions, tableMap, fromWhereOrderByClause);
 
     executeQuery<QueryData>(connection,

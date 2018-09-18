@@ -1,7 +1,9 @@
 #pragma once
 
 #include "ColumnList.h"
+#include "Table.h"
 
+#include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <string>
 
@@ -60,6 +62,8 @@ const char* const dfBearing = "DEGREES(ST_Azimuth(geom,ST_SetSRID(coordinates.co
 
 // Some table/column etc. names/joins
 
+const char* const messageQueryColumn = "message";
+
 const char* const stationTableName = "avidb_stations";
 const char* const stationTableAlias = "st";
 const char* const stationTableJoin = "st.station_id = me.station_id";
@@ -95,6 +99,8 @@ const char* const messageValidityTableName = "message_validity";
 const char* const messageValidityTableAlias = "mv";
 const char* const messageValidityTableJoin = "mv.type = mt.type";
 const char* const messageTimeRangeLatestMessagesTableName = "messagetimerangelatest_messages";
+
+const char* const stationIdQueryColumn = "stationid";
 
 // Table/query column mapping
 
