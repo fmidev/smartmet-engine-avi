@@ -27,10 +27,6 @@ namespace Engine
 {
 namespace Avi
 {
-namespace
-{
-}  // anonymous namespace
-
 // ----------------------------------------------------------------------
 /*!
  * \brief The only permitted constructor requires a configfile
