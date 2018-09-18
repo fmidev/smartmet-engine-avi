@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include "MessageType.h"
+#include "TimeRangeType.h"
+
 #include <spine/ConfigBase.h>
 #include <list>
 
@@ -11,71 +14,6 @@ namespace Engine
 {
 namespace Avi
 {
-typedef enum
-{
-  NullTimeRange = 0,
-  ValidTimeRange,
-  ValidTimeRangeLatest,
-  MessageValidTimeRange,
-  MessageValidTimeRangeLatest,  // e.g. TAF; if valid from/to times are NULL (NIL messages), query
-                                // like MessageTimeRange
-  MessageTimeRange,
-  MessageTimeRangeLatest,
-  CreationValidTimeRange,
-  CreationValidTimeRangeLatest
-} TimeRangeType;
-
-class MessageType
-{
- public:
-  MessageType()
-  {
-    itsTimeRangeType = NullTimeRange;
-    itsValidityHours = 0;
-    itsLatestMessageOnly = false;
-  }
-
-  bool operator==(const std::string &theMessageType) const
-  {
-    return (std::find(itsTypes.begin(), itsTypes.end(), theMessageType) != itsTypes.end());
-  }
-
-  void addType(const std::string &theType) { itsTypes.push_back(theType); }
-  void setTimeRangeType(TimeRangeType theTimeRangeType) { itsTimeRangeType = theTimeRangeType; }
-  void setValidityHours(unsigned int theValidityHours) { itsValidityHours = theValidityHours; }
-  void setLatestMessageOnly(bool theLatestMessageOnly)
-  {
-    itsLatestMessageOnly = theLatestMessageOnly;
-  }
-  void addMessirPattern(const std::string &theMessirPattern)
-  {
-    itsMessirPatterns.push_back(theMessirPattern);
-  }
-
-  const std::list<std::string> &getMessageTypes() const { return itsTypes; }
-  TimeRangeType getTimeRangeType() const { return itsTimeRangeType; }
-  bool hasValidityHours() const
-  {
-    return ((itsTimeRangeType == MessageValidTimeRange) ||
-            (itsTimeRangeType == MessageValidTimeRangeLatest) ||
-            (itsTimeRangeType == MessageTimeRange) || (itsTimeRangeType == MessageTimeRangeLatest));
-  }
-  unsigned int getValidityHours() const { return itsValidityHours; }
-  bool getLatestMessageOnly() const { return itsLatestMessageOnly; }
-  const std::list<std::string> &getMessirPatterns() const { return itsMessirPatterns; }
-
- private:
-  std::list<std::string> itsTypes;
-  TimeRangeType itsTimeRangeType;
-  unsigned int itsValidityHours;
-  bool itsLatestMessageOnly;
-  std::list<std::string> itsMessirPatterns;  // Querying latest messages grouped additionally by
-                                             // messir_heading (e.g. GAFOR; FBFI41..., FBFI42...,
-                                             // FBFI43...)
-};
-
-typedef std::list<MessageType> MessageTypes;
-
 class Config : public SmartMet::Spine::ConfigBase
 {
  public:
