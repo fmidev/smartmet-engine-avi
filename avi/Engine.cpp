@@ -89,7 +89,7 @@ const char* rejectedMessageTableName = "avidb_rejected_messages";
 const char* rejectedMessageTableAlias = messageTableAlias;
 const char* rejectedMessageTypeTableJoin = messageTypeTableJoin;
 const char* rejectedMessageRouteTableJoin = messageRouteTableJoin;
-const char* latestMessagesTableJoin = "me.message_id IN (SELECT message_id FROM latest_messages)";
+const char* latestMessagesTableJoin = "me.message_id IN (SELECT latest_message_id FROM latest_messages)";
 const char* requestStationsTableAlias = "rs";
 const char* requestStationsPositionColumn = "position";
 const char* requestStationsTableJoin = "rs.station_id = me.station_id";
@@ -1086,6 +1086,10 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 
     ostringstream withClause;
     string unionOrEmpty = "";
+    const string latestMessageIdQueryExpr =
+        "DISTINCT first_value(me.message_id) OVER (PARTITION BY me.station_id,";
+    const string latestMessageIdOrderByExpr =
+        " ORDER BY me.message_time DESC,me.created DESC)";
 
     withClause << latestMessagesTable.itsName << " AS (";
 
@@ -1105,14 +1109,14 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       string messirHeadingGroupByExpr =
           buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, ValidTimeRangeLatest);
 
-      withClause << "SELECT MAX(message_id) AS message_id FROM record_set " << messageTableAlias
-                 << ",avidb_message_types mt"
+      withClause << "SELECT " << latestMessageIdQueryExpr
+                 << messageTypeGroupByExpr << messirHeadingGroupByExpr
+                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
                  << observationTime << " BETWEEN " << messageTableAlias << ".valid_from AND "
                  << messageTableAlias << ".valid_to"
-                 << " AND " << observationTime << " >= " << messageTableAlias << ".created"
-                 << " GROUP BY " << messageTableAlias << ".station_id," << messageTypeGroupByExpr
-                 << messirHeadingGroupByExpr;
+                 << " AND " << observationTime << " >= " << messageTableAlias << ".created";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1125,8 +1129,10 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       string messirHeadingGroupByExpr =
           buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
 
-      withClause << unionOrEmpty << "SELECT MAX(message_id) AS message_id FROM record_set "
-                 << messageTableAlias << ",avidb_message_types mt"
+      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
+                 << "mt.type_id" << messirHeadingGroupByExpr
+                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND (("
                  << observationTime << " BETWEEN " << messageTableAlias << ".message_time AND "
@@ -1135,9 +1141,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                  << observationTime << " BETWEEN " << messageTableAlias << ".message_time AND "
                  << messageTableAlias << ".message_time + " << messageValidityTableAlias
                  << ".validityhours)) AND " << observationTime << " >= " << messageTableAlias
-                 << ".created"
-                 << " GROUP BY " << messageTableAlias << ".station_id,mt.type_id"
-                 << messirHeadingGroupByExpr;
+                 << ".created";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1153,8 +1157,10 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
           buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
       string whereOrAnd = " WHERE ";
 
-      withClause << unionOrEmpty << "SELECT MAX(message_id) AS message_id FROM record_set "
-                 << messageTableAlias << ",avidb_message_types mt"
+      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
+                 << messageTypeGroupByExpr << messirHeadingGroupByExpr
+                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias;
 
       if (filterFIMETARxxx && (messageTypeIn.find("'METAR") != string::npos))
@@ -1176,9 +1182,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                  << messageValidityTableJoin << " AND " << observationTime << " BETWEEN "
                  << messageTableAlias << ".message_time AND " << messageTableAlias
                  << ".message_time + " << messageValidityTableAlias << ".validityhours"
-                 << " AND " << observationTime << " >= " << messageTableAlias << ".created"
-                 << " GROUP BY " << messageTableAlias << ".station_id," << messageTypeGroupByExpr
-                 << messirHeadingGroupByExpr;
+                 << " AND " << observationTime << " >= " << messageTableAlias << ".created";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1191,12 +1195,13 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       string messirHeadingGroupByExpr = buildMessirHeadingGroupByExpr(
           messageTypes, knownMessageTypes, CreationValidTimeRangeLatest);
 
-      withClause << unionOrEmpty << "SELECT MAX(message_id) AS message_id FROM record_set "
-                 << messageTableAlias << ",avidb_message_types mt"
+      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
+                 << "mt.type_id" << messirHeadingGroupByExpr
+                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
                  << observationTime << " BETWEEN " << messageTableAlias << ".created AND "
-                 << messageTableAlias << ".valid_to"
-                 << " GROUP BY " << messageTableAlias << ".station_id" << messirHeadingGroupByExpr;
+                 << messageTableAlias << ".valid_to";
 
       unionOrEmpty = " UNION ALL ";
     }
