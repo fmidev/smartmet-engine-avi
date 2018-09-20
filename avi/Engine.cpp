@@ -304,6 +304,17 @@ void buildStationQueryWhereClause(const StationIdList& stationIdList, ostringstr
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Escape input literal (icao code, place (station name), country code etc)
+ */
+// ----------------------------------------------------------------------
+
+string escapeLiteral(const string& literal)
+{
+  return boost::replace_all_copy(literal, "'", "''");
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Build where clause with given icao codes or places (station names) for querying stations
  */
 // ----------------------------------------------------------------------
@@ -326,7 +337,7 @@ void buildStationQueryWhereClause(const string& columnExpression,
     {
       if (quoteLiteral)
         whereClause << ((n == 0) ? ("quote_literal(" + columnExpression + ") IN (") : ",")
-                    << "UPPER(quote_literal('" << str << "'))";
+                    << "UPPER(quote_literal('" << escapeLiteral(str) << "'))";
       else
         whereClause << ((n == 0) ? (columnExpression + " IN (") : ",") << "UPPER('" << str << "')";
 
@@ -2875,7 +2886,7 @@ void Engine::validateIcaos(const Connection& connection,
       selectFromWhereClause << ((n == 0)
                                     ? "SELECT request_icaos.icao_code FROM (VALUES (quote_literal('"
                                     : "')),(quote_literal('")
-                            << Fmi::ascii_toupper_copy(icao);
+                            << Fmi::ascii_toupper_copy(escapeLiteral(icao));
       n++;
     }
 
@@ -2929,7 +2940,7 @@ void Engine::validateCountries(const Connection& connection,
           << ((n == 0)
                   ? "WITH request_countries AS (SELECT country_code FROM (VALUES (quote_literal('"
                   : "')),(quote_literal('")
-          << Fmi::ascii_toupper_copy(country);
+          << Fmi::ascii_toupper_copy(escapeLiteral(country));
       n++;
     }
 
@@ -2997,7 +3008,7 @@ void Engine::validateWKTs(const Connection& connection,
 
     for (auto const& wkt : locationOptions.itsWKTs.itsWKTs)
     {
-      selectFromWhereClause << ((n > 0) ? "),(quote_literal('" : "") << wkt << "')," << n;
+      selectFromWhereClause << ((n > 0) ? "),(quote_literal('" : "") << escapeLiteral(wkt) << "')," << n;
       n++;
     }
 
