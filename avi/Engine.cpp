@@ -1100,7 +1100,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
     const string latestMessageIdQueryExpr =
         "DISTINCT first_value(me.message_id) OVER (PARTITION BY me.station_id,";
     const string latestMessageIdOrderByExpr =
-        " ORDER BY me.message_time DESC,me.created DESC)";
+        " ORDER BY me.message_time DESC,me.created DESC) ";
 
     withClause << latestMessagesTable.itsName << " AS (";
 
@@ -1138,7 +1138,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
     if (!messageTypeIn.empty())
     {
       string messirHeadingGroupByExpr =
-          buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
+          buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageValidTimeRangeLatest);
 
       withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
                  << "mt.type_id" << messirHeadingGroupByExpr
