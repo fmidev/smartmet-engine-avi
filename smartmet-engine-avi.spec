@@ -4,7 +4,7 @@
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
 Version: 18.9.24
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-avi
@@ -62,6 +62,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Mon Sep 24 2018 Pertti Kinnia <pertti.kinnia@fmi.fi> - 18.9.24-2.fmi
+- Restored 'message_id' column name/alias for latest_messages CTE
+
 * Mon Sep 24 2018 Pertti Kinnia <pertti.kinnia@fmi.fi> - 18.9.24-1.fmi
 - Returning latest message by latest message time and creation time instead of max message_id (BS-1286)
 - Escaping input literals (icao code, place (station name), country code etc) (BS-1352)
