@@ -476,7 +476,7 @@ BOOST_AUTO_TEST_CASE(
 }
 
 BOOST_AUTO_TEST_CASE(
-    engine_queryStations_with_locationoption_queryoption_invalid_place_sql_injection_fail,
+    engine_queryStations_with_locationoption_queryoption_invalid_place_noresult,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
   BOOST_CHECK(engine != nullptr);
@@ -484,11 +484,12 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters.push_back("stationid");
 
   queryOptions.itsLocationOptions.itsPlaces.push_back("'");
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  StationQueryData stationQueryData = engine->queryStations(queryOptions);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(
-    engine_queryStations_with_locationoption_queryoption_invalid_place_sql_injection_success,
+    engine_queryStations_with_locationoption_queryoption_invalid_place2_noresult,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
   BOOST_CHECK(engine != nullptr);
@@ -497,7 +498,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsLocationOptions.itsPlaces.push_back(
       "Kajaani lentoasema')), UPPER(quote_literal('Pori lentoasema");
   StationQueryData stationQueryData = engine->queryStations(queryOptions);
-  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
+  BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(
