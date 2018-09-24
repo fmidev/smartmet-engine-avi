@@ -89,7 +89,7 @@ const char* rejectedMessageTableName = "avidb_rejected_messages";
 const char* rejectedMessageTableAlias = messageTableAlias;
 const char* rejectedMessageTypeTableJoin = messageTypeTableJoin;
 const char* rejectedMessageRouteTableJoin = messageRouteTableJoin;
-const char* latestMessagesTableJoin = "me.message_id IN (SELECT message_id FROM latest_messages)";
+const char* latestMessagesTableJoin = "me.message_id IN (SELECT latest_message_id FROM latest_messages)";
 const char* requestStationsTableAlias = "rs";
 const char* requestStationsPositionColumn = "position";
 const char* requestStationsTableJoin = "rs.station_id = me.station_id";
@@ -304,6 +304,17 @@ void buildStationQueryWhereClause(const StationIdList& stationIdList, ostringstr
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Escape input literal (icao code, place (station name), country code etc)
+ */
+// ----------------------------------------------------------------------
+
+string escapeLiteral(const string& literal)
+{
+  return boost::replace_all_copy(literal, "'", "''");
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Build where clause with given icao codes or places (station names) for querying stations
  */
 // ----------------------------------------------------------------------
@@ -326,7 +337,7 @@ void buildStationQueryWhereClause(const string& columnExpression,
     {
       if (quoteLiteral)
         whereClause << ((n == 0) ? ("quote_literal(" + columnExpression + ") IN (") : ",")
-                    << "UPPER(quote_literal('" << str << "'))";
+                    << "UPPER(quote_literal('" << escapeLiteral(str) << "'))";
       else
         whereClause << ((n == 0) ? (columnExpression + " IN (") : ",") << "UPPER('" << str << "')";
 
@@ -1086,6 +1097,10 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 
     ostringstream withClause;
     string unionOrEmpty = "";
+    const string latestMessageIdQueryExpr =
+        "DISTINCT first_value(me.message_id) OVER (PARTITION BY me.station_id,";
+    const string latestMessageIdOrderByExpr =
+        " ORDER BY me.message_time DESC,me.created DESC)";
 
     withClause << latestMessagesTable.itsName << " AS (";
 
@@ -1105,14 +1120,14 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       string messirHeadingGroupByExpr =
           buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, ValidTimeRangeLatest);
 
-      withClause << "SELECT MAX(message_id) AS message_id FROM record_set " << messageTableAlias
-                 << ",avidb_message_types mt"
+      withClause << "SELECT " << latestMessageIdQueryExpr
+                 << messageTypeGroupByExpr << messirHeadingGroupByExpr
+                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
                  << observationTime << " BETWEEN " << messageTableAlias << ".valid_from AND "
                  << messageTableAlias << ".valid_to"
-                 << " AND " << observationTime << " >= " << messageTableAlias << ".created"
-                 << " GROUP BY " << messageTableAlias << ".station_id," << messageTypeGroupByExpr
-                 << messirHeadingGroupByExpr;
+                 << " AND " << observationTime << " >= " << messageTableAlias << ".created";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1125,8 +1140,10 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       string messirHeadingGroupByExpr =
           buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
 
-      withClause << unionOrEmpty << "SELECT MAX(message_id) AS message_id FROM record_set "
-                 << messageTableAlias << ",avidb_message_types mt"
+      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
+                 << "mt.type_id" << messirHeadingGroupByExpr
+                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND (("
                  << observationTime << " BETWEEN " << messageTableAlias << ".message_time AND "
@@ -1135,9 +1152,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                  << observationTime << " BETWEEN " << messageTableAlias << ".message_time AND "
                  << messageTableAlias << ".message_time + " << messageValidityTableAlias
                  << ".validityhours)) AND " << observationTime << " >= " << messageTableAlias
-                 << ".created"
-                 << " GROUP BY " << messageTableAlias << ".station_id,mt.type_id"
-                 << messirHeadingGroupByExpr;
+                 << ".created";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1153,8 +1168,10 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
           buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
       string whereOrAnd = " WHERE ";
 
-      withClause << unionOrEmpty << "SELECT MAX(message_id) AS message_id FROM record_set "
-                 << messageTableAlias << ",avidb_message_types mt"
+      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
+                 << messageTypeGroupByExpr << messirHeadingGroupByExpr
+                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias;
 
       if (filterFIMETARxxx && (messageTypeIn.find("'METAR") != string::npos))
@@ -1176,9 +1193,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                  << messageValidityTableJoin << " AND " << observationTime << " BETWEEN "
                  << messageTableAlias << ".message_time AND " << messageTableAlias
                  << ".message_time + " << messageValidityTableAlias << ".validityhours"
-                 << " AND " << observationTime << " >= " << messageTableAlias << ".created"
-                 << " GROUP BY " << messageTableAlias << ".station_id," << messageTypeGroupByExpr
-                 << messirHeadingGroupByExpr;
+                 << " AND " << observationTime << " >= " << messageTableAlias << ".created";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1191,12 +1206,13 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       string messirHeadingGroupByExpr = buildMessirHeadingGroupByExpr(
           messageTypes, knownMessageTypes, CreationValidTimeRangeLatest);
 
-      withClause << unionOrEmpty << "SELECT MAX(message_id) AS message_id FROM record_set "
-                 << messageTableAlias << ",avidb_message_types mt"
+      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
+                 << "mt.type_id" << messirHeadingGroupByExpr
+                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
                  << observationTime << " BETWEEN " << messageTableAlias << ".created AND "
-                 << messageTableAlias << ".valid_to"
-                 << " GROUP BY " << messageTableAlias << ".station_id" << messirHeadingGroupByExpr;
+                 << messageTableAlias << ".valid_to";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -2870,7 +2886,7 @@ void Engine::validateIcaos(const Connection& connection,
       selectFromWhereClause << ((n == 0)
                                     ? "SELECT request_icaos.icao_code FROM (VALUES (quote_literal('"
                                     : "')),(quote_literal('")
-                            << Fmi::ascii_toupper_copy(icao);
+                            << Fmi::ascii_toupper_copy(escapeLiteral(icao));
       n++;
     }
 
@@ -2924,7 +2940,7 @@ void Engine::validateCountries(const Connection& connection,
           << ((n == 0)
                   ? "WITH request_countries AS (SELECT country_code FROM (VALUES (quote_literal('"
                   : "')),(quote_literal('")
-          << Fmi::ascii_toupper_copy(country);
+          << Fmi::ascii_toupper_copy(escapeLiteral(country));
       n++;
     }
 
@@ -2992,7 +3008,7 @@ void Engine::validateWKTs(const Connection& connection,
 
     for (auto const& wkt : locationOptions.itsWKTs.itsWKTs)
     {
-      selectFromWhereClause << ((n > 0) ? "),(quote_literal('" : "") << wkt << "')," << n;
+      selectFromWhereClause << ((n > 0) ? "),(quote_literal('" : "") << escapeLiteral(wkt) << "')," << n;
       n++;
     }
 

@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 18.7.25
+Version: 18.9.24
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -18,12 +18,12 @@ BuildRequires: libconfig >= 1.4.9
 BuildRequires: libpqxx-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 18.7.23
-BuildRequires: smartmet-library-macgyver >= 18.7.25
+BuildRequires: smartmet-library-spine-devel >= 18.9.23
+BuildRequires: smartmet-library-macgyver >= 18.9.5
 Requires: boost-date-time
-Requires: smartmet-library-macgyver >= 18.7.25
+Requires: smartmet-library-macgyver >= 18.9.5
 Requires: libconfig >= 1.4.9
-Requires: smartmet-library-spine >= 18.7.23
+Requires: smartmet-library-spine >= 18.9.23
 Provides: %{SPECNAME}
 Obsoletes: smartmet-brainstorm-aviengine < 16.11.1
 Obsoletes: smartmet-brainstorm-aviengine-debuginfo < 16.11.1
@@ -62,6 +62,10 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Mon Sep 24 2018 Pertti Kinnia <pertti.kinnia@fmi.fi> - 18.9.24-1.fmi
+- Returning latest message by latest message time and creation time instead of max message_id (BS-1286)
+- Escaping input literals (icao code, place (station name), country code etc) (BS-1352)
+
 * Wed Jul 25 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.7.25-1.fmi
 - Prefer nullptr over NULL
 
