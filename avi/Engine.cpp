@@ -89,7 +89,7 @@ const char* rejectedMessageTableName = "avidb_rejected_messages";
 const char* rejectedMessageTableAlias = messageTableAlias;
 const char* rejectedMessageTypeTableJoin = messageTypeTableJoin;
 const char* rejectedMessageRouteTableJoin = messageRouteTableJoin;
-const char* latestMessagesTableJoin = "me.message_id IN (SELECT latest_message_id FROM latest_messages)";
+const char* latestMessagesTableJoin = "me.message_id IN (SELECT message_id FROM latest_messages)";
 const char* requestStationsTableAlias = "rs";
 const char* requestStationsPositionColumn = "position";
 const char* requestStationsTableJoin = "rs.station_id = me.station_id";
@@ -1122,7 +1122,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 
       withClause << "SELECT " << latestMessageIdQueryExpr
                  << messageTypeGroupByExpr << messirHeadingGroupByExpr
-                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
                  << observationTime << " BETWEEN " << messageTableAlias << ".valid_from AND "
@@ -1142,7 +1142,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 
       withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
                  << "mt.type_id" << messirHeadingGroupByExpr
-                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND (("
@@ -1170,7 +1170,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 
       withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
                  << messageTypeGroupByExpr << messirHeadingGroupByExpr
-                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias;
 
@@ -1208,7 +1208,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 
       withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
                  << "mt.type_id" << messirHeadingGroupByExpr
-                 << latestMessageIdOrderByExpr << "AS latest_message_id"
+                 << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
                  << observationTime << " BETWEEN " << messageTableAlias << ".created AND "
