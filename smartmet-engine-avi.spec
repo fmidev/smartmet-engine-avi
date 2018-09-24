@@ -65,6 +65,7 @@ make %{_smp_mflags}
 * Mon Sep 24 2018 Pertti Kinnia <pertti.kinnia@fmi.fi> - 18.9.24-1.fmi
 - Returning latest message by latest message time and creation time instead of max message_id (BS-1286)
 - Escaping input literals (icao code, place (station name), country code etc) (BS-1352)
+- Fixed messirheading grouping (type) for 'MessageValidTimeRangeLatest' message type (BS-1340)
 
 * Wed Jul 25 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.7.25-1.fmi
 - Prefer nullptr over NULL
