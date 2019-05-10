@@ -3,8 +3,8 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 18.9.24
-Release: 2%{?dist}.fmi
+Version: 19.5.10
+Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-avi
@@ -18,12 +18,12 @@ BuildRequires: libconfig >= 1.4.9
 BuildRequires: libpqxx-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 18.9.23
-BuildRequires: smartmet-library-macgyver >= 18.9.5
+BuildRequires: smartmet-library-spine-devel >= 19.5.8
+BuildRequires: smartmet-library-macgyver >= 19.4.23
 Requires: boost-date-time
-Requires: smartmet-library-macgyver >= 18.9.5
+Requires: smartmet-library-macgyver >= 19.4.23
 Requires: libconfig >= 1.4.9
-Requires: smartmet-library-spine >= 18.9.23
+Requires: smartmet-library-spine >= 19.5.8
 Provides: %{SPECNAME}
 Obsoletes: smartmet-brainstorm-aviengine < 16.11.1
 Obsoletes: smartmet-brainstorm-aviengine-debuginfo < 16.11.1
@@ -62,6 +62,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri May 10 2019 Pertti Kinnia <pertti.kinnia@fmi.fi> - 19.5.10-1.fmi
+- Ignoring IWXXM messages (BRAINSTORM-1582)
+
 * Mon Sep 24 2018 Pertti Kinnia <pertti.kinnia@fmi.fi> - 18.9.24-2.fmi
 - Restored 'message_id' column name/alias for latest_messages CTE
 
