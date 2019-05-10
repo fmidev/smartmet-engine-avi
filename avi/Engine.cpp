@@ -82,6 +82,9 @@ const char* messageTableAlias = "me";
 const char* messageTypeTableName = "avidb_message_types";
 const char* messageTypeTableAlias = "mt";
 const char* messageTypeTableJoin = "me.type_id = mt.type_id";
+const char* messageFormatTableName = "avidb_message_format";
+const char* messageFormatTableAlias = "mf";
+const char* messageFormatTableJoin = "me.format_id = mf.format_id AND mf.name = 'TAC'";
 const char* messageRouteTableName = "avidb_message_routes";
 const char* messageRouteTableAlias = "mr";
 const char* messageRouteTableJoin = "me.route_id = mr.route_id";
@@ -747,7 +750,8 @@ string buildRecordSetWithClause(bool routeQuery,
     withClause.clear();
 
     withClause << recordSetTableName << " AS (SELECT * FROM " << messageTableName << " "
-               << messageTableAlias << whereStationIdIn;
+               << messageTableAlias << "," << messageFormatTableName << " "
+               << messageFormatTableAlias << whereStationIdIn << " AND " << messageFormatTableJoin;
 
     const string& obsOrRangeEndTime =
         (rangeEndTimeOrEmpty.empty() ? obsOrRangeStartTime : rangeEndTimeOrEmpty);
@@ -3582,29 +3586,38 @@ StationQueryData Engine::queryMessages(const Connection& connection,
 
       tableMap[recordSetTableName] = recordSetTable;
     }
-    else if (queryOptions.itsLocationOptions.itsWKTs.isRoute)
+    else
     {
-      withClause += " ";
-
-      if (queryOptions.itsFilterMETARs && itsConfig->getFilterFIMETARxxx())
+      if (queryOptions.itsLocationOptions.itsWKTs.isRoute)
       {
-        // Ensure station table is joined into main query for METAR filtering
-        // (for nonroute query it's joined anyways for ordering the rows by icao code)
-        //
-        string messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), list<TimeRangeType>());
+        withClause += " ";
 
-        if (messageTypeIn.find("'METAR") != string::npos)
+        if (queryOptions.itsFilterMETARs && itsConfig->getFilterFIMETARxxx())
         {
-          auto& table = tableMap[stationTableName];
+          // Ensure station table is joined into main query for METAR filtering
+          // (for nonroute query it's joined anyways for ordering the rows by icao code)
+          //
+          string messageTypeIn = buildMessageTypeInClause(
+              queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), list<TimeRangeType>());
 
-          if (table.itsAlias.empty())
-            table.itsAlias = stationTableAlias;
+          if (messageTypeIn.find("'METAR") != string::npos)
+          {
+            auto& table = tableMap[stationTableName];
 
-          if (table.itsJoin.empty())
-            table.itsJoin = stationTableJoin;
+            if (table.itsAlias.empty())
+              table.itsAlias = stationTableAlias;
+
+            if (table.itsJoin.empty())
+              table.itsJoin = stationTableJoin;
+          }
         }
       }
+
+      // Filter by message format (currently 'TAC' only)
+
+      auto& table = tableMap[messageFormatTableName];
+      table.itsAlias = messageFormatTableAlias;
+      table.itsJoin = messageFormatTableJoin;
     }
 
     // For time range query ensure tablemap contains message_types table for joining into main
