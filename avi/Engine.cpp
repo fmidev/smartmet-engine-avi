@@ -1007,6 +1007,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                                      const MessageTypes& knownMessageTypes,
                                      const string& observationTime,
                                      bool filterFIMETARxxx,
+                                     bool distinct,
                                      const list<string>& filterFIMETARxxxExcludeIcaos)
 {
   try
@@ -1145,7 +1146,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
           buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageValidTimeRangeLatest);
 
       withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
-                 << "mt.type_id" << messirHeadingGroupByExpr
+                 << "mt.type_id" << (distinct ?  "" : ", me.route_id") << messirHeadingGroupByExpr
                  << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias
@@ -3550,6 +3551,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
                                  itsConfig->getMessageTypes(),
                                  queryOptions.itsTimeOptions.itsObservationTime,
                                  queryOptions.itsFilterMETARs && itsConfig->getFilterFIMETARxxx(),
+                                 queryOptions.itsDistinctMessages,
                                  itsConfig->getFilterFIMETARxxxExcludeIcaos()));
 
         // Add 'latest_messages' into tablemap
