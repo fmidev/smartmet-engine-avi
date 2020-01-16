@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 19.5.10
+Version: 20.1.16
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -62,6 +62,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Thu Jan 16 2020 Andris Pavēnis <andris.pavenis@fmi.fi> - 20.1.16-1.fmi
+- Return latest messages from all routes in case of distinct=0
+
 * Fri May 10 2019 Pertti Kinnia <pertti.kinnia@fmi.fi> - 19.5.10-1.fmi
 - Ignoring IWXXM messages (BRAINSTORM-1582)
 
