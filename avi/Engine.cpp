@@ -1007,6 +1007,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                                      const MessageTypes& knownMessageTypes,
                                      const string& observationTime,
                                      bool filterFIMETARxxx,
+                                     bool excludeFISPECI,
                                      bool distinct,
                                      const list<string>& filterFIMETARxxxExcludeIcaos)
 {
@@ -1179,17 +1180,30 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias;
 
-      if (filterFIMETARxxx && (messageTypeIn.find("'METAR") != string::npos))
+      bool filterMETARs = filterFIMETARxxx && (messageTypeIn.find("'METAR") != string::npos);
+      bool excludeSPECIs = excludeFISPECI && (messageTypeIn.find("'SPECI'") != string::npos);
+
+      if (filterMETARs || excludeSPECIs)
       {
         withClause << "," << stationTableName << " " << stationTableAlias << " WHERE "
-                   << stationTableJoin << " AND ((st.country_code != 'FI' OR mt.type != 'METAR' OR "
-                   << messageTableAlias << ".message LIKE 'METAR%')";
+                   << stationTableJoin << " AND (st.country_code != 'FI' OR (";
 
-        if (!filterFIMETARxxxExcludeIcaos.empty())
-          withClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos)
-                     << ")";
+        if (filterMETARs)
+        {
+          withClause << "((mt.type != 'METAR' OR "
+                     << messageTableAlias << ".message LIKE 'METAR%')";
 
-        withClause << ")";
+          if (!filterFIMETARxxxExcludeIcaos.empty())
+            withClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos)
+                       << ")";
+
+          withClause << ")";
+        }
+
+        if (excludeSPECIs)
+          withClause << (filterMETARs ? " AND " : "") << "mt.type != 'SPECI'";
+
+        withClause << "))";
 
         whereOrAnd = " AND ";
       }
@@ -1285,6 +1299,7 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
                                                const string& startTime,
                                                const string& endTime,
                                                bool filterFIMETARxxx,
+                                               bool excludeFISPECI,
                                                const list<string>& filterFIMETARxxxExcludeIcaos)
 {
   try
@@ -1329,28 +1344,42 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
     if (messageTypeIn.empty())
       return "";
 
-    ostringstream withClause;
+    ostringstream withClause,filterClause;
     string whereOrAnd = " WHERE ";
 
     withClause << "," << messageTimeRangeLatestMessagesTableName << " AS ("
                << "SELECT me.message_id "
                << "FROM record_set me,avidb_message_types mt";
 
-    if (filterFIMETARxxx && (messageTypeIn.find("'METAR") != string::npos))
+    bool filterMETARs = filterFIMETARxxx && (messageTypeIn.find("'METAR") != string::npos);
+    bool excludeSPECIs = excludeFISPECI && (messageTypeIn.find("'SPECI'") != string::npos);
+
+    if (filterMETARs || excludeSPECIs)
     {
-      withClause << "," << stationTableName << " " << stationTableAlias << " WHERE "
-                 << stationTableJoin << " AND ((st.country_code != 'FI' OR mt.type != 'METAR' OR "
-                 << messageTableAlias << ".message LIKE 'METAR%')";
+      filterClause << "," << stationTableName << " " << stationTableAlias << " WHERE "
+                   << stationTableJoin << " AND (st.country_code != 'FI' OR (";
 
-      if (!filterFIMETARxxxExcludeIcaos.empty())
-        withClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos) << ")";
+      if (filterMETARs)
+      {
+        filterClause << "((mt.type != 'METAR' OR "
+                     << messageTableAlias << ".message LIKE 'METAR%')";
 
-      withClause << ")";
+        if (!filterFIMETARxxxExcludeIcaos.empty())
+          filterClause << " OR st.icao_code IN ("
+                       << getStringList(filterFIMETARxxxExcludeIcaos) << ")";
+
+        filterClause << ")";
+      }
+
+      if (excludeSPECIs)
+        filterClause << (filterMETARs ? " AND " : "") << "mt.type != 'SPECI'";
+
+      filterClause << "))";
+
+      withClause << filterClause.str();
 
       whereOrAnd = " AND ";
     }
-    else
-      filterFIMETARxxx = false;
 
     withClause << whereOrAnd << "me.type_id = mt.type_id AND " << messageTypeIn
                << " AND me.message_time >= " << startTime << " AND me.message_time < " << endTime
@@ -1358,17 +1387,8 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
                << "SELECT MAX(message_id) AS message_id "
                << "FROM record_set me,avidb_message_types mt,message_validity mv";
 
-    if (filterFIMETARxxx)
-    {
-      withClause << "," << stationTableName << " " << stationTableAlias << " WHERE "
-                 << stationTableJoin << " AND ((st.country_code != 'FI' OR mt.type != 'METAR' OR "
-                 << messageTableAlias << ".message LIKE 'METAR%')";
-
-      if (!filterFIMETARxxxExcludeIcaos.empty())
-        withClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos) << ")";
-
-      withClause << ")";
-    }
+    if (filterMETARs || excludeSPECIs)
+      withClause << filterClause.str();
 
     withClause << whereOrAnd << "me.type_id = mt.type_id AND " << messageTypeIn
                << " AND mv.type = mt.type"
@@ -1612,25 +1632,47 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
                                << messageTableAlias << "." << timeRangeColumn->getTableColumnName()
                                << " < " << queryOptions.itsTimeOptions.itsEndTime;
 
-        if (queryOptions.itsFilterMETARs && config.getFilterFIMETARxxx() &&
-            (messageTypeIn.find("'METAR") != string::npos))
+        bool filterMETARs = (queryOptions.itsFilterMETARs && config.getFilterFIMETARxxx() &&
+                             (messageTypeIn.find("'METAR") != string::npos));
+        bool excludeSPECIs = (queryOptions.itsExcludeSPECIs &&
+                              (messageTypeIn.find("'SPECI'") != string::npos));
+
+        if (filterMETARs || excludeSPECIs)
         {
           // AND (
-          //      (st.country_code != 'FI' OR mt.type != 'METAR' OR me.message LIKE 'METAR%')
-          //      [ OR st.icao_code IN (ExcludedIcaoList) ]
+          //      st.country_code != 'FI' OR
+          //      (
+          //       [
+          //       (
+          //        (mt.type != 'METAR' OR me.message LIKE 'METAR%')
+          //        [ OR st.icao_code IN (ExcludedIcaoList) ]
+          //       )
+          //       ]
+          //       [ [ AND ] mt.type != 'SPECI' ]
+          //      )
           //     )
 
-          fromWhereOrderByClause << " AND ((" << stationTableAlias << ".country_code != 'FI' OR "
-                                 << messageTypeTableAlias << ".type != 'METAR' OR "
-                                 << messageTableAlias << ".message LIKE 'METAR%')";
+          fromWhereOrderByClause << " AND (" << stationTableAlias << ".country_code != 'FI' OR (";
 
-          auto const& filterFIMETARxxxExcludeIcaos = config.getFilterFIMETARxxxExcludeIcaos();
+          if (filterMETARs)
+          {
+            fromWhereOrderByClause << "((" << messageTypeTableAlias << ".type != 'METAR' OR "
+                                   << messageTableAlias << ".message LIKE 'METAR%')";
 
-          if (!filterFIMETARxxxExcludeIcaos.empty())
-            fromWhereOrderByClause << " OR st.icao_code IN ("
-                                   << getStringList(filterFIMETARxxxExcludeIcaos) << ")";
+            auto const& filterFIMETARxxxExcludeIcaos = config.getFilterFIMETARxxxExcludeIcaos();
 
-          fromWhereOrderByClause << ")";
+            if (!filterFIMETARxxxExcludeIcaos.empty())
+              fromWhereOrderByClause << " OR st.icao_code IN ("
+                                     << getStringList(filterFIMETARxxxExcludeIcaos) << ")";
+
+            fromWhereOrderByClause << ")";
+          }
+
+          if (excludeSPECIs)
+            fromWhereOrderByClause << (filterMETARs ? " AND " : "")
+                                   << messageTypeTableAlias << ".type != 'SPECI'";
+
+          fromWhereOrderByClause << "))";
         }
       }
     }
@@ -3443,6 +3485,9 @@ StationQueryData Engine::queryMessages(const Connection& connection,
     // is expected to be used for 'created within' query; the query is generated directly against
     // avidb_messages table
 
+    bool filterMETARs = queryOptions.itsFilterMETARs && itsConfig->getFilterFIMETARxxx();
+    bool excludeSPECIs = queryOptions.itsExcludeSPECIs;
+
     if (!queryOptions.itsTimeOptions.itsObservationTime.empty() ||
         queryOptions.itsTimeOptions.itsQueryValidRangeMessages)
     {
@@ -3550,7 +3595,8 @@ StationQueryData Engine::queryMessages(const Connection& connection,
                                  queryOptions.itsMessageTypes,
                                  itsConfig->getMessageTypes(),
                                  queryOptions.itsTimeOptions.itsObservationTime,
-                                 queryOptions.itsFilterMETARs && itsConfig->getFilterFIMETARxxx(),
+                                 filterMETARs,
+                                 excludeSPECIs,
                                  queryOptions.itsDistinctMessages,
                                  itsConfig->getFilterFIMETARxxxExcludeIcaos()));
 
@@ -3568,7 +3614,8 @@ StationQueryData Engine::queryMessages(const Connection& connection,
             itsConfig->getMessageTypes(),
             queryOptions.itsTimeOptions.itsStartTime,
             queryOptions.itsTimeOptions.itsEndTime,
-            queryOptions.itsFilterMETARs && itsConfig->getFilterFIMETARxxx(),
+            filterMETARs,
+            excludeSPECIs,
             itsConfig->getFilterFIMETARxxxExcludeIcaos());
 
       withClause += " ";
@@ -3594,15 +3641,19 @@ StationQueryData Engine::queryMessages(const Connection& connection,
       {
         withClause += " ";
 
-        if (queryOptions.itsFilterMETARs && itsConfig->getFilterFIMETARxxx())
+        if (filterMETARs || excludeSPECIs)
         {
           // Ensure station table is joined into main query for METAR filtering
+          // or exclusion of SPECIs
           // (for nonroute query it's joined anyways for ordering the rows by icao code)
           //
           string messageTypeIn = buildMessageTypeInClause(
               queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), list<TimeRangeType>());
 
-          if (messageTypeIn.find("'METAR") != string::npos)
+          if (
+              (filterMETARs && (messageTypeIn.find("'METAR") != string::npos)) ||
+              (excludeSPECIs && (messageTypeIn.find("'SPECI'") != string::npos))
+             )
           {
             auto& table = tableMap[stationTableName];
 

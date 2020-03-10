@@ -117,6 +117,7 @@ struct QueryOptions
         itsMaxMessageRows(-1),
         itsDistinctMessages(true),
         itsFilterMETARs(true),
+        itsExcludeSPECIs(false),
         itsDebug(false)
   {
   }
@@ -136,6 +137,7 @@ struct QueryOptions
 
   bool itsFilterMETARs;  // Whether to filter (finnish) METARs (LIKE 'METAR%', if enabled by
                          // engine's configuration) or not
+  bool itsExcludeSPECIs; // Whether to exclude (finnish) SPECIs (if enabled with request parameter)
 
   bool itsDebug;  // Whether to write generated sql queries to stderr or not
 };
