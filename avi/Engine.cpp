@@ -107,7 +107,7 @@ Column stationQueryColumns[] = {
     //
     // Table columns
     //
-    // Type		 Table column	   		 Query column
+    // Type, Table column, Query column
     //
     {Integer, "station_id", stationIdQueryColumn},
     {String, stationIcaoTableColumn, stationIcaoQueryColumn},
@@ -120,8 +120,7 @@ Column stationQueryColumns[] = {
     //
     // Derived columns
     //
-    // Type		 Derived column    Query column				   f(Table column)
-    // f(Table column)
+    // Type, Derived column, Query column, f(Table column), f(Table column)
     //
     {Double, dfLongitude, "longitude", derivedExpression, nullptr},
     {Double, dfLatitude, "latitude", derivedExpression, nullptr},
@@ -135,7 +134,7 @@ Column messageTypeQueryColumns[] = {
     //
     // Table columns
     //
-    // Type		 Table column	   Query column
+    // Type, Table column, Query column
     //
     {String, "type", "messagetype"},
     {String, "description", "messagetypedescription"},
@@ -146,7 +145,7 @@ Column messageRouteQueryColumns[] = {
     //
     // Table columns
     //
-    // Type		 Table column	   Query column
+    // Type, Table column, Query column
     //
     {String, "name", "route"},
     {String, "description", "routedescription"},
@@ -157,7 +156,7 @@ Column messageQueryColumns[] = {
     //
     // Table columns
     //
-    // Type		 Table column			  Query column
+    // Type, Table column, Query column
     //
     {Integer, "station_id", stationIdQueryColumn},
     {Integer, messageIdTableColumn, "messageid"},
@@ -175,7 +174,7 @@ Column rejectedMessageQueryColumns[] = {
     //
     // Table columns
     //
-    // Type		 Table column			  Query column
+    // Type, Table column, Query column
     //
     {String, "icao_code", "messagerejectedicao"},
     {String, "message", "message"},
@@ -222,7 +221,7 @@ QueryTable rejectedMessageQueryTables[] = {
 // ----------------------------------------------------------------------
 /*!
  * \brief Build from and where clause with given coordinates and max distance
- *		  for querying stations
+ *        for querying stations
  */
 // ----------------------------------------------------------------------
 
@@ -252,13 +251,11 @@ void buildStationQueryFromWhereClause(const LocationOptions& locationOptions,
                     << locationOptions.itsMaxDistance << ")";
 
     // Note: When querying for given max # of nearest stations, stations having certain icaos codes
-    // (starting with 'IL') are
-    //		 ignored if messages of the only message type (AWSMETAR) originating from them will
-    // be
-    // ignored when querying messages
-    //		 (when messages types were given but AWSMETAR was not included).
+    // (starting with 'IL') are ignored if messages of the only message type (AWSMETAR) originating
+    // from them will be ignored when querying messages (when messages types were given but AWSMETAR
+    // was not included).
     //
-    //		 This is to exclude nonapplicable stations when querying for TAFs, METARs etc
+    // This is to exclude nonapplicable stations when querying for TAFs, METARs etc
 
     const char* messageTypeSpecialToNearestStationSearch = "AWSMETAR";
     const char* stationIcaosSpecialToNearestStationSearch = "UPPER(icao_code) NOT LIKE 'IL%'";
@@ -358,7 +355,7 @@ void buildStationQueryWhereClause(const string& columnExpression,
 // ----------------------------------------------------------------------
 /*!
  * \brief Build from and where (and order by for route query) clause with given wkts for querying
- * stations
+ *        stations
  */
 // ----------------------------------------------------------------------
 
@@ -374,10 +371,8 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
 
     if (locationOptions.itsWKTs.isRoute)
       // For route query the route segments (stations shortest distance to them) are used for
-      // selecting the stations,
-      // and segment indexes and starting points (stations distance to them) are used for ordering
-      // the
-      // stations along the route
+      // selecting the stations, and segment indexes and starting points (stations distance to them)
+      // are used for ordering the stations along the route
       //
       // SELECT station_id[,...]
       // FROM avidb_stations,
@@ -511,7 +506,7 @@ void buildMessageQueryWhereStationIdInClause(const StationIdList& stationIdList,
 // ----------------------------------------------------------------------
 /*!
  * \brief Build 'request_stations' table (WITH clause) for request station id's
- * 		  (and position/order) for message query
+ *        (and position/order) for message query
  */
 // ----------------------------------------------------------------------
 
@@ -559,7 +554,7 @@ string buildRequestStationsWithClause(const StationIdList& stationIdList, bool r
 // ----------------------------------------------------------------------
 /*!
  * \brief Build 'message_validity' table (WITH clause) for requested message
- * 		  types and their configured validity in hours
+ *        types and their configured validity in hours
  */
 // ----------------------------------------------------------------------
 
@@ -707,7 +702,7 @@ string buildMessageTypeInClause(const StringList& messageTypeList,
 // ----------------------------------------------------------------------
 /*!
  * \brief Build 'record_set' table (WITH clause) for querying accepted messages
- * 		 for given observation time or time range
+ *        for given observation time or time range
  */
 // ----------------------------------------------------------------------
 
@@ -774,7 +769,7 @@ string buildRecordSetWithClause(bool routeQuery,
 // ----------------------------------------------------------------------
 /*!
  * \brief Build GROUP BY expression for message type with given message types
- *		  (e.g. METREP,SPECIAL) and time range type for querying latest accepted messages
+ *        (e.g. METREP,SPECIAL) and time range type for querying latest accepted messages
  */
 // ----------------------------------------------------------------------
 
@@ -872,7 +867,7 @@ string buildMessageTypeGroupByExpr(const StringList& messageTypeList,
 // ----------------------------------------------------------------------
 /*!
  * \brief Build GROUP BY expression for messir_heading with given message types
- *		  (e.g. GAFOR) and time range type for querying latest accepted messages
+ *        (e.g. GAFOR) and time range type for querying latest accepted messages
  */
 // ----------------------------------------------------------------------
 
@@ -999,7 +994,7 @@ string getStringList(const list<string>& stringList)
 // ----------------------------------------------------------------------
 /*!
  * \brief Build 'latest_messages' table (WITH clause) for querying latest
- *		  accepted messages for given observation time
+ *        accepted messages for given observation time
  */
 // ----------------------------------------------------------------------
 
@@ -1289,8 +1284,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 // ----------------------------------------------------------------------
 /*!
  * \brief Build 'messagetimerangelatest_messages' table (WITH clause) for
- *		  querying accepted messages having MessageTimeRangeLatest time
- *		  restriction with given time range
+ *        querying accepted messages having MessageTimeRangeLatest time
+ *        restriction with given time range
  */
 // ----------------------------------------------------------------------
 
@@ -1334,8 +1329,7 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
     )
 
     Note: For grouped types (like METREP/SPECIAL, currently such don't exist with
-    MessageTimeRangeLatest time restriction)
-              latest message would be returned for each group's type
+    MessageTimeRangeLatest time restriction) latest message would be returned for each group's type
     */
 
     string messageTypeIn =
@@ -1407,7 +1401,7 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
 // ----------------------------------------------------------------------
 /*!
  * \brief Build from, where and order by clause with given station id's, message types,
- *		  tables and time instant/range for querying accepted messages
+ *        tables and time instant/range for querying accepted messages
  */
 // ----------------------------------------------------------------------
 
@@ -1487,9 +1481,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         // Querying valid messages within time range.
         //
         // Note: User given time range is taken as a half open range where start <= time < end. The
-        // valid_from-valid_to range and any range calculated
-        //		 with range start time and period length (here me.message_time +
-        // mv.validityhours) are taken as a closed range.
+        // valid_from-valid_to range and any range calculated with range start time and period
+        // length (here me.message_time + mv.validityhours) are taken as a closed range.
         //
         // AND
         // (
@@ -1570,16 +1563,13 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         }
 
         // For MessageTimeRangeLatest restriction querying 'messagetimerangelatest_messages' for the
-        // id's of the latest valid messages
-        // having message_time earlier than starttime in addition to all messages having starttime
-        // <=
-        // message_time < endtime
+        // id's of the latest valid messages having message_time earlier than starttime in addition
+        // to all messages having starttime <= message_time < endtime
         //
         // Note: Even through 'messagetimerangelatest_messages' contains message id's only for
-        // MessageTimeRangeLatest types, type restriction
-        //		 must be combined with IN clause below; otherwise query throughput
-        // drastically drops with longer time ranges
-        //		 (query planner is somehow fooled by the query)
+        // MessageTimeRangeLatest types, type restriction must be combined with IN clause below;
+        // otherwise query throughput drastically drops with longer time ranges (query planner is
+        // somehow fooled by the query)
 
         messageTypeIn = buildMessageTypeInClause(
             queryOptions.itsMessageTypes, knownMessageTypes, MessageTimeRangeLatest);
@@ -1715,7 +1705,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
 // ----------------------------------------------------------------------
 /*!
  * \brief Build from, where and order by clause with given message types,
- *		  message tables and time range for querying rejected messages
+ *        message tables and time range for querying rejected messages
  */
 // ----------------------------------------------------------------------
 
@@ -2017,10 +2007,9 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
     for (auto const& param : paramList)
     {
       // Note: If 'selectStationList' is set, scanning only for derived distance and bearing columns
-      // (they are not available in current message query),
-      //		 and setting 'AutomaticRequested' (instead of 'Automatic') type for the user
-      // requested
-      // fields (stationid) to indicate they shall be returned
+      // (they are not available in current message query), and setting 'AutomaticRequested'
+      // (instead of 'Automatic') type for the user requested fields (stationid) to indicate they
+      // shall be returned
       //
       auto queryColumn =
           getQueryColumn(stationQueryColumns, columns, param, duplicate, columnNumber);
@@ -2101,23 +2090,18 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
     messageColumnSelected = distinct = false;
 
     // For accepted messages, station id is automatically selected for storing the data (station id
-    // is
-    // data map key) and
-    // for joining with station data (to get distance and bearing), and for non route query
-    // icao_code
-    // column is added to
-    // the list of query columns to join with station table for ordering the messages by icao code.
+    // is data map key) and for joining with station data (to get distance and bearing), and for non
+    // route query icao_code column is added to the list of query columns to join with station table
+    // for ordering the messages by icao code.
     //
     // Message column is automatically selected to check duplicates if any other message table
-    // column
-    // is selected
+    // column is selected
 
     if (queryTables->itsName == messageTableName)
     {
       // Because queries like "param=name,messagetype,route" - selecting columns from
-      // avidb_stations,
-      // avidb_message_types and avidb_message_routes, but none
-      // from avidb_messages - are allowed, the select for accepted messages is distinct unless at
+      // avidb_stations, avidb_message_types and avidb_message_routes, but none from
+      // avidb_messages - are allowed, the select for accepted messages is distinct unless at
       // least one avidb_messages column other than station id is selected
       //
       // No LEFT OUTER joins when querying accepted messages
@@ -2171,11 +2155,8 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
           table.itsSelectedColumns.push_back(column);
 
           // NOTE: Generate select expression if icao is requested by the caller too. When looping
-          // the
-          // parameters below, column's select
-          // 		 expression is NOT generated if the column already exists in column list;
-          // it's
-          // type just gets changed to AutomaticRequested
+          // the parameters below, column's select expression is NOT generated if the column already
+          // exists in column list; it's type just gets changed to AutomaticRequested
 
           if (find(paramList.begin(), paramList.end(), stationIcaoQueryColumn) != paramList.end())
           {
@@ -2290,8 +2271,8 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
     // SELECT [DISTINCT] ...
     //
     // Note: "for SELECT DISTINCT, ORDER BY expressions must appear in select list"; ensure
-    // avidb_stations is joined and icao is selected for non route query,
-    //		 or select 'position' column for route query
+    // avidb_stations is joined and icao is selected for non route query, or select 'position'
+    // column for route query
 
     selectClause = (distinct ? "SELECT DISTINCT " : "SELECT ") + selectClause;
 
@@ -2387,14 +2368,11 @@ void Engine::executeQuery(const Connection& connection,
       for (const Column& column : queryData.itsColumns)
       {
         // For station data (stations and accepted messages) automatically selected station id is
-        // stored as a map key;
-        // it is not stored as a column if it was not requested.
+        // stored as a map key; it is not stored as a column if it was not requested.
         //
         // Also distance is selected automatically for stations to apply max # of nearest stations,
-        // and icao is
-        // automatically added to the column list to generate station table join to order the
-        // messages
-        // by icao code
+        // and icao is automatically added to the column list to generate station table join to
+        // order the messages by icao code
         //
         if (column.itsSelection == Automatic)
           // Column was not requested by the caller, skip it
@@ -2418,9 +2396,8 @@ void Engine::executeQuery(const Connection& connection,
         else if (column.itsType == Double)
         {
           // Note: try/catch; With station query distance and bearing are available only when
-          // querying
-          // stations with coordinates;
-          //		 for other station queries distance and bearing are not selected at all
+          // querying stations with coordinates; for other station queries distance and bearing
+          // are not selected at all
           //
           SmartMet::Spine::TimeSeries::Value return_value = SmartMet::Spine::TimeSeries::None();
           try
@@ -2459,8 +2436,7 @@ void Engine::executeQuery(const Connection& connection,
         else if ((column.itsType == TS_LonLat) || (column.itsType == TS_LatLon))
         {
           // 'latlon' and 'lonlat' are selected as comma separated strings. Return them as
-          // SmartMet::Spine::TimeSeries::LonLat for formatted
-          // output with TableFeeder
+          // SmartMet::Spine::TimeSeries::LonLat for formatted output with TableFeeder
           //
           SmartMet::Spine::TimeSeries::LonLat lonlat(0, 0);
           string llStr(boost::algorithm::trim_copy(row[column.itsName].as<string>()));
@@ -2764,9 +2740,8 @@ void Engine::validateParameters(const StringList& paramList,
   try
   {
     // All parameters must be known but don't have to be selectable (validity controls whether
-    // selecting stations
-    // and/or accepted messages or rejected messages). At least one parameter must be selectable.
-    // Duplicates are not allowed.
+    // selecting stations and/or accepted messages or rejected messages). At least one parameter
+    // must be selectable. Duplicates are not allowed.
     //
     // 'messageColumnSelected' is set on return if any selectable message column is requested
     // (the information is used when querying stations)
@@ -2822,8 +2797,7 @@ void Engine::validateParameters(const StringList& paramList,
     if ((validity == Accepted) || (validity == AcceptedMessages))
     {
       // Must have at least 1 station or accepted message column for 'Accepted' and at least 1
-      // message
-      // column for 'AcceptedMessages'
+      // message column for 'AcceptedMessages'
       //
       buildMessageQuerySelectClause(messageQueryTables,
                                     StringList(),
@@ -3021,7 +2995,7 @@ void Engine::validateCountries(const Connection& connection,
 // ----------------------------------------------------------------------
 /*!
  * \brief Check given wkt's are valid and of supported type.
- * 		  Convert POINTs to latlons to support 'max # of nearest station' search.
+ *        Convert POINTs to latlons to support 'max # of nearest station' search.
  */
 // ----------------------------------------------------------------------
 
@@ -3064,8 +3038,8 @@ void Engine::validateWKTs(const Connection& connection,
            "WHEN 'ST_Point' THEN 0 ELSE 1 END,index";
 
     // If a single LINESTRING (route) is given, the stations (and their messages) will be ordered by
-    // route segment index and
-    // station's distance to the start of the segment. Otherwise icao code order is used
+    // route segment index and station's distance to the start of the segment. Otherwise icao code
+    // order is used
 
     bool checkIfRoute =
         (locationOptions.itsLonLats.empty() && locationOptions.itsStationIds.empty() &&
@@ -3190,10 +3164,9 @@ StationQueryData Engine::queryStations(const Connection& connection,
       validateWKTs(connection, locationOptions, queryOptions.itsDebug);
 
     // If any message column is requested, select only stationid and additionally distance/bearing
-    // if
-    // requested (all other requested station columns except
-    // distance/bearing are selected by message query) and queryOptions.messageColumnSelected is set
-    // instructing the caller to call queryMessages() with the returned station id's
+    // if requested (all other requested station columns except distance/bearing are selected by
+    // message query) and queryOptions.messageColumnSelected is set instructing the caller to call
+    // queryMessages() with the returned station id's
     //
     // Build select column expressions
     //
@@ -3367,7 +3340,7 @@ void Engine::validateMessageTypes(const Connection& connection,
 // ----------------------------------------------------------------------
 /*!
  * \brief Get pointer to internal column definition for given
- *		  datetime column in avidb_messages table
+ *        datetime column in avidb_messages table
  */
 // ----------------------------------------------------------------------
 
@@ -3427,8 +3400,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
       validateMessageTypes(connection, queryOptions.itsMessageTypes, queryOptions.itsDebug);
 
     // If querying messages created within time range, get the column to be used for time
-    // restriction
-    // (message_time by default, not settable currently)
+    // restriction (message_time by default, not settable currently)
 
     if (queryOptions.itsTimeOptions.itsObservationTime.empty() &&
         (!queryOptions.itsTimeOptions.itsQueryValidRangeMessages))
@@ -3479,11 +3451,10 @@ StationQueryData Engine::queryMessages(const Connection& connection,
     }
 
     // If querying valid messages (in contrast to querying messages created within the given time
-    // range) the query is generated based on 'record_set' CTE
-    // using message_time restriction and thus enabling use of an index. Otherwise an indexed time
-    // column (queryOptions.itsTimeOptions.itsTimeRangeColumn)
-    // is expected to be used for 'created within' query; the query is generated directly against
-    // avidb_messages table
+    // range) the query is generated based on 'record_set' CTE using message_time restriction and
+    // thus enabling use of an index. Otherwise an indexed time column
+    // (queryOptions.itsTimeOptions.itsTimeRangeColumn) is expected to be used for 'created within'
+    // query; the query is generated directly against avidb_messages table
 
     bool filterMETARs = queryOptions.itsFilterMETARs && itsConfig->getFilterFIMETARxxx();
     bool excludeSPECIs = queryOptions.itsExcludeSPECIs;
@@ -3495,9 +3466,9 @@ StationQueryData Engine::queryMessages(const Connection& connection,
       // instant/range.
       //
       // Note: By passing false instead of queryOptions.itsLocationOptions.itsWKTs.isRoute
-      // record_set.station_id is limited by IN (StationIdList)
-      // instead by subquery from request_stations table which makes the query slower
-      // (request_stations CTE is generated only for route query)
+      // record_set.station_id is limited by IN (StationIdList) instead by subquery from
+      // request_stations table which makes the query slower (request_stations CTE is generated
+      // only for route query)
 
       string recordSetWithClause;
 
@@ -3520,8 +3491,8 @@ StationQueryData Engine::queryMessages(const Connection& connection,
       withClause += ((withClause.empty() ? "WITH " : ",") + recordSetWithClause);
 
       // Build WITH clause for 'message_validity' table containing configured message type specific
-      // validity length for message types having
-      // MessageValidTimeRange[Latest] or MessageTimeRange[Latest] restriction
+      // validity length for message types having MessageValidTimeRange[Latest] or
+      // MessageTimeRange[Latest] restriction
 
       string messageValidityWithClause = buildMessageTypeValidityWithClause(
           queryOptions.itsMessageTypes, itsConfig->getMessageTypes());
@@ -3584,8 +3555,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
       // Otherwise if querying valid MessageTimeRangeLatest messages, build WITH clause for
       // 'messagetimerangelatest_messages' table containing message id's for the
       // latest messages having message_time earlier than range start time in addition to all
-      // messages
-      // having starttime <= message_time < endtime
+      // messages having starttime <= message_time < endtime
 
       if (!queryOptions.itsTimeOptions.itsObservationTime.empty())
       {
@@ -3621,8 +3591,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
       withClause += " ";
 
       // Replace avidb_messages with record_set in the tablemap; record_set contains all (columns
-      // of)
-      // needed avidb_messages rows, and is used instead
+      // of) needed avidb_messages rows, and is used instead
 
       auto it = tableMap.find(messageTableName);
 
@@ -3643,9 +3612,8 @@ StationQueryData Engine::queryMessages(const Connection& connection,
 
         if (filterMETARs || excludeSPECIs)
         {
-          // Ensure station table is joined into main query for METAR filtering
-          // or exclusion of SPECIs
-          // (for nonroute query it's joined anyways for ordering the rows by icao code)
+          // Ensure station table is joined into main query for METAR filtering or exclusion of
+          // SPECIs (for nonroute query it's joined anyways for ordering the rows by icao code)
           //
           string messageTypeIn = buildMessageTypeInClause(
               queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), list<TimeRangeType>());
@@ -3674,8 +3642,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
     }
 
     // For time range query ensure tablemap contains message_types table for joining into main
-    // query;
-    // needed for message type or type specific time range restriction
+    // query; needed for message type or type specific time range restriction
 
     if (queryOptions.itsTimeOptions.itsObservationTime.empty())
     {
@@ -3776,7 +3743,7 @@ StationQueryData& Engine::joinStationAndMessageData(const StationQueryData& stat
         // Ignore stations having no messages.
         //
         // Note: The input data's have station id as a map key. If the 'station' data contains
-        //		 distance and/or bearing, copy the values to 'message' data
+        // distance and/or bearing, copy the values to 'message' data
         //
         if (messageData.itsValues.find(station.first) != messageData.itsValues.end())
         {
@@ -3827,8 +3794,8 @@ StationQueryData& Engine::joinStationAndMessageData(const StationQueryData& stat
 /*!
  * \brief Query stations and/or accepted messages.
  *
- *		  This method serves for convenience, by executing station and message querys
- *		  and joining the data.
+ *        This method serves for convenience, by executing station and message querys
+ *        and joining the data.
  */
 // ----------------------------------------------------------------------
 
