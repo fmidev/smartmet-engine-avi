@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 20.1.20
+Version: 20.3.19
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -18,12 +18,12 @@ BuildRequires: libconfig >= 1.4.9
 BuildRequires: libpqxx-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 20.1.15
-BuildRequires: smartmet-library-macgyver >= 20.1.9
+BuildRequires: smartmet-library-spine-devel >= 20.3.9
+BuildRequires: smartmet-library-macgyver >= 20.3.5
 Requires: boost-date-time
-Requires: smartmet-library-macgyver >= 20.1.9
+Requires: smartmet-library-macgyver >= 20.3.5
 Requires: libconfig >= 1.4.9
-Requires: smartmet-library-spine >= 20.1.15
+Requires: smartmet-library-spine >= 20.3.9
 Provides: %{SPECNAME}
 Obsoletes: smartmet-brainstorm-aviengine < 16.11.1
 Obsoletes: smartmet-brainstorm-aviengine-debuginfo < 16.11.1
@@ -62,6 +62,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Thu Mar 19 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.3.19-1.fmi
+- Added support for excluding finnish SPECIs (BS-1779)
+
 * Mon Jan 20 2020 Andris Pavēnis <andris.pavenis@fmi.fi> - 20.1.20-1.fmi
 - Return latest messages from all routes in case of distinct=0
 
