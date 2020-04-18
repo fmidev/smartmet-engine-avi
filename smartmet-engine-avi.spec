@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 20.3.19
+Version: 20.4.18
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -13,17 +13,17 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: make
-BuildRequires: boost-devel
+BuildRequires: boost169-devel
 BuildRequires: libconfig >= 1.4.9
 BuildRequires: libpqxx-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 20.3.9
-BuildRequires: smartmet-library-macgyver >= 20.3.5
-Requires: boost-date-time
-Requires: smartmet-library-macgyver >= 20.3.5
+BuildRequires: smartmet-library-spine-devel >= 20.4.18
+BuildRequires: smartmet-library-macgyver >= 20.4.18
+Requires: boost169-date-time
+Requires: smartmet-library-macgyver >= 20.4.18
 Requires: libconfig >= 1.4.9
-Requires: smartmet-library-spine >= 20.3.9
+Requires: smartmet-library-spine >= 20.4.18
 Provides: %{SPECNAME}
 Obsoletes: smartmet-brainstorm-aviengine < 16.11.1
 Obsoletes: smartmet-brainstorm-aviengine-debuginfo < 16.11.1
@@ -62,6 +62,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Sat Apr 18 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.4.18-1.fmi
+- Upgraded to Boost 1.69
+
 * Thu Mar 19 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.3.19-1.fmi
 - Added support for excluding finnish SPECIs (BS-1779)
 
