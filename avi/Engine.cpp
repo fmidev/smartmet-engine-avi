@@ -708,6 +708,8 @@ string buildMessageTypeInClause(const StringList& messageTypeList,
 
 string buildRecordSetWithClause(bool routeQuery,
                                 const StationIdList& stationIdList,
+                                const StringList& messageTypeList,
+                                const MessageTypes& knownMessageTypes,
                                 unsigned int startTimeOffsetHours,
                                 unsigned int endTimeOffsetHours,
                                 const string& obsOrRangeStartTime,
@@ -744,9 +746,22 @@ string buildRecordSetWithClause(bool routeQuery,
     withClause.str("");
     withClause.clear();
 
-    withClause << recordSetTableName << " AS (SELECT * FROM " << messageTableName << " "
+    withClause << recordSetTableName << " AS (SELECT me.* FROM " << messageTableName << " "
                << messageTableAlias << "," << messageFormatTableName << " "
-               << messageFormatTableAlias << whereStationIdIn << " AND " << messageFormatTableJoin;
+               << messageFormatTableAlias;
+
+    if (!messageTypeList.empty())
+      withClause << "," << messageTypeTableName << " " << messageTypeTableAlias;
+
+    withClause << whereStationIdIn << " AND " << messageFormatTableJoin;
+
+    if (!messageTypeList.empty())
+    {
+      string messageTypeIn =
+          buildMessageTypeInClause(messageTypeList, knownMessageTypes, list<TimeRangeType>());
+
+      withClause << " AND " << messageTypeTableJoin << " AND " << messageTypeIn;
+    }
 
     const string& obsOrRangeEndTime =
         (rangeEndTimeOrEmpty.empty() ? obsOrRangeStartTime : rangeEndTimeOrEmpty);
@@ -3476,6 +3491,8 @@ StationQueryData Engine::queryMessages(const Connection& connection,
         recordSetWithClause =
             buildRecordSetWithClause(false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
                                      stationIdList,
+                                     queryOptions.itsMessageTypes,
+                                     itsConfig->getMessageTypes(),
                                      itsConfig->getRecordSetStartTimeOffsetHours(),
                                      itsConfig->getRecordSetEndTimeOffsetHours(),
                                      queryOptions.itsTimeOptions.itsStartTime,
@@ -3484,6 +3501,8 @@ StationQueryData Engine::queryMessages(const Connection& connection,
         recordSetWithClause =
             buildRecordSetWithClause(false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
                                      stationIdList,
+                                     queryOptions.itsMessageTypes,
+                                     itsConfig->getMessageTypes(),
                                      itsConfig->getRecordSetStartTimeOffsetHours(),
                                      itsConfig->getRecordSetEndTimeOffsetHours(),
                                      queryOptions.itsTimeOptions.itsObservationTime);
