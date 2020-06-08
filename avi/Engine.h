@@ -415,6 +415,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                     StationQueryData &queryData) const;
   void queryStationsWithWKTs(const Connection &connection,
                              const LocationOptions &locationOptions,
+                             const StringList &messageTypes,
                              const std::string &selectClause,
                              bool debug,
                              StationQueryData &queryData) const;

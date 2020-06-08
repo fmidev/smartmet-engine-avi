@@ -63,6 +63,8 @@ const char* dfBearing = "DEGREES(ST_Azimuth(geom,ST_SetSRID(coordinates.coordina
 
 // Some table/column etc. names/joins
 
+const char* firTableName = "icao_fir_yhdiste";
+const char* firTableAlias = "fi";
 const char* stationTableName = "avidb_stations";
 const char* stationTableAlias = "st";
 const char* stationTableJoin = "st.station_id = me.station_id";
@@ -360,6 +362,7 @@ void buildStationQueryWhereClause(const string& columnExpression,
 // ----------------------------------------------------------------------
 
 void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOptions,
+                                             const StringList& messageTypeList,
                                              ostringstream& fromWhereOrderByClause)
 {
   try
@@ -367,7 +370,38 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
     if (locationOptions.itsWKTs.itsWKTs.empty())
       return;
 
-    fromWhereOrderByClause << " FROM avidb_stations";
+    // All message types for route query must be either station or fir scoped
+    //
+    // Note: temporarily fetching global scoped message types as fir scoped
+
+    size_t firTypeCnt = 0;
+
+    for (const string &messageType : messageTypeList)
+    {
+      if (
+          // fir scope
+          (messageType == "AIRMET") || (messageType == "ARS") ||
+          (messageType == "SIGMET") || (messageType == "WXREP") ||
+          // global scope
+          (messageType == "SWX") || (messageType == "TCA") || (messageType == "VAA")
+         )
+        firTypeCnt++;
+    }
+
+    if ((firTypeCnt > 0) && (firTypeCnt != messageTypeList.size()))
+      throw SmartMet::Spine::Exception::Trace(BCP,
+                                              "Route query with area scoped message types "
+                                              "(AIRMET, ARS, SIGMET, WXREP, SWX, TCA and VAA)"
+                                              " and other message types not allowed");
+
+    string geom;
+
+    if (firTypeCnt > 0)
+      geom = string(firTableAlias) + ".areageom";
+    else
+      geom = string(stationTableAlias) + ".geom";
+
+    fromWhereOrderByClause << " FROM " << stationTableName << " " << stationTableAlias;
 
     if (locationOptions.itsWKTs.isRoute)
       // For route query the route segments (stations shortest distance to them) are used for
@@ -384,6 +418,9 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
       //	     ) AS segpoints
       // ) AS segments
       //
+      if (firTypeCnt > 0)
+        fromWhereOrderByClause << "," << firTableName << " " << firTableAlias;
+
       fromWhereOrderByClause
           << ",(SELECT segindex,segstart,ST_SetSRID(ST_MakeLine(segstart,segend),4326) as segment "
           << "FROM (SELECT ST_PointN(route,generate_series(1,ST_NPoints(route)-1)) as segstart,"
@@ -401,11 +438,18 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
       ostringstream condition;
 
       if (locationOptions.itsWKTs.isRoute)
+      {
         // For a route (a single linestring), limit the stations by their shortest distance to route
         // segments
         //
-        condition << "ST_DWithin(geom::geography,ST_ClosestPoint(segment,geom)::geography," << fixed
+        condition << "ST_DWithin(" << geom << "::geography,ST_ClosestPoint(segment,"
+                  << geom << ")::geography," << fixed
                   << setprecision(0) << locationOptions.itsMaxDistance << ")";
+
+        if (firTypeCnt > 0)
+          condition << " AND ST_Within(" << stationTableAlias << ".geom,"
+                    << firTableAlias << ".areageom)";
+      }
       else
         // Limit by distance between geometries
         //
@@ -425,7 +469,7 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
 
     if (locationOptions.itsWKTs.isRoute)
       fromWhereOrderByClause
-          << " ORDER BY segindex,ST_Distance(segstart::geography,geom::geography)";
+          << " ORDER BY segindex,ST_Distance(segstart::geography," << geom << "::geography)";
   }
   catch (...)
   {
@@ -2689,6 +2733,7 @@ void Engine::queryStationsWithPlaces(const Connection& connection,
 
 void Engine::queryStationsWithWKTs(const Connection& connection,
                                    const LocationOptions& locationOptions,
+                                   const StringList& messageTypes,
                                    const string& selectClause,
                                    bool debug,
                                    StationQueryData& stationQueryData) const
@@ -2699,7 +2744,7 @@ void Engine::queryStationsWithWKTs(const Connection& connection,
 
     ostringstream fromWhereOrderByClause;
 
-    buildStationQueryFromWhereOrderByClause(locationOptions, fromWhereOrderByClause);
+    buildStationQueryFromWhereOrderByClause(locationOptions, messageTypes, fromWhereOrderByClause);
 
     executeQuery<StationQueryData>(
         connection, selectClause + fromWhereOrderByClause.str(), debug, stationQueryData);
@@ -3237,8 +3282,8 @@ StationQueryData Engine::queryStations(const Connection& connection,
                               stationQueryData);
 
     if (!locationOptions.itsWKTs.itsWKTs.empty())
-      queryStationsWithWKTs(
-          connection, locationOptions, selectClause, queryOptions.itsDebug, stationQueryData);
+      queryStationsWithWKTs(connection, locationOptions, queryOptions.itsMessageTypes, selectClause,
+                            queryOptions.itsDebug, stationQueryData);
 
     if (!locationOptions.itsBBoxes.empty())
       queryStationsWithBBoxes(
