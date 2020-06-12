@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 20.6.8
+Version: 20.6.12
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -62,6 +62,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Jun 12 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.6.12-1.fmi
+- Configured message type scope (station, fir area or global) based queries (BS-1840)
+
 * Mon Jun  8 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.6.8-1.fmi
 - Use FIR areas to query SIGMET, AIRMET, ARS and WXREP messages, and temporarily use FIR areas to query SWX, TCA and VAA messages too (BS-1833)
 - Use message type restriction for record_set CTE to speed up queries (BS-1838)
