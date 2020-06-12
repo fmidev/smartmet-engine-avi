@@ -340,6 +340,39 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         knownMessageTypes.push_back(name);
       }
 
+      // Message scope
+
+      typedef struct
+      {
+        const char *scopeName;
+        MessageScope messageScope;
+      } KnownMessageScope;
+
+      KnownMessageScope messageScopes[] = {{"station", StationScope},
+                                           {"fir", FIRScope},
+                                           {"global", GlobalScope},
+                                           {nullptr, NoScope}};
+
+      KnownMessageScope *s = messageScopes;
+      auto scope = get_optional_config_param<std::string>(typeSetting, "scope", "station");
+
+      for (; (s->scopeName); s++)
+        if (scope == s->scopeName)
+          break;
+
+      if (!(s->scopeName))
+      {
+        SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+        exception.addDetail(
+            "Use one of the following values : \"station\", \"fir\" or \"global\"");
+        exception.addParameter("Configuration file", theConfigFileName);
+        exception.addParameter("Attribute", blockName + ".scope");
+        exception.addParameter("Invalid value", scope);
+        throw exception;
+      }
+
+      messageType.setScope(s->messageScope);
+
       // Query time range types (which time columns are used for time restriction).
 
       typedef struct
