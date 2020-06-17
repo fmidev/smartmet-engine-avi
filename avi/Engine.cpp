@@ -395,8 +395,7 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
     else if (scope == FIRScope)
       geom = string(firTableAlias) + ".areageom";
     else
-      throw SmartMet::Spine::Exception::Trace(
-          BCP, "Route query for global scoped messagetype(s) not yet supported");
+      return;
 
     fromWhereOrderByClause << " FROM " << stationTableName << " " << stationTableAlias;
 
@@ -526,6 +525,9 @@ void buildMessageQueryWhereStationIdInClause(const StationIdList& stationIdList,
 {
   try
   {
+    if (stationIdList.empty())
+      return;
+
     // { WHERE | AND } me.station_id IN (stationIdList)
 
     string whereStationIdIn = (string(whereClause.str().empty() ? " WHERE " : " AND ") +
@@ -855,11 +857,14 @@ string buildRecordSetWithClause(bool routeQuery,
     ostringstream withClause;
     string whereStationIdIn;
 
-    if (!routeQuery)
-      buildMessageQueryWhereStationIdInClause(stationIdList, withClause);
+    if (!stationIdList.empty())
+      if (!routeQuery)
+        buildMessageQueryWhereStationIdInClause(stationIdList, withClause);
+      else
+        withClause << " WHERE " << messageTableAlias << ".station_id IN (SELECT station_id FROM "
+                   << requestStationsTable.itsName << ")";
     else
-      withClause << " WHERE " << messageTableAlias << ".station_id IN (SELECT station_id FROM "
-                 << requestStationsTable.itsName << ")";
+      withClause << " WHERE ";
 
     whereStationIdIn = withClause.str();
     withClause.str("");
@@ -872,7 +877,8 @@ string buildRecordSetWithClause(bool routeQuery,
     if (!messageTypeList.empty())
       withClause << "," << messageTypeTableName << " " << messageTypeTableAlias;
 
-    withClause << whereStationIdIn << " AND " << messageFormatTableJoin;
+    withClause << whereStationIdIn << (!stationIdList.empty() ? " AND " : "")
+               << messageFormatTableJoin;
 
     if (!messageTypeList.empty())
     {
@@ -1807,7 +1813,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
 
     // ORDER BY { st.icao_code | rs.position } [,me.message] [,me.message_id]
 
-    if (!queryOptions.itsLocationOptions.itsWKTs.isRoute)
+    if ((!queryOptions.itsLocationOptions.itsWKTs.isRoute) || stationIdList.empty())
       fromWhereOrderByClause << " ORDER BY " << stationTableAlias << "." << stationIcaoTableColumn;
     else
       fromWhereOrderByClause << " ORDER BY " << requestStationsTableAlias << "."
@@ -3581,7 +3587,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
 
     string withClause;
 
-    if (queryOptions.itsLocationOptions.itsWKTs.isRoute)
+    if ((!stationIdList.empty()) && queryOptions.itsLocationOptions.itsWKTs.isRoute)
     {
       // Build 'request_stations' table ('WITH table AS ...') for input station id's',
       // containing 'position' column for sorting the stations to route order
@@ -3996,8 +4002,8 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
 
     list<ScopeData> scopeDatas = {
                                   { stationOrAll, stationScopeStations, stationScopeMessages },
-                                  { FIRScope,     firScopeStations,     firScopeMessages }
-//                                { GlobalScope,  globalScopeStations,  globalScopeMessages }
+                                  { FIRScope,     firScopeStations,     firScopeMessages },
+                                  { GlobalScope,  globalScopeStations,  globalScopeMessages }
                                  };
 
     bool validateQuery = true;
@@ -4014,7 +4020,7 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
         scope.stationData = queryStations(connection, queryOptions, validateQuery);
         validateQuery = false;
 
-        if (!scope.stationData.itsStationIds.empty())
+        if ((scope.scope == GlobalScope) || !scope.stationData.itsStationIds.empty())
         {
           // Query messages if any message column were requested
 
