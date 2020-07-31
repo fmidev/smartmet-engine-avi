@@ -25,11 +25,20 @@ typedef enum
   CreationValidTimeRangeLatest
 } TimeRangeType;
 
+typedef enum
+{
+  NoScope = 0,
+  StationScope,
+  FIRScope,
+  GlobalScope
+} MessageScope;
+
 class MessageType
 {
  public:
   MessageType()
   {
+    itsScope = StationScope;
     itsTimeRangeType = NullTimeRange;
     itsValidityHours = 0;
     itsLatestMessageOnly = false;
@@ -41,6 +50,7 @@ class MessageType
   }
 
   void addType(const std::string &theType) { itsTypes.push_back(theType); }
+  void setScope(MessageScope theScope) { itsScope = theScope; }
   void setTimeRangeType(TimeRangeType theTimeRangeType) { itsTimeRangeType = theTimeRangeType; }
   void setValidityHours(unsigned int theValidityHours) { itsValidityHours = theValidityHours; }
   void setLatestMessageOnly(bool theLatestMessageOnly)
@@ -53,6 +63,7 @@ class MessageType
   }
 
   const std::list<std::string> &getMessageTypes() const { return itsTypes; }
+  MessageScope getScope() const { return itsScope; }
   TimeRangeType getTimeRangeType() const { return itsTimeRangeType; }
   bool hasValidityHours() const
   {
@@ -66,6 +77,7 @@ class MessageType
 
  private:
   std::list<std::string> itsTypes;
+  MessageScope itsScope;
   TimeRangeType itsTimeRangeType;
   unsigned int itsValidityHours;
   bool itsLatestMessageOnly;

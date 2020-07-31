@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 20.6.8
+Version: 20.6.12
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -18,12 +18,12 @@ BuildRequires: libconfig >= 1.4.9
 BuildRequires: libpqxx-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 20.4.18
+BuildRequires: smartmet-library-spine-devel >= 20.5.27
 BuildRequires: smartmet-library-macgyver >= 20.4.18
 Requires: boost169-date-time
 Requires: smartmet-library-macgyver >= 20.4.18
 Requires: libconfig >= 1.4.9
-Requires: smartmet-library-spine >= 20.4.18
+Requires: smartmet-library-spine >= 20.5.27
 Provides: %{SPECNAME}
 Obsoletes: smartmet-brainstorm-aviengine < 16.11.1
 Obsoletes: smartmet-brainstorm-aviengine-debuginfo < 16.11.1
@@ -62,7 +62,12 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
-* Mon Jun  8 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.6.8-1.fmi
+* Fri Jun 12 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.6.12-1.fmi
+- Configured message type scope (station, fir area or global) based queries (BS-1840)
+
+* Mon Jun  8 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.6.8-1.fmi
+- Use FIR areas to query SIGMET, AIRMET, ARS and WXREP messages, and temporarily use FIR areas to query SWX, TCA and VAA messages too (BS-1833)
+- Use message type restriction for record_set CTE to speed up queries (BS-1838)
 - Upgraded libpqxx dependencies
 - Use message type restriction for record_set CTE
 
