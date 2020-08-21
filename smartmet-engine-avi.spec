@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 20.6.12
+Version: 20.8.21
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -18,12 +18,12 @@ BuildRequires: libconfig >= 1.4.9
 BuildRequires: libpqxx-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 20.5.27
-BuildRequires: smartmet-library-macgyver >= 20.4.18
+BuildRequires: smartmet-library-spine-devel >= 20.8.21
+BuildRequires: smartmet-library-macgyver >= 20.8.21
 Requires: boost169-date-time
-Requires: smartmet-library-macgyver >= 20.4.18
+Requires: smartmet-library-macgyver >= 20.8.21
 Requires: libconfig >= 1.4.9
-Requires: smartmet-library-spine >= 20.5.27
+Requires: smartmet-library-spine >= 20.8.21
 Provides: %{SPECNAME}
 Obsoletes: smartmet-brainstorm-aviengine < 16.11.1
 Obsoletes: smartmet-brainstorm-aviengine-debuginfo < 16.11.1
@@ -62,6 +62,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Aug 21 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.8.21-1.fmi
+- Upgrade to fmt 6.2
+
 * Fri Jun 12 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.6.12-1.fmi
 - Configured message type scope (station, fir area or global) based queries (BS-1840)
 
