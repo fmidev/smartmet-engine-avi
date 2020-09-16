@@ -124,7 +124,7 @@ configtest:
 	@if [ -x "$$(command -v cfgvalidate)" ]; then cfgvalidate -v cnf/avi.conf.sample; fi
 
 $(LIBFILE): $(OBJS)
-	$(CXX) $(CFLAGS) -shared -rdynamic -o $(LIBFILE) $(OBJS) $(LIBS)
+	$(CC) $(LDFLAGS) -shared -rdynamic -o $(LIBFILE) $(OBJS) $(LIBS)
 
 clean:
 	if [ -h lib$(LIBFILE) ] && [ -e $(LIBFILE) ]; then rm lib$(LIBFILE); fi
