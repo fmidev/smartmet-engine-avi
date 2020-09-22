@@ -372,6 +372,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                         bool autoSelectDistance,
                                         std::string &selectClause) const;
   TableMap buildMessageQuerySelectClause(QueryTable *queryTables,
+                                         const StationIdList &stationIdList,
                                          const StringList &messageTypeList,
                                          const StringList &paramList,
                                          bool routeQuery,
@@ -426,10 +427,11 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                StationQueryData &queryData) const;
 
   StationQueryData queryStations(const Connection &connection, QueryOptions &queryOptions,
-                                 bool validateQuery = true) const;
+                                 bool validateQuery) const;
   StationQueryData queryMessages(const Connection &connection,
                                  const StationIdList &stationIdList,
-                                 const QueryOptions &queryOptions) const;
+                                 const QueryOptions &queryOptions,
+                                 bool validateQuery) const;
 
   std::string itsConfigFileName;
   std::shared_ptr<Config> itsConfig;

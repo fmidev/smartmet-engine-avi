@@ -76,6 +76,7 @@ const char* stationCoordinateColumn = "coordinate";
 const char* stationLonLatQueryColumn = "lonlat";
 const char* stationLatLonQueryColumn = "latlon";
 const char* messageIdTableColumn = "message_id";
+const char* messageStationIdTableColumn = "station_id";
 const char* messageTableColumn = messageQueryColumn;
 const char* rejectedMessageIcaoTableColumn = "icao_code";
 const char* recordSetTableName = "record_set";
@@ -368,25 +369,46 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
 {
   try
   {
-    if (locationOptions.itsWKTs.itsWKTs.empty() || messageTypeList.empty())
+    if (locationOptions.itsWKTs.itsWKTs.empty())
       return;
 
-    // Determine message scope for station query generation.
-    // All given message types have same scope (station, fir or global)
+    StringList allMessageTypes = { "" };
+    const StringList& messageTypes = (messageTypeList.empty() ? allMessageTypes : messageTypeList);
 
-    auto const &messageType = messageTypeList.front();
-    MessageScope scope = NoScope;
+    // Determine message scope (station for nonroute query) for station query generation.
+    // All given message types must have same scope (station, fir or global) for route query
 
-    for (auto const& knownType : knownMessageTypes)
-      if (knownType == messageType)
-      {
-        scope = knownType.getScope();
-        break;
-      }
+    MessageScope scope = (locationOptions.itsWKTs.isRoute ? NoScope : StationScope);
 
     if (scope == NoScope)
-      throw SmartMet::Spine::Exception::Trace(
-          BCP, "buildStationQueryFromWhereOrderByClause: internal; message scope unknown");
+    {
+      for (auto const& messageType : messageTypes)
+      {
+        MessageScope knownScope = NoScope;
+
+        for (auto const& knownType : knownMessageTypes)
+          if (messageType.empty() || (knownType == messageType))
+          {
+            knownScope = knownType.getScope();
+
+            if (scope != NoScope)
+            {
+              if (knownScope != scope)
+                throw SmartMet::Spine::Exception::Trace(
+                    BCP, "All requested message types must have same scope for route query");
+            }
+            else
+              scope = knownScope;
+
+            if (!messageType.empty())
+              break;
+          }
+
+        if (knownScope == NoScope)
+          throw SmartMet::Spine::Exception::Trace(
+              BCP, "buildStationQueryFromWhereOrderByClause: internal: message scope unknown");
+      }
+    }
 
     string geom;
 
@@ -1813,8 +1835,11 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
 
     // ORDER BY { st.icao_code | rs.position } [,me.message] [,me.message_id]
 
-    if ((!queryOptions.itsLocationOptions.itsWKTs.isRoute) || stationIdList.empty())
+    if (!queryOptions.itsLocationOptions.itsWKTs.isRoute)
       fromWhereOrderByClause << " ORDER BY " << stationTableAlias << "." << stationIcaoTableColumn;
+    else if (stationIdList.empty())
+      fromWhereOrderByClause << " ORDER BY " << messageTableAlias << "."
+                             << messageStationIdTableColumn;
     else
       fromWhereOrderByClause << " ORDER BY " << requestStationsTableAlias << "."
                              << requestStationsPositionColumn;
@@ -2210,6 +2235,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
 // ----------------------------------------------------------------------
 
 TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
+                                               const StationIdList& stationIdList,
                                                const StringList& messageTypeList,
                                                const StringList& paramList,
                                                bool routeQuery,
@@ -2428,7 +2454,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
 
       selectClause += (string(",") + stationTableAlias + "." + stationIcaoTableColumn);
     }
-    else if (routeQuery && distinct)
+    else if (routeQuery && distinct && (!stationIdList.empty()))
       selectClause +=
           (string(",") + requestStationsTableAlias + "." + requestStationsPositionColumn);
 
@@ -2946,6 +2972,7 @@ void Engine::validateParameters(const StringList& paramList,
       // message column for 'AcceptedMessages'
       //
       buildMessageQuerySelectClause(messageQueryTables,
+                                    StationIdList(),
                                     StringList(),
                                     paramList,
                                     false,
@@ -2961,6 +2988,7 @@ void Engine::validateParameters(const StringList& paramList,
       // Must have at least 1 rejected message column
       //
       buildMessageQuerySelectClause(rejectedMessageQueryTables,
+                                    StationIdList(),
                                     StringList(),
                                     paramList,
                                     false,
@@ -3423,7 +3451,7 @@ StationQueryData Engine::queryStations(QueryOptions& queryOptions) const
 
     queryOptions.itsLocationOptions.itsWKTs.isRoute = false;
 
-    return queryStations(connection, queryOptions);
+    return queryStations(connection, queryOptions, true);
   }
   catch (...)
   {
@@ -3527,7 +3555,8 @@ const Column* Engine::getMessageTableTimeColumn(const string& timeColumn) const
 //
 StationQueryData Engine::queryMessages(const Connection& connection,
                                        const StationIdList& stationIdList,
-                                       const QueryOptions& queryOptions) const
+                                       const QueryOptions& queryOptions,
+                                       bool validateQuery) const
 {
   try
   {
@@ -3543,13 +3572,16 @@ StationQueryData Engine::queryMessages(const Connection& connection,
           string("Max number of stations exceeded (") + Fmi::to_string(maxStations) + "/" +
               Fmi::to_string(stationIdList.size()) + "), limit the query");
 
-    bool messageColumnSelected;
+    bool messageColumnSelected = queryOptions.itsMessageColumnSelected;
     const Column* timeRangeColumn = nullptr;
 
-    validateParameters(queryOptions.itsParameters, AcceptedMessages, messageColumnSelected);
+    if (validateQuery)
+    {
+      validateParameters(queryOptions.itsParameters, AcceptedMessages, messageColumnSelected);
 
-    if (!queryOptions.itsMessageTypes.empty())
-      validateMessageTypes(connection, queryOptions.itsMessageTypes, queryOptions.itsDebug);
+      if (!queryOptions.itsMessageTypes.empty())
+        validateMessageTypes(connection, queryOptions.itsMessageTypes, queryOptions.itsDebug);
+    }
 
     // If querying messages created within time range, get the column to be used for time
     // restriction (message_time by default, not settable currently)
@@ -3566,6 +3598,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
     string selectClause;
 
     TableMap tableMap = buildMessageQuerySelectClause(messageQueryTables,
+                                                      stationIdList,
                                                       queryOptions.itsMessageTypes,
                                                       queryOptions.itsParameters,
                                                       routeQuery,
@@ -3859,7 +3892,7 @@ StationQueryData Engine::queryMessages(const StationIdList& stationIdList,
                           itsConfig->getDatabase(),
                           itsConfig->getEncoding());
 
-    return queryMessages(connection, stationIdList, queryOptions);
+    return queryMessages(connection, stationIdList, queryOptions, true);
   }
   catch (...)
   {
@@ -3994,11 +4027,17 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
 
     if (!queryOptions.itsLocationOptions.itsWKTs.itsWKTs.empty())
     {
+      // Check for route query; whether to use scoped queries or single query for all message types
+
       validateWKTs(connection, queryOptions.itsLocationOptions, queryOptions.itsDebug);
 
       if (queryOptions.itsLocationOptions.itsWKTs.isRoute)
         stationOrAll = StationScope;
     }
+
+    // Validate all requested message types (without taking scope into account)
+
+    validateMessageTypes(connection, queryMessageTypes, queryOptions.itsDebug);
 
     list<ScopeData> scopeDatas = {
                                   { stationOrAll, stationScopeStations, stationScopeMessages },
@@ -4029,7 +4068,8 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
             // Query messages and join station and message data to get distance and bearing values for
             // message data rows
             //
-            scope.messageData = queryMessages(connection, scope.stationData.itsStationIds, queryOptions);
+            scope.messageData = queryMessages(connection, scope.stationData.itsStationIds,
+                                              queryOptions, validateQuery);
             joinStationAndMessageData(scope.stationData, scope.messageData);
 
             // Collect/combine data
@@ -4111,6 +4151,7 @@ QueryData Engine::queryRejectedMessages(const QueryOptions& queryOptions) const
     bool distinct = false;
 
     TableMap tableMap = buildMessageQuerySelectClause(rejectedMessageQueryTables,
+                                                      StationIdList(),
                                                       queryOptions.itsMessageTypes,
                                                       queryOptions.itsParameters,
                                                       false,
