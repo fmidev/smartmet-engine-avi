@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 20.8.21
+Version: 20.9.22
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -62,6 +62,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue Sep 22 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.9.22-1.fmi
+- Support for querying global scoped message types (e.g. SWX, TCA, VAA) for flight route (BS-1840)
+
 * Fri Aug 21 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.8.21-1.fmi
 - Upgrade to fmt 6.2
 
