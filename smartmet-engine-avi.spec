@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 20.9.22
+Version: 20.9.23
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -18,12 +18,12 @@ BuildRequires: libconfig >= 1.4.9
 BuildRequires: libpqxx-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 20.8.21
-BuildRequires: smartmet-library-macgyver >= 20.8.21
+BuildRequires: smartmet-library-spine-devel >= 20.9.23
+BuildRequires: smartmet-library-macgyver >= 20.9.18
 Requires: boost169-date-time
-Requires: smartmet-library-macgyver >= 20.8.21
+Requires: smartmet-library-macgyver >= 20.9.18
 Requires: libconfig >= 1.4.9
-Requires: smartmet-library-spine >= 20.8.21
+Requires: smartmet-library-spine >= 20.9.23
 Provides: %{SPECNAME}
 Obsoletes: smartmet-brainstorm-aviengine < 16.11.1
 Obsoletes: smartmet-brainstorm-aviengine-debuginfo < 16.11.1
@@ -62,6 +62,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Wed Sep 23 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.9.23-1.fmi
+- Use Fmi::Exception instead of Spine::Exception
+
 * Tue Sep 22 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.9.22-1.fmi
 - Support for querying global scoped message types (e.g. SWX, TCA, VAA) for flight route (BS-1840)
 

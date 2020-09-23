@@ -3,7 +3,7 @@
 #include "Config.h"
 #include <boost/algorithm/string.hpp>
 #include <macgyver/StringConversion.h>
-#include <spine/Exception.h>
+#include <macgyver/Exception.h>
 #include <stdexcept>
 
 namespace SmartMet
@@ -28,7 +28,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (!theConfig.exists("postgis.host"))
     {
-      SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
+      Fmi::Exception exception(BCP, "Missing configuration attribute!");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "postgis.host");
       throw exception;
@@ -36,7 +36,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (!theConfig.exists("postgis.port"))
     {
-      SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
+      Fmi::Exception exception(BCP, "Missing configuration attribute!");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "postgis.port");
       throw exception;
@@ -44,7 +44,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (!theConfig.exists("postgis.database"))
     {
-      SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
+      Fmi::Exception exception(BCP, "Missing configuration attribute!");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "postgis.database");
       throw exception;
@@ -52,7 +52,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (!theConfig.exists("postgis.username"))
     {
-      SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
+      Fmi::Exception exception(BCP, "Missing configuration attribute!");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "postgis.username");
       throw exception;
@@ -60,7 +60,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (!theConfig.exists("postgis.password"))
     {
-      SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
+      Fmi::Exception exception(BCP, "Missing configuration attribute!");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "postgis.password");
       throw exception;
@@ -68,7 +68,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (!theConfig.exists("postgis.encoding"))
     {
-      SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
+      Fmi::Exception exception(BCP, "Missing configuration attribute!");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "postgis.encoding");
       throw exception;
@@ -99,7 +99,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (!theConfig.exists("message.recordsetstarttimeoffsethours"))
     {
-      SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
+      Fmi::Exception exception(BCP, "Missing configuration attribute!");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "message.recordsetstarttimeoffsethours");
       throw exception;
@@ -110,7 +110,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (itsRecordSetStartTimeOffsetHours == 0)
     {
-      SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+      Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
       exception.addDetail("The attribute value must be greater than 0.");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "message.recordsetstarttimeoffsethours");
@@ -119,7 +119,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (!theConfig.exists("message.recordsetendtimeoffsethours"))
     {
-      SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
+      Fmi::Exception exception(BCP, "Missing configuration attribute!");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "message.recordsetendtimeoffsethours");
       throw exception;
@@ -129,7 +129,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (itsRecordSetEndTimeOffsetHours == 0)
     {
-      SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+      Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
       exception.addDetail("The attribute value must be greater than 0");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "message.recordsetendtimeoffsethours");
@@ -152,7 +152,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
         if (!icaosSetting.isArray())
         {
-          SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
           exception.addDetail("The attribute must contain an array of icao codes.");
           exception.addParameter("Configuration file", theConfigFileName);
           exception.addParameter("Attribute", "message.filter_FI_METARxxx.excludeicaos");
@@ -165,7 +165,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         {
           if (icaosSetting[j].getType() != libconfig::Setting::Type::TypeString)
           {
-            SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+            Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
             exception.addDetail("The attribute must contain an array of strings.");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", "message.filter_FI_METARxxx.excludeicaos");
@@ -176,7 +176,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (icao.empty())
           {
-            SmartMet::Spine::Exception exception(BCP, "Empty configuration attribute value!");
+            Fmi::Exception exception(BCP, "Empty configuration attribute value!");
             exception.addDetail("The attribute value is empty.");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", "message.filter_FI_METARxxx.excludeicaos");
@@ -187,7 +187,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
                    itsFilterFIMETARxxxExcludeIcaos.end(),
                    icao) != itsFilterFIMETARxxxExcludeIcaos.end())
           {
-            SmartMet::Spine::Exception exception(
+            Fmi::Exception exception(
                 BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", "message.filter_FI_METARxxx.excludeicaos");
@@ -205,7 +205,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (!theConfig.exists("message.types"))
     {
-      SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
+      Fmi::Exception exception(BCP, "Missing configuration attribute!");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "message.types");
       throw exception;
@@ -216,7 +216,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     if (!messageTypes.isList())
     {
-      SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+      Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
       exception.addDetail("The attribute must contain an array of groups.");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "message.types");
@@ -224,7 +224,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
     }
     else if (messageTypes.getLength() == 0)
     {
-      SmartMet::Spine::Exception exception(BCP, "Empty configuration attribute value!");
+      Fmi::Exception exception(BCP, "Empty configuration attribute value!");
       exception.addDetail("The attribute value is empty.");
       exception.addParameter("Configuration file", theConfigFileName);
       exception.addParameter("Attribute", "message.types");
@@ -240,7 +240,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       if (!typeSetting.isGroup())
       {
-        SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+        Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
         exception.addDetail("The attribute must contain an array of groups.");
         exception.addParameter("Configuration file", theConfigFileName);
         exception.addParameter("Attribute", blockName);
@@ -257,7 +257,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
         if (!namesSetting.isArray())
         {
-          SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
           exception.addDetail("The attribute must contain an array of names.");
           exception.addParameter("Configuration file", theConfigFileName);
           exception.addParameter("Attribute", blockName + ".names");
@@ -265,7 +265,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         }
         else if (namesSetting.getLength() == 0)
         {
-          SmartMet::Spine::Exception exception(BCP, "Empty configuration attribute value!");
+          Fmi::Exception exception(BCP, "Empty configuration attribute value!");
           exception.addDetail("The attribute value is empty.");
           exception.addParameter("Configuration file", theConfigFileName);
           exception.addParameter("Attribute", blockName + ".names");
@@ -276,7 +276,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         {
           if (namesSetting[j].getType() != libconfig::Setting::Type::TypeString)
           {
-            SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+            Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
             exception.addDetail("The attribute must contain an array of strings.");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", blockName + ".names");
@@ -287,7 +287,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (name.empty())
           {
-            SmartMet::Spine::Exception exception(BCP, "Empty configuration attribute array item!");
+            Fmi::Exception exception(BCP, "Empty configuration attribute array item!");
             exception.addDetail("The attribute array item is empty.");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", blockName + ".names");
@@ -298,7 +298,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           if (find(knownMessageTypes.begin(), knownMessageTypes.end(), name) !=
               knownMessageTypes.end())
           {
-            SmartMet::Spine::Exception exception(
+            Fmi::Exception exception(
                 BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", blockName + ".names");
@@ -318,7 +318,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
         if (name.empty())
         {
-          SmartMet::Spine::Exception exception(BCP, "Empty configuration attribute value!");
+          Fmi::Exception exception(BCP, "Empty configuration attribute value!");
           exception.addDetail("The attribute value is empty");
           exception.addParameter("Configuration file", theConfigFileName);
           exception.addParameter("Attribute", blockName + ".name");
@@ -328,7 +328,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         if (find(knownMessageTypes.begin(), knownMessageTypes.end(), name) !=
             knownMessageTypes.end())
         {
-          SmartMet::Spine::Exception exception(BCP, "Configuration redefinition!");
+          Fmi::Exception exception(BCP, "Configuration redefinition!");
           exception.addDetail("Configuration with the same name is already defined");
           exception.addParameter("Configuration file", theConfigFileName);
           exception.addParameter("Attribute", blockName + ".name");
@@ -362,7 +362,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       if (!(s->scopeName))
       {
-        SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+        Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
         exception.addDetail(
             "Use one of the following values : \"station\", \"fir\" or \"global\"");
         exception.addParameter("Configuration file", theConfigFileName);
@@ -398,7 +398,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       if (!(r->timeRangeName))
       {
-        SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+        Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
         exception.addDetail(
             "Use one of the following values : \"validtime\", \"messagetime\" or \"creationtime\"");
         exception.addParameter("Configuration file", theConfigFileName);
@@ -416,7 +416,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
         if (validityHours == 0)
         {
-          SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
           exception.addDetail("The attribute value must be greater than 0.");
           exception.addParameter("Configuration file", theConfigFileName);
           exception.addParameter("Attribute", blockName + ".validityhours");
@@ -436,7 +436,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
         if ((!latestMessageOnly) && (messageType.getMessageTypes().size() > 1))
         {
-          SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
           exception.addDetail("The attribute value must be 'true' for group of message types.");
           exception.addParameter("Configuration file", theConfigFileName);
           exception.addParameter("Attribute", blockName + ".latestmessage");
@@ -446,7 +446,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       else if ((latestMessageOnly =
                     get_optional_config_param<bool>(typeSetting, "latestmessageonly", false)))
       {
-        SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+        Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
         exception.addDetail("The attribute value cannot be set for the selected time range type.");
         exception.addParameter("Configuration file", theConfigFileName);
         exception.addParameter("Attribute", blockName + ".latestmessageonly");
@@ -466,7 +466,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       {
         if (messageType.getMessageTypes().size() > 1)
         {
-          SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
           exception.addDetail("The attribute value cannot be set for group of message types.");
           exception.addParameter("Configuration file", theConfigFileName);
           exception.addParameter("Attribute", blockName + ".messirpatterns");
@@ -475,7 +475,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
         if (!latestMessageOnly)
         {
-          SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
           exception.addDetail(
               "The attribute value cannot be set unless 'latestmessage' is 'true'.");
           exception.addParameter("Configuration file", theConfigFileName);
@@ -487,7 +487,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
         if (!patternsSetting.isArray())
         {
-          SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
           exception.addDetail("The attribute value must contain an array of patterns.");
           exception.addParameter("Configuration file", theConfigFileName);
           exception.addParameter("Attribute", blockName + ".messirpatterns");
@@ -495,7 +495,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         }
         else if (patternsSetting.getLength() == 0)
         {
-          SmartMet::Spine::Exception exception(BCP, "Empty configuration attribute value!");
+          Fmi::Exception exception(BCP, "Empty configuration attribute value!");
           exception.addDetail("The attribute value is empty.");
           exception.addParameter("Configuration file", theConfigFileName);
           exception.addParameter("Attribute", blockName + ".messirpatterns");
@@ -508,7 +508,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         {
           if (patternsSetting[j].getType() != libconfig::Setting::Type::TypeString)
           {
-            SmartMet::Spine::Exception exception(BCP, "Invalid configuration attribute value!");
+            Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
             exception.addDetail("The attribute value must contain an array of strings.");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", blockName + ".messirpatterns");
@@ -520,7 +520,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (pattern.empty())
           {
-            SmartMet::Spine::Exception exception(BCP, "Empty configuration attribute array item!");
+            Fmi::Exception exception(BCP, "Empty configuration attribute array item!");
             exception.addDetail("The attribute array item is empty");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", blockName + ".messirpatterns");
@@ -532,7 +532,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (find(patterns.begin(), patterns.end(), pattern) != patterns.end())
           {
-            SmartMet::Spine::Exception exception(
+            Fmi::Exception exception(
                 BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", blockName + ".messirpatterns");
@@ -554,7 +554,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Configuration failed!");
+    throw Fmi::Exception::Trace(BCP, "Configuration failed!");
   }
 }
 
