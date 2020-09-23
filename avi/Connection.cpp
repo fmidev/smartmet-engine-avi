@@ -1,6 +1,6 @@
 #include "Connection.h"
 
-#include <spine/Exception.h>
+#include <macgyver/Exception.h>
 
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
@@ -29,7 +29,7 @@ Connection::Connection(const std::string& theHost,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -65,7 +65,7 @@ bool Connection::open(const std::string& theHost,
     }
     catch (...)
     {
-      throw SmartMet::Spine::Exception::Trace(BCP, "Connection to the database failed!")
+      throw Fmi::Exception::Trace(BCP, "Connection to the database failed!")
           .addParameter("Database", theDatabase)
           .addParameter("User", theUser);
     }
@@ -74,7 +74,7 @@ bool Connection::open(const std::string& theHost,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -92,13 +92,13 @@ void Connection::close()
           itsConnection->disconnect();
       }
       catch (const std::exception& e) {
-        throw SmartMet::Spine::Exception(BCP,string("Failed to disconnect database: ") + e.what());
+        throw Fmi::Exception(BCP,string("Failed to disconnect database: ") + e.what());
       }
 #endif
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -116,13 +116,13 @@ pqxx::result Connection::executeNonTransaction(const std::string& theSQLStatemen
     }
     catch (...)
     {
-      throw SmartMet::Spine::Exception(BCP, "Execution of the SQL statement failed!")
+      throw Fmi::Exception(BCP, "Execution of the SQL statement failed!")
           .addParameter("SQL statement", theSQLStatement);
     }
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 

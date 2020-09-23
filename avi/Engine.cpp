@@ -4,7 +4,7 @@
 #include "Connection.h"
 #include <boost/algorithm/string/trim.hpp>
 #include <macgyver/StringConversion.h>
-#include <spine/Exception.h>
+#include <macgyver/Exception.h>
 #include <stdexcept>
 
 using namespace std;
@@ -270,7 +270,7 @@ void buildStationQueryFromWhereClause(const LocationOptions& locationOptions,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -301,7 +301,7 @@ void buildStationQueryWhereClause(const StationIdList& stationIdList, ostringstr
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -351,7 +351,7 @@ void buildStationQueryWhereClause(const string& columnExpression,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -394,7 +394,7 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
             if (scope != NoScope)
             {
               if (knownScope != scope)
-                throw SmartMet::Spine::Exception::Trace(
+                throw Fmi::Exception::Trace(
                     BCP, "All requested message types must have same scope for route query");
             }
             else
@@ -405,7 +405,7 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
           }
 
         if (knownScope == NoScope)
-          throw SmartMet::Spine::Exception::Trace(
+          throw Fmi::Exception::Trace(
               BCP, "buildStationQueryFromWhereOrderByClause: internal: message scope unknown");
       }
     }
@@ -493,7 +493,7 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -532,7 +532,7 @@ void buildStationQueryWhereClause(const BBoxList& bboxList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -566,7 +566,7 @@ void buildMessageQueryWhereStationIdInClause(const StationIdList& stationIdList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -614,7 +614,7 @@ string buildRequestStationsWithClause(const StationIdList& stationIdList, bool r
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -682,7 +682,7 @@ string buildMessageTypeValidityWithClause(const StringList messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -735,7 +735,7 @@ void scopeMessageTypes(const StringList& messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -758,7 +758,7 @@ void scopeMessageTypes(const StringList& messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -821,7 +821,7 @@ string buildMessageTypeInClause(const StringList& messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -838,7 +838,7 @@ string buildMessageTypeInClause(const StringList& messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -924,7 +924,7 @@ string buildRecordSetWithClause(bool routeQuery,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1022,7 +1022,7 @@ string buildMessageTypeGroupByExpr(const StringList& messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1126,7 +1126,7 @@ string buildMessirHeadingGroupByExpr(const StringList& messageTypeList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1149,7 +1149,7 @@ string getStringList(const list<string>& stringList)
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1439,7 +1439,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1556,7 +1556,7 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1771,7 +1771,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         // AND me.message_time >= starttime AND me.message_time < endtime
         //
         if (!timeRangeColumn)
-          throw SmartMet::Spine::Exception(
+          throw Fmi::Exception(
               BCP, "buildMessageQueryFromWhereOrderByClause(): internal: time column is NULL");
 
         buildMessageQueryWhereStationIdInClause(stationIdList, fromWhereOrderByClause);
@@ -1863,7 +1863,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1968,7 +1968,7 @@ void buildRejectedMessageQueryFromWhereOrderByClause(int maxMessageRows,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -1986,7 +1986,7 @@ void sortColumnList(Columns& columns)
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2018,7 +2018,7 @@ void Engine::init()
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Init failed!");
+    throw Fmi::Exception::Trace(BCP, "Init failed!");
   }
 }
 
@@ -2079,7 +2079,7 @@ const Column* Engine::getQueryColumn(const ColumnTable tableColumns,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2108,7 +2108,7 @@ string Engine::buildStationQueryCoordinateExpressions(const Columns& columns) co
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2126,7 +2126,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
   try
   {
     if (paramList.empty())
-      throw SmartMet::Spine::Exception(BCP, "No parameters were given to station query");
+      throw Fmi::Exception(BCP, "No parameters were given to station query");
 
     // Selected columns
 
@@ -2141,7 +2141,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
         getQueryColumn(stationQueryColumns, columns, stationIdQueryColumn, duplicate);
 
     if (!queryColumn)
-      throw SmartMet::Spine::Exception(
+      throw Fmi::Exception(
           BCP, "buildStationQuerySelectClause(): internal: Unable to get id column");
 
     Column column(*queryColumn);
@@ -2159,7 +2159,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
           getQueryColumn(stationQueryColumns, columns, stationDistanceQueryColumn, duplicate);
 
       if (!queryColumn)
-        throw SmartMet::Spine::Exception(
+        throw Fmi::Exception(
             BCP, "buildStationQuerySelectClause(): internal: Unable to get distance column");
 
       Column column(*queryColumn);
@@ -2224,7 +2224,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2292,7 +2292,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
               queryTable.itsColumns, table.itsSelectedColumns, stationIdQueryColumn, duplicate);
 
           if (!queryColumn)
-            throw SmartMet::Spine::Exception(
+            throw Fmi::Exception(
                 BCP, "buildMessageQuerySelectClause(): internal: Unable to get station id column");
 
           Column column(*queryColumn);
@@ -2312,7 +2312,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
               queryTable.itsColumns, table.itsSelectedColumns, stationIcaoQueryColumn, duplicate);
 
           if (!queryColumn)
-            throw SmartMet::Spine::Exception(
+            throw Fmi::Exception(
                 BCP,
                 "buildMessageQuerySelectClause(): internal: Unable to get station icao column");
 
@@ -2423,7 +2423,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
           messageQueryColumns, table.itsSelectedColumns, messageQueryColumn, duplicate);
 
       if (!queryColumn)
-        throw SmartMet::Spine::Exception(
+        throw Fmi::Exception(
             BCP, "buildMessageQuerySelectClause(): internal: Unable to get message column");
 
       Column column(*queryColumn);
@@ -2478,7 +2478,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2507,7 +2507,7 @@ void Engine::executeQuery(const Connection& connection,
       cerr << "Rows: " << result.size() << std::endl;
 
     if ((maxRows > 0) && ((int)result.size() > maxRows))
-      throw SmartMet::Spine::Exception(
+      throw Fmi::Exception(
           BCP,
           string("Max number of rows exceeded (") + Fmi::to_string(maxRows) + "), limit the query");
 
@@ -2630,7 +2630,7 @@ void Engine::executeQuery(const Connection& connection,
           }
 
           if (!lonlatValid)
-            throw SmartMet::Spine::Exception(
+            throw Fmi::Exception(
                 BCP, string("Query returned invalid ") + column.itsName + " value '" + llStr + "'");
 
           queryValues[column.itsName].push_back(lonlat);
@@ -2649,7 +2649,7 @@ void Engine::executeQuery(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2704,7 +2704,7 @@ void Engine::queryStationsWithCoordinates(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2735,7 +2735,7 @@ void Engine::queryStationsWithIds(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2766,7 +2766,7 @@ void Engine::queryStationsWithIcaos(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2797,7 +2797,7 @@ void Engine::queryStationsWithCountries(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2828,7 +2828,7 @@ void Engine::queryStationsWithPlaces(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2863,7 +2863,7 @@ void Engine::queryStationsWithWKTs(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2895,7 +2895,7 @@ void Engine::queryStationsWithBBoxes(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -2919,7 +2919,7 @@ void Engine::validateParameters(const StringList& paramList,
     // (the information is used when querying stations)
 
     if (paramList.empty())
-      throw SmartMet::Spine::Exception(BCP, "The 'param'option is missing or empty!");
+      throw Fmi::Exception(BCP, "The 'param'option is missing or empty!");
 
     Columns columns;
     bool paramKnown, duplicate;
@@ -2954,13 +2954,13 @@ void Engine::validateParameters(const StringList& paramList,
           break;
         }
         else if (duplicate)
-          throw SmartMet::Spine::Exception(BCP, "Duplicate 'param' name '" + param + "'");
+          throw Fmi::Exception(BCP, "Duplicate 'param' name '" + param + "'");
 
         qt++;
       }
 
       if (!paramKnown)
-        throw SmartMet::Spine::Exception(BCP, "Unknown 'param' name '" + param + "'");
+        throw Fmi::Exception(BCP, "Unknown 'param' name '" + param + "'");
     }
 
     string selectClause;
@@ -2998,11 +2998,11 @@ void Engine::validateParameters(const StringList& paramList,
     }
 
     if (selectClause.empty())
-      throw SmartMet::Spine::Exception(BCP, "No applicable 'param' names given");
+      throw Fmi::Exception(BCP, "No applicable 'param' names given");
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3048,12 +3048,12 @@ void Engine::validateStationIds(const Connection& connection,
       int stationId(boost::get<int>(&(queryData.itsValues["station_id"].front()))
                         ? *(boost::get<int>(&(queryData.itsValues["station_id"].front())))
                         : -1);
-      throw SmartMet::Spine::Exception(BCP, "Unknown station id " + Fmi::to_string(stationId));
+      throw Fmi::Exception(BCP, "Unknown station id " + Fmi::to_string(stationId));
     }
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3101,12 +3101,12 @@ void Engine::validateIcaos(const Connection& connection,
       string icaoCode(boost::get<std::string>(&(queryData.itsValues["icao_code"].front()))
                           ? *(boost::get<std::string>(&(queryData.itsValues["icao_code"].front())))
                           : "?");
-      throw SmartMet::Spine::Exception(BCP, "Unknown icao code " + icaoCode);
+      throw Fmi::Exception(BCP, "Unknown icao code " + icaoCode);
     }
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3157,12 +3157,12 @@ void Engine::validateCountries(const Connection& connection,
           boost::get<std::string>(&(queryData.itsValues["country_code"].front()))
               ? *(boost::get<std::string>(&(queryData.itsValues["country_code"].front())))
               : "?");
-      throw SmartMet::Spine::Exception(BCP, "Unknown country code " + countryCode);
+      throw Fmi::Exception(BCP, "Unknown country code " + countryCode);
     }
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3233,7 +3233,7 @@ void Engine::validateWKTs(const Connection& connection,
     executeQuery<QueryData>(connection, selectFromWhereClause.str(), debug, queryData);
 
     if (queryData.itsValues["wkt"].size() != n)
-      throw SmartMet::Spine::Exception(
+      throw Fmi::Exception(
           BCP, "validateWKTs: internal: wkt check query did not return as many rows as expected");
 
     bool isValid = ((boost::get<int>(&(queryData.itsValues["isvalid"].front()))
@@ -3250,9 +3250,9 @@ void Engine::validateWKTs(const Connection& connection,
                           : "?");
 
       if ((geomType == "ST_Point") || (geomType == "ST_Polygon") || (geomType == "ST_LineString"))
-        throw SmartMet::Spine::Exception(BCP, "Invalid wkt " + wkt);
+        throw Fmi::Exception(BCP, "Invalid wkt " + wkt);
 
-      throw SmartMet::Spine::Exception(
+      throw Fmi::Exception(
           BCP, "Unsupported wkt " + wkt + "; use POINT(s), POLYGON(s) or LINESTRING(s)");
     }
 
@@ -3281,7 +3281,7 @@ void Engine::validateWKTs(const Connection& connection,
       }
 
       if ((index < 0) || (itwkt == locationOptions.itsWKTs.itsWKTs.end()))
-        throw SmartMet::Spine::Exception(BCP, "validateWKTs: internal: wkt index is invalid");
+        throw Fmi::Exception(BCP, "validateWKTs: internal: wkt index is invalid");
 
       double lat = (boost::get<double>(&(queryData.itsValues["lat"][dataIndex]))
                         ? *(boost::get<double>(&(queryData.itsValues["lat"][dataIndex])))
@@ -3301,7 +3301,7 @@ void Engine::validateWKTs(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3432,7 +3432,7 @@ StationQueryData Engine::queryStations(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 //
@@ -3455,7 +3455,7 @@ StationQueryData Engine::queryStations(QueryOptions& queryOptions) const
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3481,7 +3481,7 @@ void Engine::validateMessageTypes(const Connection& connection,
 
     for (auto const& msgType : messageTypeList)
       if (find(it_begin, it_end, msgType) == it_end)
-        throw SmartMet::Spine::Exception(BCP, "Unknown message type " + msgType);
+        throw Fmi::Exception(BCP, "Unknown message type " + msgType);
 
     /*
     ostringstream selectFromWhereClause;
@@ -3507,13 +3507,13 @@ void Engine::validateMessageTypes(const Connection& connection,
     if (!queryData.itsValues.empty()) {
             string msgType(boost::get<std::string>(&(queryData.itsValues["type"].front())) ?
     *(boost::get<std::string>(&(queryData.itsValues["type"].front()))) : "?");
-            throw SmartMet::Spine::Exception(BCP,"Unknown message type " + msgType);
+            throw Fmi::Exception(BCP,"Unknown message type " + msgType);
     }
     */
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3534,14 +3534,14 @@ const Column* Engine::getMessageTableTimeColumn(const string& timeColumn) const
     auto queryColumn = getQueryColumn(messageQueryColumns, columns, timeColumn, duplicate);
 
     if ((!queryColumn) || (queryColumn->itsType != DateTime))
-      throw SmartMet::Spine::Exception(
+      throw Fmi::Exception(
           BCP, string("Column '") + timeColumn + "' is not a datetime column in message table");
 
     return queryColumn;
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3567,7 +3567,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
                                                  : itsConfig->getMaxMessageStations());
 
     if ((maxStations > 0) && ((int)stationIdList.size() > maxStations))
-      throw SmartMet::Spine::Exception(
+      throw Fmi::Exception(
           BCP,
           string("Max number of stations exceeded (") + Fmi::to_string(maxStations) + "/" +
               Fmi::to_string(stationIdList.size()) + "), limit the query");
@@ -3785,7 +3785,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
       auto it = tableMap.find(messageTableName);
 
       if (it == tableMap.end())
-        throw SmartMet::Spine::Exception(
+        throw Fmi::Exception(
             BCP, "queryMessages: internal: Unable to get avidb_messages table");
 
       auto recordSetTable = it->second;
@@ -3874,7 +3874,7 @@ StationQueryData Engine::queryMessages(const Connection& connection,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 //
@@ -3896,7 +3896,7 @@ StationQueryData Engine::queryMessages(const StationIdList& stationIdList,
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3975,7 +3975,7 @@ StationQueryData& Engine::joinStationAndMessageData(const StationQueryData& stat
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -3993,7 +3993,7 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
   try
   {
     if (queryOptions.itsValidity == Avi::Rejected)
-      throw SmartMet::Spine::Exception(
+      throw Fmi::Exception(
           BCP,
           "queryStationsAndMessages() can't be used to query rejected messages; use "
           "queryRejectedMessages() instead");
@@ -4112,7 +4112,7 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
@@ -4136,7 +4136,7 @@ QueryData Engine::queryRejectedMessages(const QueryOptions& queryOptions) const
     // Validate time options, parameters and message types
 
     if (!queryOptions.itsTimeOptions.itsObservationTime.empty())
-      throw SmartMet::Spine::Exception(BCP, "Time range must be used to query rejected messages");
+      throw Fmi::Exception(BCP, "Time range must be used to query rejected messages");
 
     bool messageColumnSelected;
 
@@ -4194,7 +4194,7 @@ QueryData Engine::queryRejectedMessages(const QueryOptions& queryOptions) const
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception::Trace(BCP, "Operation failed!");
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
 }
 
