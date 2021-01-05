@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 20.9.23
+Version: 21.1.5
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -14,16 +14,16 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: make
 BuildRequires: boost169-devel
-BuildRequires: libconfig >= 1.4.9
-BuildRequires: libpqxx-devel
+BuildRequires: libconfig >= 1.7.2
+BuildRequires: libpqxx-devel < 1:7.0
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 20.9.23
-BuildRequires: smartmet-library-macgyver >= 20.9.18
+BuildRequires: smartmet-library-spine-devel >= 21.1.5
+BuildRequires: smartmet-library-macgyver >= 21.1.5
 Requires: boost169-date-time
-Requires: smartmet-library-macgyver >= 20.9.18
-Requires: libconfig >= 1.4.9
-Requires: smartmet-library-spine >= 20.9.23
+Requires: smartmet-library-macgyver >= 21.1.5
+Requires: libconfig >= 1.7.2
+Requires: smartmet-library-spine >= 21.1.5
 Provides: %{SPECNAME}
 Obsoletes: smartmet-brainstorm-aviengine < 16.11.1
 Obsoletes: smartmet-brainstorm-aviengine-debuginfo < 16.11.1
@@ -35,7 +35,7 @@ SmartMet aviation message engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: libpqxx-devel
+Requires: libpqxx-devel < 1:7.0
 Obsoletes: smartmet-brainstorm-aviengine-devel < 16.11.1
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -62,6 +62,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue Jan  5 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.5-1.fmi
+- Upgraded libpqxx dependency
+
 * Wed Sep 23 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.9.23-1.fmi
 - Use Fmi::Exception instead of Spine::Exception
 - New release version
