@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 21.1.5
+Version: 21.1.8
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -62,6 +62,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Jan  8 2021 Andris Pavenis <andris.pavenis@fmi.fi> - 21.1.8-1.fmi
+- Build update (use makefile.inc, do not use cmake in director test)
+
 * Tue Jan  5 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.5-1.fmi
 - Upgraded libpqxx dependency
 
