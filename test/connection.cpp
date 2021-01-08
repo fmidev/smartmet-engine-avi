@@ -16,7 +16,7 @@ BOOST_AUTO_TEST_CASE(connection_constructor_not_valid_args)
 {
   BOOST_CHECK_THROW(
       { Connection connection("host", 123456789, "user", "passwd", "db", "encoding"); },
-      Spine::Exception);
+      Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(connection_constructor_valid_args,

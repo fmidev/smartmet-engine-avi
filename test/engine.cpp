@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_empty_queryoptions_fail,
 {
   BOOST_CHECK(engine != nullptr);
   QueryOptions queryOptions;
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_fail,
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_fail,
   BOOST_CHECK(engine != nullptr);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("dummyparam");
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK(engine != nullptr);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("");
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsParameters.push_back("name");
   queryOptions.itsParameters.push_back("stationid");
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_stationid,
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_case_in
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("elevation");
   queryOptions.itsParameters.push_back("StationId");
-  BOOST_CHECK_THROW(engine->queryStations(queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryStations(queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_all_valid_parameters,
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE(
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsStationIds.push_back(-1);
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -282,7 +282,7 @@ BOOST_AUTO_TEST_CASE(
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsStationIds.push_back(std::numeric_limits<unsigned int>::max());
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE(
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsIcaos.push_back("XXxx");
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -529,7 +529,7 @@ BOOST_AUTO_TEST_CASE(
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsCountries = {""};
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -690,7 +690,7 @@ BOOST_AUTO_TEST_CASE(
   // Counterclockwise non-closed polygon around EFHK station.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
       "POLYGON((24.90695 60.31581, 24.90697 60.31581, 24.90697 60.31583, 24.90695 60.31583))");
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -704,7 +704,7 @@ BOOST_AUTO_TEST_CASE(
   // One polygon, with two loops: the first around EFHK and the second around ILHK station.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + EFHK_counterclockwise +
                                                             "," + ILHK_counterclockwise + ")");
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -717,7 +717,7 @@ BOOST_AUTO_TEST_CASE(
   // The first polygon around EFHK and the second around ILHK station.
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
       "MULTIPOLYGON((" + EFHK_counterclockwise + "),(" + ILHK_counterclockwise + "))");
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -754,7 +754,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
       "MULTIPOINT((24.90695 60.3157), (24.95674 60.3266))");
-  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Spine::Exception);
+  BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -812,7 +812,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
       "MULTILINESTRING((18.5 57.5, 25.7 62.4),(25.7 62.4, 29.7 62.6))");
-  BOOST_CHECK_THROW(engine->queryStations(queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryStations(queryOptions), Fmi::Exception);
 }
 
 //
@@ -825,7 +825,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_stationidlist_and_queryoptions_empty_f
   BOOST_CHECK(engine != nullptr);
   const StationIdList stationIdList;
   const QueryOptions queryOptions;
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_unknown_dummyparam_fail,
@@ -835,7 +835,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_unknown_dummyparam_fail,
   const StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("dummyparam");
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_allvalidparameters_fail,
@@ -845,7 +845,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_allvalidparameters_fail,
   const StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsParameters = allValidParameters;
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_parameter_locationparameter_fail,
@@ -855,7 +855,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_parameter_locationparamet
   const StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allLocationParameters.front());
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_parameter_messagetypeparameter_fail,
@@ -865,7 +865,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_parameter_messagetypepara
   const StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_iso_fail,
@@ -877,16 +877,16 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_iso_fail,
   queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
 
   queryOptions.itsTimeOptions.itsObservationTime = "2018-01-01";
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 
   queryOptions.itsTimeOptions.itsObservationTime = "20180101T000000Z";
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 
   queryOptions.itsTimeOptions.itsObservationTime = "2018-01-01T00:00:00Z";
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 
   queryOptions.itsTimeOptions.itsObservationTime = "2018-01-01T00:00:00+00:00";
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_timestamptz,
@@ -1050,13 +1050,13 @@ BOOST_AUTO_TEST_CASE(
         {
           // For METAR messagevalidfrom is missing
           // Throws "[Out of range] Year is out of valid range: 1400..10000"
-          BOOST_CHECK_THROW(boost::apply_visitor(sv, *vvIt), Spine::Exception);
+          BOOST_CHECK_THROW(boost::apply_visitor(sv, *vvIt), Fmi::Exception);
         }
         else if (name == "messagevalidto")
         {
           // For METAR messagevalidto is missing
           //  [Out of range] Year is out of valid range: 1400..10000
-          BOOST_CHECK_THROW(boost::apply_visitor(sv, *vvIt), Spine::Exception);
+          BOOST_CHECK_THROW(boost::apply_visitor(sv, *vvIt), Fmi::Exception);
         }
         else if (name == "messagecreated")
         {
@@ -1347,7 +1347,7 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 4);
 
   queryOptions.itsMaxMessageStations = 4;
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1362,7 +1362,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters.push_back(allMessageParameters.front());
   queryOptions.itsLocationOptions.itsStationIds = {8, 9, 10, 11};
 
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1377,7 +1377,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters.push_back(allMessageParameters.front());
   queryOptions.itsLocationOptions.itsIcaos = {"EFIV", "EFJO", "EFJY", "EFKE"};
 
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1395,7 +1395,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsLocationOptions.itsBBoxes.push_back(
       BBox(24.80458, 24.90697, 60.31582, 61.85540));  //!< EFHK id=7 and EFHA id=5
 
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1411,7 +1411,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsLocationOptions.itsLonLats.push_back(LonLat(24.90696, 60.31600));
   queryOptions.itsLocationOptions.itsMaxDistance = 1000.0;
 
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1426,7 +1426,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters.push_back(allMessageParameters.front());
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back("POLYGON(" + EFHK_counterclockwise +
                                                             ")");
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1441,7 +1441,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters.push_back(allMessageParameters.front());
   queryOptions.itsLocationOptions.itsPlaces.push_back("Inari Ivalo lentoasema");
 
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1456,7 +1456,7 @@ BOOST_AUTO_TEST_CASE(
   queryOptions.itsParameters.push_back(allMessageParameters.front());
   queryOptions.itsLocationOptions.itsCountries = {"FI", "SE"};
 
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1506,7 +1506,7 @@ BOOST_AUTO_TEST_CASE(
 
   // Greater than 0 value limits the number of messages in result
   queryOptions.itsMaxMessageRows = 1;
-  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1586,7 +1586,7 @@ BOOST_AUTO_TEST_CASE(engine_querystationsandmessages_queryoptions_empty_fail,
 {
   BOOST_CHECK(engine != nullptr);
   QueryOptions queryOptions;
-  BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_querystationsandmessages_queryoptions_with_parameter,
@@ -1619,7 +1619,7 @@ BOOST_AUTO_TEST_CASE(
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageParameters.front());
   queryOptions.itsValidity = Avi::Rejected;
-  BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1630,7 +1630,7 @@ BOOST_AUTO_TEST_CASE(
   QueryOptions queryOptions;
   queryOptions.itsLocationOptions.itsStationIds = {8};
   queryOptions.itsParameters.push_back(allMessageParameters.front());
-  BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1970,7 +1970,7 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_empty_fail,
 {
   BOOST_CHECK(engine != nullptr);
   QueryOptions queryOptions;
-  BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_two_parameters_fail,
@@ -1981,7 +1981,7 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_two_parameters_fa
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.front());
   queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.back());
-  BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_starttime_endtime,
@@ -2073,7 +2073,7 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_maxmessagerows,
   BOOST_CHECK_EQUAL(f->second.size(), 12);
 
   queryOptions.itsMaxMessageRows = 5;
-  BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Spine::Exception);
+  BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Fmi::Exception);
 }
 }  // namespace Avi
 }  // namespace Engine

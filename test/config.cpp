@@ -14,7 +14,7 @@ namespace Avi
 BOOST_AUTO_TEST_CASE(config_constructor_with_file_not_exist)
 {
   const std::string filename = "cnf/notexist.conf";
-  BOOST_CHECK_THROW({ Config config(filename); }, Spine::Exception);
+  BOOST_CHECK_THROW({ Config config(filename); }, Fmi::Exception);
 }
 BOOST_AUTO_TEST_CASE(config_constructor_with_valid_file_exist)
 {
