@@ -1,5 +1,4 @@
 
-INCDIR = smartmet/plugins/$(SUBNAME)
 TOP = $(shell pwd)/..
 
 REQUIRES = configpp
@@ -43,7 +42,7 @@ clean:
 	rm -rf obj/*.o obj/*.d
 	rm -rf $(TESTSUITE_TARGETS)
 
-check:	$(TESTSUITE_TARGETS)
+test:	$(TESTSUITE_TARGETS)
 	@ok=true; \
 	for test in $(TESTSUITE_TARGETS); do \
 		if ! ./$$test --log_level=message ; then ok=false; fi; \

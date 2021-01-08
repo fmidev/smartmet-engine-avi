@@ -46,8 +46,8 @@ $(LIBFILE): $(OBJS)
 	$(CC) $(LDFLAGS) -shared -rdynamic -o $(LIBFILE) $(OBJS) $(LIBS)
 
 clean:
-	if [ -h lib$(LIBFILE) ] && [ -e $(LIBFILE) ]; then rm lib$(LIBFILE); fi
 	rm -f $(LIBFILE) $(OBJS) *~ $(SUBNAME)/*~ $(objdir)/*.d
+	$(MAKE) -C test $@
 
 format:
 	clang-format -i -style=file $(SUBNAME)/*.h $(SUBNAME)/*.cpp test/*.cpp
@@ -64,8 +64,7 @@ install:
 	$(INSTALL_PROG) $(LIBFILE) $(enginedir)/$(LIBFILE)
 
 test:
-	if [ ! -e lib$(LIBFILE) ] && [ -e $(LIBFILE) ]; then ln -s $(LIBFILE) lib$(LIBFILE); fi
-	mkdir -p build && cd build && cmake ../ && make && make test && cd ..
+	$(MAKE) -C test $@
 
 objdir:
 	@mkdir -p $(objdir)
