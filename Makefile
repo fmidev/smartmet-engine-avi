@@ -2,6 +2,8 @@ SUBNAME = avi
 SPEC = smartmet-engine-avi
 INCDIR = smartmet/engines/$(SUBNAME)
 
+REQUIRES = libpqxx
+
 include $(shell echo $${PREFIX-/usr})/share/smartmet/devel/makefile.inc
 
 # Compiler options
@@ -9,8 +11,8 @@ include $(shell echo $${PREFIX-/usr})/share/smartmet/devel/makefile.inc
 DEFINES = -DUNIX -D_REENTRANT
 
 LIBS += -L$(libdir) \
+	$(REQUIRED_LIBS) \
 	-lsmartmet-spine \
-	-lpqxx \
 	-lbz2 -lz
 
 # What to install
@@ -43,7 +45,7 @@ configtest:
 	@if [ -x "$$(command -v cfgvalidate)" ]; then cfgvalidate -v cnf/avi.conf.sample; fi
 
 $(LIBFILE): $(OBJS)
-	$(CC) $(LDFLAGS) -shared -rdynamic -o $(LIBFILE) $(OBJS) $(LIBS)
+	$(CXX) $(LDFLAGS) -shared -rdynamic -o $(LIBFILE) $(OBJS) $(LIBS)
 
 clean:
 	rm -f $(LIBFILE) $(OBJS) *~ $(SUBNAME)/*~ $(objdir)/*.d
