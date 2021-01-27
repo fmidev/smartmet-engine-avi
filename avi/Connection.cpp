@@ -114,10 +114,9 @@ pqxx::result Connection::executeNonTransaction(const std::string& theSQLStatemen
       pqxx::nontransaction ntrx(*itsConnection);
       return ntrx.exec(theSQLStatement);
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-      throw Fmi::Exception(BCP, "Execution of the SQL statement failed!")
-          .addParameter("SQL statement", theSQLStatement);
+      throw Fmi::Exception(BCP, e.what()).addParameter("SQL statement", theSQLStatement);
     }
   }
   catch (...)
