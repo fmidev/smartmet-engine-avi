@@ -109,6 +109,7 @@ BOOST_AUTO_TEST_CASE(engine_singleton, *boost::unit_test::depends_on("engine_con
   engine = nullptr;
 
   SmartMet::Spine::Reactor reactor(opts);
+  reactor.init();
   engine = reinterpret_cast<Engine *>(reactor.getSingleton("Avi", NULL));
 
   BOOST_CHECK(engine != nullptr);
