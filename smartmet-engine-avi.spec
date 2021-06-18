@@ -4,7 +4,7 @@
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
 Version: 21.6.18
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-avi
@@ -61,6 +61,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Jul 18 2021 Andris Pavēnis <andris.pavenis@fmi.fi> 21.6.18-2.fmi
+- Connection: fix libpqxx7 support
+
 * Fri Jul 18 2021 Andris Pavēnis <andris.pavenis@fmi.fi> 21.6.18-1.fmi
 - Remove explicit dependency on libpqxx
 
