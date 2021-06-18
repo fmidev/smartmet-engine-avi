@@ -34,6 +34,7 @@ SmartMet aviation message engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
+Requires: %{SPECNAME} = %version-%release
 Obsoletes: smartmet-brainstorm-aviengine-devel < 16.11.1
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
