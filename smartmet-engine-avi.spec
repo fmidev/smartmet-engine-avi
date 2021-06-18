@@ -3,8 +3,8 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 21.6.18
-Release: 2%{?dist}.fmi
+Version: 21.1.14
+Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-avi
@@ -15,6 +15,7 @@ BuildRequires: gcc-c++
 BuildRequires: make
 BuildRequires: boost169-devel
 BuildRequires: libconfig >= 1.7.2
+BuildRequires: libpqxx-devel < 1:7.0
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
 BuildRequires: smartmet-library-spine-devel >= 21.1.14
@@ -35,6 +36,7 @@ Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
 Requires: %{SPECNAME} = %version-%release
+Requires: libpqxx-devel < 1:7.0
 Obsoletes: smartmet-brainstorm-aviengine-devel < 16.11.1
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -61,12 +63,6 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
-* Fri Jul 18 2021 Andris Pavēnis <andris.pavenis@fmi.fi> 21.6.18-2.fmi
-- Connection: fix libpqxx7 support
-
-* Fri Jul 18 2021 Andris Pavēnis <andris.pavenis@fmi.fi> 21.6.18-1.fmi
-- Remove explicit dependency on libpqxx
-
 * Thu Jan 14 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.14-1.fmi
 - Repackaged smartmet to resolve debuginfo issues
 
