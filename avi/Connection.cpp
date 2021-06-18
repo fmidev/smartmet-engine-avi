@@ -82,14 +82,13 @@ void Connection::close()
 {
   try
   {
-    // disconnect() does not throw according to documentation
 
+#if PQXX_VERSION_MAJOR < 7
     itsConnection->disconnect();
-
-#if 0
+#else
       try {
         if (itsConnection->is_open())
-          itsConnection->disconnect();
+          itsConnection->close();
       }
       catch (const std::exception& e) {
         throw Fmi::Exception(BCP,string("Failed to disconnect database: ") + e.what());
