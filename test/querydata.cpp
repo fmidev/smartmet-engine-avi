@@ -1,7 +1,6 @@
 #define BOOST_TEST_MODULE "QueryDataClassModule"
 
 #include "Config.h"
-#include "Connection.h"
 #include "Engine.h"
 
 #include <boost/test/included/unit_test.hpp>
@@ -13,6 +12,18 @@ namespace Engine
 {
 namespace Avi
 {
+Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConfig)
+{
+  Fmi::Database::PostgreSQLConnectionOptions opt;
+  opt.host = itsConfig.getHost();
+  opt.port = itsConfig.getPort();
+  opt.username = itsConfig.getUsername();
+  opt.password = itsConfig.getPassword();
+  opt.database = itsConfig.getDatabase();
+  opt.encoding = itsConfig.getEncoding();
+  return opt;
+}
+
 BOOST_AUTO_TEST_CASE(querydata_constructor_default)
 {
   QueryData queryData;
@@ -53,12 +64,7 @@ BOOST_AUTO_TEST_CASE(querydata_member_getValues,
 {
   const std::string filename = "cnf/valid.conf";
   Config conf(filename);
-  Connection connection(conf.getHost(),
-                        conf.getPort(),
-                        conf.getUsername(),
-                        conf.getPassword(),
-                        conf.getDatabase(),
-                        conf.getEncoding());
+  Fmi::Database::PostgreSQLConnection connection(mk_connection_options(conf));
 
   const std::string sqlStatement(
       "SELECT generate_series%2 as stationid, case when generate_series=1 then 'taf' when "

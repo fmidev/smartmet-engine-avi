@@ -2,7 +2,6 @@
 
 #include "Engine.h"
 #include "Config.h"
-#include "Connection.h"
 
 #include <boost/test/included/unit_test.hpp>
 #include <spine/Options.h>
@@ -17,6 +16,18 @@ namespace Engine
 {
 namespace Avi
 {
+Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConfig)
+{
+  Fmi::Database::PostgreSQLConnectionOptions opt;
+  opt.host = itsConfig.getHost();
+  opt.port = itsConfig.getPort();
+  opt.username = itsConfig.getUsername();
+  opt.password = itsConfig.getPassword();
+  opt.database = itsConfig.getDatabase();
+  opt.encoding = itsConfig.getEncoding();
+  return opt;
+}
+
 Engine *engine;
 
 const std::list<std::string> allLocationParameters({"stationid",
