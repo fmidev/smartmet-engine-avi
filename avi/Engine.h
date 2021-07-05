@@ -4,6 +4,7 @@
 
 #include "Config.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <macgyver/PostgreSQLConnection.h>
 #include <spine/SmartMetEngine.h>
 #include <spine/TimeSeries.h>
 #include <list>
@@ -20,6 +21,7 @@ namespace Engine
 {
 namespace Avi
 {
+
 // Types for passing location options
 
 struct BBox
@@ -318,8 +320,6 @@ struct StationQueryData
 
 // The engine
 
-class Connection;
-
 class Engine : public SmartMet::Spine::SmartMetEngine
 {
  public:
@@ -344,17 +344,17 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   void validateParameters(const StringList &paramList,
                           Validity validity,
                           bool &messageColumnSelected) const;
-  void validateStationIds(const Connection &connection,
+  void validateStationIds(const Fmi::Database::PostgreSQLConnection &connection,
                           const StationIdList &stationIdList,
                           bool debug) const;
-  void validateIcaos(const Connection &connection, const StringList &icaoList, bool debug) const;
-  void validateCountries(const Connection &connection,
+  void validateIcaos(const Fmi::Database::PostgreSQLConnection &connection, const StringList &icaoList, bool debug) const;
+  void validateCountries(const Fmi::Database::PostgreSQLConnection &connection,
                          const StringList &countryList,
                          bool debug) const;
-  void validateWKTs(const Connection &connection,
+  void validateWKTs(const Fmi::Database::PostgreSQLConnection &connection,
                     LocationOptions &locationOptions,
                     bool debug) const;
-  void validateMessageTypes(const Connection &connection,
+  void validateMessageTypes(const Fmi::Database::PostgreSQLConnection &connection,
                             const StringList &messageTypeList,
                             bool debug) const;
 
@@ -381,54 +381,54 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                          bool &distinct) const;
 
   template <typename T>
-  void executeQuery(const Connection &connection,
+  void executeQuery(const Fmi::Database::PostgreSQLConnection &connection,
                     const std::string &query,
                     bool debug,
                     T &queryData,
                     bool distinctRows = true,
                     int maxRows = 0) const;
 
-  void queryStationsWithIds(const Connection &connection,
+  void queryStationsWithIds(const Fmi::Database::PostgreSQLConnection &connection,
                             const StationIdList &stationIdList,
                             const std::string &selectClause,
                             bool debug,
                             StationQueryData &queryData) const;
-  void queryStationsWithIcaos(const Connection &connection,
+  void queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnection &connection,
                               const StringList &icaoList,
                               const std::string &selectClause,
                               bool debug,
                               StationQueryData &queryData) const;
-  void queryStationsWithCountries(const Connection &connection,
+  void queryStationsWithCountries(const Fmi::Database::PostgreSQLConnection &connection,
                                   const StringList &countryList,
                                   const std::string &selectClause,
                                   bool debug,
                                   StationQueryData &stationQueryData) const;
-  void queryStationsWithPlaces(const Connection &connection,
+  void queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection &connection,
                                const StringList &placeList,
                                const std::string &selectClause,
                                bool debug,
                                StationQueryData &queryData) const;
-  void queryStationsWithCoordinates(const Connection &connection,
+  void queryStationsWithCoordinates(const Fmi::Database::PostgreSQLConnection &connection,
                                     const LocationOptions &locationOptions,
                                     const StringList &messageTypes,
                                     const std::string &selectClause,
                                     bool debug,
                                     StationQueryData &queryData) const;
-  void queryStationsWithWKTs(const Connection &connection,
+  void queryStationsWithWKTs(const Fmi::Database::PostgreSQLConnection &connection,
                              const LocationOptions &locationOptions,
                              const StringList &messageTypes,
                              const std::string &selectClause,
                              bool debug,
                              StationQueryData &queryData) const;
-  void queryStationsWithBBoxes(const Connection &connection,
+  void queryStationsWithBBoxes(const Fmi::Database::PostgreSQLConnection &connection,
                                const LocationOptions &locationOptions,
                                const std::string &selectClause,
                                bool debug,
                                StationQueryData &queryData) const;
 
-  StationQueryData queryStations(const Connection &connection, QueryOptions &queryOptions,
+  StationQueryData queryStations(const Fmi::Database::PostgreSQLConnection &connection, QueryOptions &queryOptions,
                                  bool validateQuery) const;
-  StationQueryData queryMessages(const Connection &connection,
+  StationQueryData queryMessages(const Fmi::Database::PostgreSQLConnection &connection,
                                  const StationIdList &stationIdList,
                                  const QueryOptions &queryOptions,
                                  bool validateQuery) const;
