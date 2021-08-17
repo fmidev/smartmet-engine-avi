@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 21.7.8
+Version: 21.8.17
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -17,20 +17,20 @@ BuildRequires: boost169-devel
 BuildRequires: libconfig >= 1.7.2
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 21.1.14
-BuildRequires: smartmet-library-macgyver >= 21.7.8
+BuildRequires: smartmet-library-spine-devel >= 21.8.17
+BuildRequires: smartmet-library-macgyver >= 21.8.5
 Requires: boost169-date-time
-Requires: smartmet-library-macgyver >= 21.7.8
+Requires: smartmet-library-macgyver >= 21.8.5
 Requires: libconfig >= 1.7.2
-Requires: smartmet-library-spine >= 21.1.14
+Requires: smartmet-library-spine >= 21.8.17
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
 BuildRequires: libpqxx-devel < 1:7.0
 %else
 %if %{defined el8}
-Requires: libpqxx >= 1:7.0
-BuildRequires: libpqxx-devel >= 1:7.0
+Requires: libpqxx >= 5.0.1
+BuildRequires: libpqxx-devel >= 5.0.1
 %else
 Requires: libpqxx
 BuildRequires: libpqxx-devel
@@ -75,6 +75,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue Aug 17 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.8.17-1.fmi
+- Repackaged due to Reactor ABI changes related to shutdowns
+
 * Thu Jul  8 2021 Andris Pavēnis <andris.pavenis@fmi.fi> 21.7.8-1.fmi
 - Use libpqxx7 for RHEL8
 
