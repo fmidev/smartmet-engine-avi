@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 21.8.17
+Version: 21.8.31
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -17,12 +17,12 @@ BuildRequires: boost169-devel
 BuildRequires: libconfig >= 1.7.2
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 21.8.17
-BuildRequires: smartmet-library-macgyver >= 21.8.5
+BuildRequires: smartmet-library-spine-devel >= 21.8.30
+BuildRequires: smartmet-library-macgyver >= 21.8.30
 Requires: boost169-date-time
-Requires: smartmet-library-macgyver >= 21.8.5
+Requires: smartmet-library-macgyver >= 21.8.30
 Requires: libconfig >= 1.7.2
-Requires: smartmet-library-spine >= 21.8.17
+Requires: smartmet-library-spine >= 21.8.30
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
@@ -75,6 +75,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue Aug 31 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.8.31-1.fmi
+- Repackaged due to Spine ABI changes
+
 * Tue Aug 17 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.8.17-1.fmi
 - Repackaged due to Reactor ABI changes related to shutdowns
 
