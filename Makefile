@@ -2,7 +2,7 @@ SUBNAME = avi
 SPEC = smartmet-engine-avi
 INCDIR = smartmet/engines/$(SUBNAME)
 
-REQUIRES = libpqxx
+REQUIRES = libpqxx configpp
 
 include $(shell echo $${PREFIX-/usr})/share/smartmet/devel/makefile.inc
 
