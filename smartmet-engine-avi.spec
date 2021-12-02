@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 21.9.7
+Version: 21.12.2
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -16,19 +16,19 @@ BuildRequires: make
 BuildRequires: boost169-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 21.9.7
-BuildRequires: smartmet-library-macgyver >= 21.8.30
+BuildRequires: smartmet-library-spine-devel >= 21.12.2
+BuildRequires: smartmet-library-macgyver >= 21.12.1
 Requires: boost169-date-time
-Requires: smartmet-library-macgyver >= 21.8.30
-Requires: smartmet-library-spine >= 21.9.7
+Requires: smartmet-library-macgyver >= 21.12.1
+Requires: smartmet-library-spine >= 21.12.7
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
 BuildRequires: libpqxx-devel < 1:7.0
 %else
 %if %{defined el8}
-Requires: libpqxx >= 5.0.1
-BuildRequires: libpqxx-devel >= 5.0.1
+Requires: libpqxx >= 1:7.6.0, libpqxx < 1:7.7.0
+BuildRequires: libpqxx-devel >= 1:7.6.0, libpqxx-devel < 1:7.7.0
 %else
 Requires: libpqxx
 BuildRequires: libpqxx-devel
