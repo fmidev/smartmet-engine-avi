@@ -20,7 +20,7 @@ BuildRequires: smartmet-library-spine-devel >= 21.12.2
 BuildRequires: smartmet-library-macgyver >= 21.12.1
 Requires: boost169-date-time
 Requires: smartmet-library-macgyver >= 21.12.1
-Requires: smartmet-library-spine >= 21.12.7
+Requires: smartmet-library-spine >= 21.12.2
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
