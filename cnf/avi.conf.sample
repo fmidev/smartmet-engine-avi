@@ -85,6 +85,10 @@ message:
 			timerangetype = "messagevalidtime";
 			validityhours = 4;					# 'NIL' messages have no valid from/to; use message_time - message_time+'validityhours' time range
 			latestmessage = true;
+                        queryrestrictionhours = [ 2,5,8,11,14,17,20,23 ];
+                        queryrestrictioncountrycodes = [ "FI" ];
+                        queryrestrictionstartminute = 20;
+                        queryrestrictionendminute = 40;
 		},
 		{
 			names = [ "METREP","SPECIAL" ];

@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 21.12.7
+Version: 22.1.25
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -16,19 +16,19 @@ BuildRequires: make
 BuildRequires: boost169-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 21.12.2
-BuildRequires: smartmet-library-macgyver >= 21.12.1
+BuildRequires: smartmet-library-spine-devel >= 22.1.21
+BuildRequires: smartmet-library-macgyver >= 22.1.21
 Requires: boost169-date-time
-Requires: smartmet-library-macgyver >= 21.12.1
-Requires: smartmet-library-spine >= 21.12.2
+Requires: smartmet-library-macgyver >= 22.1.21
+Requires: smartmet-library-spine >= 22.1.21
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
 BuildRequires: libpqxx-devel < 1:7.0
 %else
 %if %{defined el8}
-Requires: libpqxx >= 1:7.6.0, libpqxx < 1:7.7.0
-BuildRequires: libpqxx-devel >= 1:7.6.0, libpqxx-devel < 1:7.7.0
+Requires: libpqxx >= 6.2.5 libpqxx < 1:7.7.0
+BuildRequires: libpqxx-devel >= 6.2.5 libpqxx-devel < 1:7.7.0
 %else
 Requires: libpqxx
 BuildRequires: libpqxx-devel
@@ -73,6 +73,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue Jan 25 2022 Pertti Kinnia <pertti.kinnia@fmi.fi> 22.1.25-1.fmi
+- TAF's are stored e.g. every n'th (3rd) hour between xx:20 and xx:40 and then published. If configured, during publication hour delay latest messages until xx:40 for messages having 'messagevalidtime' time restriction. Take publication time into account with time range query too when querying valid messages (when validrangemessages=1); BRAINSTORM-2239
+
 * Tue Dec  7 2021 Andris Pavēnis <andris.pavenis@fmi.fi> 21.12.7-1.fmi
 - Update to postgresql 13 and gdal 3.3
 
