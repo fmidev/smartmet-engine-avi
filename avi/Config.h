@@ -42,6 +42,7 @@ class MessageType
     itsTimeRangeType = NullTimeRange;
     itsValidityHours = 0;
     itsLatestMessageOnly = false;
+    itsQueryRestrictionStartMinute = itsQueryRestrictionEndMinute = 0;
   }
 
   bool operator==(const std::string &theMessageType) const
@@ -61,6 +62,26 @@ class MessageType
   {
     itsMessirPatterns.push_back(theMessirPattern);
   }
+  void setQueryRestrictionHours(const std::string &hours)
+  {
+    itsQueryRestrictionHours = hours;
+  }
+  void addQueryRestrictionIcaoPattern(const std::string &theIcaoPattern)
+  {
+    itsQueryRestrictionIcaoPatterns.push_back(theIcaoPattern);
+  }
+  void addQueryRestrictionCountryCode(const std::string &theCountryCode)
+  {
+    itsQueryRestrictionCountryCodes.push_back(theCountryCode);
+  }
+  void setQueryRestrictionStartMinute(int minute)
+  {
+    itsQueryRestrictionStartMinute = minute;
+  }
+  void setQueryRestrictionEndMinute(int minute)
+  {
+    itsQueryRestrictionEndMinute = minute;
+  }
 
   const std::list<std::string> &getMessageTypes() const { return itsTypes; }
   MessageScope getScope() const { return itsScope; }
@@ -74,6 +95,17 @@ class MessageType
   unsigned int getValidityHours() const { return itsValidityHours; }
   bool getLatestMessageOnly() const { return itsLatestMessageOnly; }
   const std::list<std::string> &getMessirPatterns() const { return itsMessirPatterns; }
+  const std::string &getQueryRestrictionHours() const { return itsQueryRestrictionHours; }
+  const std::list<std::string> &getQueryRestrictionIcaoPatterns() const
+  {
+    return itsQueryRestrictionIcaoPatterns;
+  }
+  const std::list<std::string> &getQueryRestrictionCountryCodes() const
+  {
+    return itsQueryRestrictionCountryCodes;
+  }
+  int getQueryRestrictionStartMinute() const { return itsQueryRestrictionStartMinute; }
+  int getQueryRestrictionEndMinute() const { return itsQueryRestrictionEndMinute; }
 
  private:
   std::list<std::string> itsTypes;
@@ -84,6 +116,11 @@ class MessageType
   std::list<std::string> itsMessirPatterns;  // Querying latest messages grouped additionally by
                                              // messir_heading (e.g. GAFOR; FBFI41..., FBFI42...,
                                              // FBFI43...)
+  std::string itsQueryRestrictionHours;	     // TAF query restriction hours (e.g. 2,5,8,...)
+  std::list<std::string> itsQueryRestrictionIcaoPatterns;  // ... icao patterns
+  std::list<std::string> itsQueryRestrictionCountryCodes;  // ... country codes
+  int itsQueryRestrictionStartMinute;                      // ... starting minute (e.g. 20)
+  int itsQueryRestrictionEndMinute;                        // ... ending minute (e.g. 40)
 };
 
 typedef std::list<MessageType> MessageTypes;

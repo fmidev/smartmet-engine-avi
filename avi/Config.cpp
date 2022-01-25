@@ -5,6 +5,7 @@
 #include <macgyver/StringConversion.h>
 #include <macgyver/Exception.h>
 #include <stdexcept>
+#include <set>
 
 namespace SmartMet
 {
@@ -444,12 +445,12 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         }
       }
       else if ((latestMessageOnly =
-                    get_optional_config_param<bool>(typeSetting, "latestmessageonly", false)))
+                    get_optional_config_param<bool>(typeSetting, "latestmessage", false)))
       {
         Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
         exception.addDetail("The attribute value cannot be set for the selected time range type.");
         exception.addParameter("Configuration file", theConfigFileName);
-        exception.addParameter("Attribute", blockName + ".latestmessageonly");
+        exception.addParameter("Attribute", blockName + ".latestmessage");
         throw exception;
       }
 
@@ -462,14 +463,16 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       // messir_heading LIKE pattern(s) used for additional grouping (e.g. for GAFOR) when querying
       // latest messages
 
-      if (theConfig.exists(blockName + ".messirpatterns"))
+      std::string attrBlockName(blockName + ".messirpatterns");
+
+      if (theConfig.exists(attrBlockName))
       {
         if (messageType.getMessageTypes().size() > 1)
         {
           Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
           exception.addDetail("The attribute value cannot be set for group of message types.");
           exception.addParameter("Configuration file", theConfigFileName);
-          exception.addParameter("Attribute", blockName + ".messirpatterns");
+          exception.addParameter("Attribute", attrBlockName);
           throw exception;
         }
 
@@ -479,18 +482,18 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addDetail(
               "The attribute value cannot be set unless 'latestmessage' is 'true'.");
           exception.addParameter("Configuration file", theConfigFileName);
-          exception.addParameter("Attribute", blockName + ".messirpatterns");
+          exception.addParameter("Attribute", attrBlockName);
           throw exception;
         }
 
-        const libconfig::Setting &patternsSetting = theConfig.lookup(blockName + ".messirpatterns");
+        const libconfig::Setting &patternsSetting = theConfig.lookup(attrBlockName);
 
         if (!patternsSetting.isArray())
         {
           Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
           exception.addDetail("The attribute value must contain an array of patterns.");
           exception.addParameter("Configuration file", theConfigFileName);
-          exception.addParameter("Attribute", blockName + ".messirpatterns");
+          exception.addParameter("Attribute", attrBlockName);
           throw exception;
         }
         else if (patternsSetting.getLength() == 0)
@@ -498,7 +501,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           Fmi::Exception exception(BCP, "Empty configuration attribute value!");
           exception.addDetail("The attribute value is empty.");
           exception.addParameter("Configuration file", theConfigFileName);
-          exception.addParameter("Attribute", blockName + ".messirpatterns");
+          exception.addParameter("Attribute", attrBlockName);
           throw exception;
         }
 
@@ -511,7 +514,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
             Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
             exception.addDetail("The attribute value must contain an array of strings.");
             exception.addParameter("Configuration file", theConfigFileName);
-            exception.addParameter("Attribute", blockName + ".messirpatterns");
+            exception.addParameter("Attribute", attrBlockName);
             throw exception;
           }
 
@@ -523,7 +526,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
             Fmi::Exception exception(BCP, "Empty configuration attribute array item!");
             exception.addDetail("The attribute array item is empty");
             exception.addParameter("Configuration file", theConfigFileName);
-            exception.addParameter("Attribute", blockName + ".messirpatterns");
+            exception.addParameter("Attribute", attrBlockName);
             exception.addParameter("Array index", Fmi::to_string(j));
             throw exception;
           }
@@ -535,7 +538,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
             Fmi::Exception exception(
                 BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
-            exception.addParameter("Attribute", blockName + ".messirpatterns");
+            exception.addParameter("Attribute", attrBlockName);
             exception.addParameter("Duplicate index", Fmi::to_string(j));
             exception.addParameter("Duplicate value", pattern);
             throw exception;
@@ -543,6 +546,329 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           messageType.addMessirPattern(pattern);
         }
+      }
+
+      // Message (i.e. TAF) query restriction hours, icao patterns, country codes
+      // and starting/ending minutes
+      //
+      // TAFs are stored e.g. every n'th (3rd) hour between xx:20 and xx:40 and then
+      // published; during publication hour output of latest message is delayed until xx:40
+      //
+
+      attrBlockName = blockName + ".queryrestrictionhours";
+
+      if (theConfig.exists(attrBlockName))
+      {
+        if (!latestMessageOnly)
+        {
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+          exception.addDetail(
+              "The attribute value cannot be set unless 'latestmessage' is 'true'.");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", attrBlockName);
+          throw exception;
+        }
+
+        if (messageType.getTimeRangeType() != MessageValidTimeRangeLatest)
+        {
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+          exception.addDetail(
+              "The attribute value cannot be set unless 'timerangetype' is 'messagevalidtime'");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", attrBlockName);
+          throw exception;
+        }
+
+        const libconfig::Setting &hoursSetting = theConfig.lookup(attrBlockName);
+
+        if (!hoursSetting.isArray())
+        {
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+          exception.addDetail("The attribute value must contain an array of hour values (0-23).");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", attrBlockName);
+          throw exception;
+        }
+        else if (hoursSetting.getLength() == 0)
+        {
+          Fmi::Exception exception(BCP, "Empty configuration attribute value!");
+          exception.addDetail("The attribute value is empty.");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", attrBlockName);
+          throw exception;
+        }
+
+        std::set<int> restrictionHours;
+
+        for (int j = 0; (j < hoursSetting.getLength()); j++)
+        {
+          if (hoursSetting[j].getType() != libconfig::Setting::Type::TypeInt)
+          {
+            Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+            exception.addDetail("The attribute value must contain an array of hour values (0-23).");
+            exception.addParameter("Configuration file", theConfigFileName);
+            exception.addParameter("Attribute", attrBlockName);
+            throw exception;
+          }
+
+          int hour = hoursSetting[j];
+
+          if ((hour < 0) || (hour > 23))
+          {
+            Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+            exception.addDetail("The attribute value is invalid, hour 0-23 expected");
+            exception.addParameter("Configuration file", theConfigFileName);
+            exception.addParameter("Attribute", attrBlockName);
+            exception.addParameter("Array index", Fmi::to_string(j));
+            throw exception;
+          }
+
+          if (restrictionHours.find(hour) != restrictionHours.end())
+          {
+            Fmi::Exception exception(
+                BCP, "Configuration attribute value contains duplicates!");
+            exception.addParameter("Configuration file", theConfigFileName);
+            exception.addParameter("Attribute", attrBlockName);
+            exception.addParameter("Duplicate index", Fmi::to_string(j));
+            exception.addParameter("Duplicate value", Fmi::to_string(hour));
+            throw exception;
+          }
+
+          restrictionHours.insert(hour);
+        }
+
+        std::string hourList;
+
+        for (auto rh = restrictionHours.cbegin(); rh != restrictionHours.cend(); rh++)
+          hourList += (((rh != restrictionHours.cbegin()) ? "," : "") + Fmi::to_string(*rh));
+
+        messageType.setQueryRestrictionHours(hourList);
+      }
+
+      // Query restriction icao LIKE pattern(s) and country code(s)
+
+      attrBlockName = blockName + ".queryrestrictionicaopatterns";
+      bool hasPatterns = theConfig.exists(attrBlockName);
+
+      std::string codeAttrBlockName = blockName + ".queryrestrictioncountrycodes";
+      bool hasCodes = theConfig.exists(codeAttrBlockName);
+
+      if (((!messageType.getQueryRestrictionHours().empty()) && (!hasCodes)) || hasPatterns)
+      {
+        if (messageType.getQueryRestrictionHours().empty())
+        {
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+          exception.addDetail(
+              "The attribute value cannot be set unless 'queryrestrictionhours' is set");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", attrBlockName);
+          throw exception;
+        }
+        else if (!hasPatterns)
+        {
+          Fmi::Exception exception(BCP, "Missing configuration attribute value!");
+          exception.addDetail(
+              "The attribute value must be set when 'queryrestrictionhours' is set");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", attrBlockName);
+          throw exception;
+        }
+
+        const libconfig::Setting &patternsSetting = theConfig.lookup(attrBlockName);
+
+        if (!patternsSetting.isArray())
+        {
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+          exception.addDetail("The attribute value must contain an array of patterns.");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", attrBlockName);
+          throw exception;
+        }
+
+        std::string pattern;
+
+        for (int j = 0; (j < patternsSetting.getLength()); j++)
+        {
+          if (patternsSetting[j].getType() != libconfig::Setting::Type::TypeString)
+          {
+            Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+            exception.addDetail("The attribute value must contain an array of strings.");
+            exception.addParameter("Configuration file", theConfigFileName);
+            exception.addParameter("Attribute", attrBlockName);
+            throw exception;
+          }
+
+          pattern = Fmi::ascii_toupper_copy((const char *)patternsSetting[j]);
+          boost::trim(pattern);
+
+          if (pattern.empty())
+          {
+            Fmi::Exception exception(BCP, "Empty configuration attribute array item!");
+            exception.addDetail("The attribute array item is empty");
+            exception.addParameter("Configuration file", theConfigFileName);
+            exception.addParameter("Attribute", attrBlockName);
+            exception.addParameter("Array index", Fmi::to_string(j));
+            throw exception;
+          }
+
+          auto const &patterns = messageType.getQueryRestrictionIcaoPatterns();
+
+          if (find(patterns.begin(), patterns.end(), pattern) != patterns.end())
+          {
+            Fmi::Exception exception(
+                BCP, "Configuration attribute value contains duplicates!");
+            exception.addParameter("Configuration file", theConfigFileName);
+            exception.addParameter("Attribute", attrBlockName);
+            exception.addParameter("Duplicate index", Fmi::to_string(j));
+            exception.addParameter("Duplicate value", pattern);
+            throw exception;
+          }
+
+          messageType.addQueryRestrictionIcaoPattern(pattern);
+        }
+      }
+
+      if (((!messageType.getQueryRestrictionHours().empty()) && (!hasPatterns)) || hasCodes)
+      {
+        if (messageType.getQueryRestrictionHours().empty())
+        {
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+          exception.addDetail(
+              "The attribute value cannot be set unless 'queryrestrictionhours' is set");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", codeAttrBlockName);
+          throw exception;
+        }
+        else if (!hasCodes)
+        {
+          Fmi::Exception exception(BCP, "Missing configuration attribute value!");
+          exception.addDetail(
+              "The attribute value must be set when 'queryrestrictionhours' is set");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", codeAttrBlockName);
+          throw exception;
+        }
+
+        const libconfig::Setting &codesSetting = theConfig.lookup(codeAttrBlockName);
+
+        if (!codesSetting.isArray())
+        {
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+          exception.addDetail("The attribute value must contain an array of country codes.");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", codeAttrBlockName);
+          throw exception;
+        }
+
+        std::string code;
+
+        for (int j = 0; (j < codesSetting.getLength()); j++)
+        {
+          if (codesSetting[j].getType() != libconfig::Setting::Type::TypeString)
+          {
+            Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+            exception.addDetail("The attribute value must contain an array of strings.");
+            exception.addParameter("Configuration file", theConfigFileName);
+            exception.addParameter("Attribute", codeAttrBlockName);
+            throw exception;
+          }
+
+          code = Fmi::ascii_toupper_copy((const char *)codesSetting[j]);
+          boost::trim(code);
+
+          if (code.empty())
+          {
+            Fmi::Exception exception(BCP, "Empty configuration attribute array item!");
+            exception.addDetail("The attribute array item is empty");
+            exception.addParameter("Configuration file", theConfigFileName);
+            exception.addParameter("Attribute", codeAttrBlockName);
+            exception.addParameter("Array index", Fmi::to_string(j));
+            throw exception;
+          }
+
+          auto const &codes = messageType.getQueryRestrictionCountryCodes();
+
+          if (find(codes.begin(), codes.end(), code) != codes.end())
+          {
+            Fmi::Exception exception(
+                BCP, "Configuration attribute value contains duplicates!");
+            exception.addParameter("Configuration file", theConfigFileName);
+            exception.addParameter("Attribute", codeAttrBlockName);
+            exception.addParameter("Duplicate index", Fmi::to_string(j));
+            exception.addParameter("Duplicate value", code);
+            throw exception;
+          }
+
+          messageType.addQueryRestrictionCountryCode(code);
+        }
+      }
+
+      if (
+          (!messageType.getQueryRestrictionHours().empty()) &&
+          messageType.getQueryRestrictionIcaoPatterns().empty() &&
+          messageType.getQueryRestrictionCountryCodes().empty()
+         )
+      {
+        Fmi::Exception exception(
+            BCP, "Query restriction icao pattern(s) and country code(s) missing!");
+        exception.addParameter("Configuration file", theConfigFileName);
+        exception.addParameter("Attribute", blockName);
+        throw exception;
+      }
+
+      // Query restriction starting and ending minute
+
+      std::string startBlockName(blockName + ".queryrestrictionstartminute");
+      std::string endBlockName(blockName + ".queryrestrictionendminute");
+      bool hasStart = theConfig.exists(startBlockName);
+      bool hasEnd = theConfig.exists(endBlockName);
+
+      if ((!messageType.getQueryRestrictionHours().empty()) || hasStart || hasEnd)
+      {
+        if (messageType.getQueryRestrictionHours().empty())
+        {
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+          exception.addDetail(
+              "The attribute value cannot be set unless 'queryrestrictionhours' is set");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", hasStart ? startBlockName : endBlockName);
+          throw exception;
+        }
+        else if ((!hasStart) || (!hasEnd))
+        {
+          Fmi::Exception exception(BCP, "Missing configuration attribute value!");
+          exception.addDetail(
+              "The attribute value must be set when 'queryrestrictionhours' is set");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", hasStart ? endBlockName : startBlockName);
+          throw exception;
+        }
+
+        const libconfig::Setting &startMinuteSetting = theConfig.lookup(startBlockName);
+        const libconfig::Setting &endMinuteSetting = theConfig.lookup(endBlockName);
+        bool startMinuteOk = (startMinuteSetting.getType() == libconfig::Setting::Type::TypeInt);
+        bool endMinuteOk = (endMinuteSetting.getType() == libconfig::Setting::Type::TypeInt);
+        int startMinute = 0, endMinute = 0;
+
+        if (startMinuteOk && endMinuteOk)
+        {
+          startMinute = startMinuteSetting;
+          endMinute = endMinuteSetting;
+          startMinuteOk = ((startMinute >= 0) && (startMinute <= 59));
+          endMinuteOk = ((endMinute > startMinute) && (endMinute <= 59));
+        }
+
+        if ((!startMinuteOk) || (!endMinuteOk))
+        {
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+          exception.addDetail("The attribute value must contain minute value (0-59).");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", startMinuteOk ? endBlockName : startBlockName);
+          throw exception;
+        }
+
+        messageType.setQueryRestrictionStartMinute(startMinute);
+        messageType.setQueryRestrictionEndMinute(endMinute);
       }
 
       itsMessageTypes.push_back(messageType);
