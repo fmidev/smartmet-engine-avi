@@ -1170,7 +1170,7 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
       for (auto const& knownType : knownMessageTypes)
         if (knownType.getTimeRangeType() == MessageValidTimeRangeLatest)
         {
-          if (! knownType.getQueryRestrictionHours().empty())
+          if ((! knownType.getQueryRestrictionHours().empty()) || bStationJoin)
           {
             // Messages (i.e. TAFs) are stored e.g. every n'th (3rd) hour between xx:20 and xx:40
             // and then published; during publication hour delay latest message until xx:40
@@ -1213,7 +1213,7 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
 
             bStationJoin = true;
           }
-          else
+          else if (whereExpr.str().empty())
             whereExpr << "((" << observationTime << " BETWEEN " << messageTableAlias
                       << ".message_time AND " << messageTableAlias << ".valid_to)"
                       << " OR (" << messageTableAlias
@@ -1236,7 +1236,7 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
           {
             if (knownType.getMessageTypes().front() == messageType)
             {
-              if (! knownType.getQueryRestrictionHours().empty())
+              if ((! knownType.getQueryRestrictionHours().empty()) || bStationJoin)
               {
                 if (!(whereExpr.str().empty()))
                   throw Fmi::Exception::Trace(
@@ -1276,7 +1276,7 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
 
                 bStationJoin = true;
               }
-              else
+              else if (whereExpr.str().empty())
                 whereExpr << "((" << observationTime << " BETWEEN " << messageTableAlias
                           << ".message_time AND " << messageTableAlias << ".valid_to)"
                           << " OR (" << messageTableAlias
@@ -1331,14 +1331,14 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
       for (auto const& knownType : knownMessageTypes)
         if (knownType.getTimeRangeType() == MessageValidTimeRangeLatest)
         {
-          if (!(whereExpr.str().empty()))
-            throw Fmi::Exception::Trace(
-                BCP, "Query time restriction settings not supported for multiple messagetypes");
-
-          if (! knownType.getQueryRestrictionHours().empty())
+          if ((! knownType.getQueryRestrictionHours().empty()) || bStationJoin)
           {
             // Messages (i.e. TAFs) are stored e.g. every n'th (3rd) hour between xx:20 and xx:40
             // and then published; ignore publication hour's messages unless xx:40 within range
+
+            if (!(whereExpr.str().empty()))
+              throw Fmi::Exception::Trace(
+                  BCP, "Query time restriction settings not supported for multiple messagetypes");
 
             whereExpr << "(((" << startTime << " <= " << messageTableAlias << ".valid_to AND "
                       << endTime << " > " << messageTableAlias << ".message_time) AND ((";
@@ -1373,7 +1373,7 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
 
             bStationJoin = true;
           }
-          else
+          else if (whereExpr.str().empty())
             whereExpr << "((" << startTime << " <= " << messageTableAlias << ".valid_to AND "
                       << endTime << " > " << messageTableAlias << ".message_time) OR ("
                       << messageTableAlias << ".valid_from IS NULL AND "
@@ -1395,12 +1395,12 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
           {
             if (knownType.getMessageTypes().front() == messageType)
             {
-              if (!(whereExpr.str().empty()))
-                throw Fmi::Exception::Trace(
-                    BCP, "Query time restriction settings not supported for multiple messagetypes");
-
-              if (! knownType.getQueryRestrictionHours().empty())
+              if ((! knownType.getQueryRestrictionHours().empty()) || bStationJoin)
               {
+                if (!(whereExpr.str().empty()))
+                  throw Fmi::Exception::Trace(
+                      BCP, "Query time restriction settings not supported for multiple messagetypes");
+
                 whereExpr << "(((" << startTime << " <= " << messageTableAlias << ".valid_to AND "
                           << endTime << " > " << messageTableAlias << ".message_time) AND ((";
 
@@ -1434,7 +1434,7 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
 
                 bStationJoin = true;
               }
-              else
+              else if (whereExpr.str().empty())
                 whereExpr << "((" << startTime << " <= " << messageTableAlias << ".valid_to AND "
                           << endTime << " > " << messageTableAlias << ".message_time) OR ("
                           << messageTableAlias << ".valid_from IS NULL AND "
