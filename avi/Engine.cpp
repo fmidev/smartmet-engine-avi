@@ -1179,8 +1179,9 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
               throw Fmi::Exception::Trace(
                   BCP, "Query time restriction settings not supported for multiple messagetypes");
 
-            whereExpr << "(((" << observationTime << " BETWEEN " << messageTableAlias
-                      << ".message_time AND " << messageTableAlias << ".valid_to) AND ((";
+            whereExpr << "(((" << observationTime << " >= " << messageTableAlias
+                      << ".message_time AND " << observationTime << " < "
+                      << messageTableAlias << ".valid_to) AND ((";
 
             auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
 
@@ -1206,10 +1207,10 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                       << knownType.getQueryRestrictionEndMinute()
                       << "))) OR (" << messageTableAlias
                       << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
-                      << observationTime << " BETWEEN " << messageTableAlias << ".message_time AND "
-                      << messageTableAlias << ".message_time + " << messageValidityTableAlias
-                      << ".validityhours)) AND " << observationTime << " >= " << messageTableAlias
-                      << ".created";
+                      << observationTime << " >= " << messageTableAlias << ".message_time AND "
+                      << observationTime << " < (" << messageTableAlias << ".message_time + "
+                      << messageValidityTableAlias << ".validityhours))) AND "
+                      << observationTime << " >= " << messageTableAlias << ".created";
 
             bStationJoin = true;
           }
@@ -1218,10 +1219,10 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                       << ".message_time AND " << messageTableAlias << ".valid_to)"
                       << " OR (" << messageTableAlias
                       << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
-                      << observationTime << " BETWEEN " << messageTableAlias << ".message_time AND "
-                      << messageTableAlias << ".message_time + " << messageValidityTableAlias
-                      << ".validityhours)) AND " << observationTime << " >= " << messageTableAlias
-                      << ".created";
+                      << observationTime << " >= " << messageTableAlias << ".message_time AND "
+                      << observationTime << " < (" << messageTableAlias << ".message_time + "
+                      << messageValidityTableAlias << ".validityhours))) AND "
+                      << observationTime << " >= " << messageTableAlias << ".created";
         }
 
         return whereExpr.str();
@@ -1242,8 +1243,9 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                   throw Fmi::Exception::Trace(
                       BCP, "Query time restriction settings not supported for multiple messagetypes");
 
-                whereExpr << "(((" << observationTime << " BETWEEN " << messageTableAlias
-                          << ".message_time AND " << messageTableAlias << ".valid_to) AND ((";
+                whereExpr << "(((" << observationTime << " >= " << messageTableAlias
+                          << ".message_time AND " << observationTime << " < "
+                          << messageTableAlias << ".valid_to) AND ((";
 
                 auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
 
@@ -1269,10 +1271,10 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                           << knownType.getQueryRestrictionEndMinute()
                           << "))) OR (" << messageTableAlias
                           << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
-                          << observationTime << " BETWEEN " << messageTableAlias << ".message_time AND "
-                          << messageTableAlias << ".message_time + " << messageValidityTableAlias
-                          << ".validityhours)) AND " << observationTime << " >= " << messageTableAlias
-                          << ".created";
+                          << observationTime << " >= " << messageTableAlias << ".message_time AND "
+                          << observationTime << " < (" << messageTableAlias << ".message_time + "
+                          << messageValidityTableAlias << ".validityhours))) AND "
+                          << observationTime << " >= " << messageTableAlias << ".created";
 
                 bStationJoin = true;
               }
@@ -1281,10 +1283,10 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                           << ".message_time AND " << messageTableAlias << ".valid_to)"
                           << " OR (" << messageTableAlias
                           << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
-                          << observationTime << " BETWEEN " << messageTableAlias << ".message_time AND "
-                          << messageTableAlias << ".message_time + " << messageValidityTableAlias
-                          << ".validityhours)) AND " << observationTime << " >= " << messageTableAlias
-                          << ".created";
+                          << observationTime << " >= " << messageTableAlias << ".message_time AND "
+                          << observationTime << " < (" << messageTableAlias << ".message_time + "
+                          << messageValidityTableAlias << ".validityhours))) AND "
+                          << observationTime << " >= " << messageTableAlias << ".created";
 
               break;
             }
@@ -1617,8 +1619,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                  << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << observationTime << " BETWEEN " << messageTableAlias << ".valid_from AND "
-                 << messageTableAlias << ".valid_to"
+                 << observationTime << " >= " << messageTableAlias << ".valid_from AND "
+                 << observationTime << " < " << messageTableAlias << ".valid_to"
                  << " AND " << observationTime << " >= " << messageTableAlias << ".created";
 
       unionOrEmpty = " UNION ALL ";
@@ -1696,10 +1698,11 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       }
 
       withClause << whereOrAnd << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << messageValidityTableJoin << " AND " << observationTime << " BETWEEN "
-                 << messageTableAlias << ".message_time AND " << messageTableAlias
-                 << ".message_time + " << messageValidityTableAlias << ".validityhours"
-                 << " AND " << observationTime << " >= " << messageTableAlias << ".created";
+                 << messageValidityTableJoin << " AND " << observationTime << " >= "
+                 << messageTableAlias << ".message_time AND " << observationTime << " < ("
+                 << messageTableAlias << ".message_time + "
+                 << messageValidityTableAlias << ".validityhours) AND "
+                 << observationTime << " >= " << messageTableAlias << ".created";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1717,8 +1720,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                  << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << observationTime << " BETWEEN " << messageTableAlias << ".created AND "
-                 << messageTableAlias << ".valid_to";
+                 << observationTime << " >= " << messageTableAlias << ".created AND "
+                 << observationTime << " < " << messageTableAlias << ".valid_to";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1730,8 +1733,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       withClause << unionOrEmpty << "SELECT message_id FROM record_set " << messageTableAlias
                  << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << observationTime << " BETWEEN " << messageTableAlias << ".valid_from AND "
-                 << messageTableAlias << ".valid_to"
+                 << observationTime << " >= " << messageTableAlias << ".valid_from AND "
+                 << observationTime << " < " << messageTableAlias << ".valid_to"
                  << " AND " << observationTime << " >= " << messageTableAlias << ".created";
 
       unionOrEmpty = " UNION ALL ";
@@ -1745,10 +1748,11 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                  << ",avidb_message_types mt"
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << messageValidityTableJoin << " AND " << observationTime << " BETWEEN "
-                 << messageTableAlias << ".message_time AND " << messageTableAlias
-                 << ".message_time + " << messageValidityTableAlias << ".validityhours"
-                 << " AND " << observationTime << " >= " << messageTableAlias << ".created";
+                 << messageValidityTableJoin << " AND " << observationTime << " >= "
+                 << messageTableAlias << ".message_time AND " << observationTime << " < ("
+                 << messageTableAlias << ".message_time + "
+                 << messageValidityTableAlias << ".validityhours) AND "
+                 << observationTime << " >= " << messageTableAlias << ".created";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1760,8 +1764,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       withClause << unionOrEmpty << "SELECT message_id FROM record_set " << messageTableAlias
                  << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << observationTime << " BETWEEN " << messageTableAlias << ".created AND "
-                 << messageTableAlias << ".valid_to";
+                 << observationTime << " >= " << messageTableAlias << ".created AND "
+                 << observationTime << " < " << messageTableAlias << ".valid_to";
 
     withClause << ")";
 
