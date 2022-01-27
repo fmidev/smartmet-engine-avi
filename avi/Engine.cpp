@@ -1342,7 +1342,7 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
               throw Fmi::Exception::Trace(
                   BCP, "Query time restriction settings not supported for multiple messagetypes");
 
-            whereExpr << "(((" << startTime << " <= " << messageTableAlias << ".valid_to AND "
+            whereExpr << "(((" << startTime << " < " << messageTableAlias << ".valid_to AND "
                       << endTime << " > " << messageTableAlias << ".message_time) AND ((";
 
             auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
@@ -1369,18 +1369,18 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
                       << knownType.getQueryRestrictionEndMinute()
                       << "))) OR (" << messageTableAlias
                       << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
-                      << "(" << startTime << " <= (" << messageTableAlias << ".message_time + "
+                      << "(" << startTime << " < (" << messageTableAlias << ".message_time + "
                       << messageValidityTableAlias << ".validityhours)"
                       << " AND " << endTime << " > " << messageTableAlias << ".message_time)))";
 
             bStationJoin = true;
           }
           else if (whereExpr.str().empty())
-            whereExpr << "((" << startTime << " <= " << messageTableAlias << ".valid_to AND "
+            whereExpr << "((" << startTime << " < " << messageTableAlias << ".valid_to AND "
                       << endTime << " > " << messageTableAlias << ".message_time) OR ("
                       << messageTableAlias << ".valid_from IS NULL AND "
                       << messageTableAlias << ".valid_to IS NULL AND ("
-                      << startTime << " <= (" << messageTableAlias << ".message_time + "
+                      << startTime << " < (" << messageTableAlias << ".message_time + "
                       << messageValidityTableAlias << ".validityhours) AND "
                       << endTime << " > " << messageTableAlias << ".message_time)))";
         }
@@ -1403,7 +1403,7 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
                   throw Fmi::Exception::Trace(
                       BCP, "Query time restriction settings not supported for multiple messagetypes");
 
-                whereExpr << "(((" << startTime << " <= " << messageTableAlias << ".valid_to AND "
+                whereExpr << "(((" << startTime << " < " << messageTableAlias << ".valid_to AND "
                           << endTime << " > " << messageTableAlias << ".message_time) AND ((";
 
                 auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
@@ -1430,18 +1430,18 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
                           << knownType.getQueryRestrictionEndMinute()
                           << "))) OR (" << messageTableAlias
                           << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
-                          << "(" << startTime << " <= (" << messageTableAlias << ".message_time + "
+                          << "(" << startTime << " < (" << messageTableAlias << ".message_time + "
                           << messageValidityTableAlias << ".validityhours)"
                           << " AND " << endTime << " > " << messageTableAlias << ".message_time)))";
 
                 bStationJoin = true;
               }
               else if (whereExpr.str().empty())
-                whereExpr << "((" << startTime << " <= " << messageTableAlias << ".valid_to AND "
+                whereExpr << "((" << startTime << " < " << messageTableAlias << ".valid_to AND "
                           << endTime << " > " << messageTableAlias << ".message_time) OR ("
                           << messageTableAlias << ".valid_from IS NULL AND "
                           << messageTableAlias << ".valid_to IS NULL AND ("
-                          << startTime << " <= (" << messageTableAlias << ".message_time + "
+                          << startTime << " < (" << messageTableAlias << ".message_time + "
                           << messageValidityTableAlias << ".validityhours) AND "
                           << endTime << " > " << messageTableAlias << ".message_time)))";
 
@@ -2013,7 +2013,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         {
           fromWhereOrderByClause << "(" << messageTypeIn << " AND "
                                  << "(" << queryOptions.itsTimeOptions.itsStartTime
-                                 << " <= " << messageTableAlias << ".valid_to"
+                                 << " < " << messageTableAlias << ".valid_to"
                                  << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
                                  << messageTableAlias << ".valid_from))";
           emptyOrOr = " OR ";
@@ -2047,7 +2047,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         if (!messageTypeIn.empty())
         {
           fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND "
-                                 << "(" << queryOptions.itsTimeOptions.itsStartTime << " <= ("
+                                 << "(" << queryOptions.itsTimeOptions.itsStartTime << " < ("
                                  << messageTableAlias << ".message_time + "
                                  << messageValidityTableAlias << ".validityhours)"
                                  << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
@@ -2085,7 +2085,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         if (!messageTypeIn.empty())
           fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND "
                                  << "(" << queryOptions.itsTimeOptions.itsStartTime
-                                 << " <= " << messageTableAlias << ".valid_to"
+                                 << " < " << messageTableAlias << ".valid_to"
                                  << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
                                  << messageTableAlias << ".created))";
 
