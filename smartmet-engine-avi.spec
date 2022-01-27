@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 22.1.25
+Version: 22.1.27
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -73,6 +73,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Thu Jan 27 2022 Pertti Kinnia <pertti.kinnia@fmi.fi> 22.1.27-1.fmi
+- Using half open range when querying valid messages; BS-2245
+
 * Tue Jan 25 2022 Pertti Kinnia <pertti.kinnia@fmi.fi> 22.1.25-1.fmi
 - TAF's are stored e.g. every n'th (3rd) hour between xx:20 and xx:40 and then published. If configured, during publication hour delay latest messages until xx:40 for messages having 'messagevalidtime' time restriction. Take publication time into account with time range query too when querying valid messages (when validrangemessages=1); BRAINSTORM-2239
 
