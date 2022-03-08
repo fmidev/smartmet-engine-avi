@@ -13,6 +13,7 @@ DEFINES = -DUNIX -D_REENTRANT
 LIBS += -L$(libdir) \
 	$(REQUIRED_LIBS) \
 	-lsmartmet-spine \
+	-lsmartmet-timeseries \
 	-lbz2 -lz
 
 # What to install

@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 22.1.27
+Version: 22.3.8
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -16,11 +16,12 @@ BuildRequires: make
 BuildRequires: boost169-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 22.1.21
-BuildRequires: smartmet-library-macgyver >= 22.1.21
+BuildRequires: smartmet-library-spine-devel >= 22.3.8
+BuildRequires: smartmet-library-macgyver >= 22.3.8
+BuildRequires: smartmet-library-macgyver-devel >= 22.3.8
 Requires: boost169-date-time
-Requires: smartmet-library-macgyver >= 22.1.21
-Requires: smartmet-library-spine >= 22.1.21
+Requires: smartmet-library-macgyver >= 22.3.8
+Requires: smartmet-library-spine >= 22.3.8
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
@@ -73,6 +74,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue Mar  8 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.3.8-1.fmi
+- Use the new TimeSeries library
+
 * Thu Jan 27 2022 Pertti Kinnia <pertti.kinnia@fmi.fi> 22.1.27-1.fmi
 - Using half open range when querying valid messages; BS-2245
 

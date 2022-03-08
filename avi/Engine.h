@@ -6,7 +6,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <macgyver/PostgreSQLConnection.h>
 #include <spine/SmartMetEngine.h>
-#include <spine/TimeSeries.h>
+#include <timeseries/TimeSeries.h>
 #include <list>
 #include <map>
 #include <pqxx/pqxx>
@@ -21,7 +21,6 @@ namespace Engine
 {
 namespace Avi
 {
-
 // Types for passing location options
 
 struct BBox
@@ -137,9 +136,9 @@ struct QueryOptions
 
   bool itsDistinctMessages;  // Whether to skip duplicate messages or not
 
-  bool itsFilterMETARs;  // Whether to filter (finnish) METARs (LIKE 'METAR%', if enabled by
-                         // engine's configuration) or not
-  bool itsExcludeSPECIs; // Whether to exclude (finnish) SPECIs (if enabled with request parameter)
+  bool itsFilterMETARs;   // Whether to filter (finnish) METARs (LIKE 'METAR%', if enabled by
+                          // engine's configuration) or not
+  bool itsExcludeSPECIs;  // Whether to exclude (finnish) SPECIs (if enabled with request parameter)
 
   bool itsDebug;  // Whether to write generated sql queries to stderr or not
 };
@@ -253,7 +252,7 @@ typedef std::map<std::string, Table> TableMap;
 
 // Types for returning query results
 
-typedef std::vector<SmartMet::Spine::TimeSeries::Value> ValueVector;
+typedef std::vector<TimeSeries::Value> ValueVector;
 typedef std::map<std::string, ValueVector> QueryValues;
 
 struct QueryData
@@ -347,7 +346,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   void validateStationIds(const Fmi::Database::PostgreSQLConnection &connection,
                           const StationIdList &stationIdList,
                           bool debug) const;
-  void validateIcaos(const Fmi::Database::PostgreSQLConnection &connection, const StringList &icaoList, bool debug) const;
+  void validateIcaos(const Fmi::Database::PostgreSQLConnection &connection,
+                     const StringList &icaoList,
+                     bool debug) const;
   void validateCountries(const Fmi::Database::PostgreSQLConnection &connection,
                          const StringList &countryList,
                          bool debug) const;
@@ -426,7 +427,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                bool debug,
                                StationQueryData &queryData) const;
 
-  StationQueryData queryStations(const Fmi::Database::PostgreSQLConnection &connection, QueryOptions &queryOptions,
+  StationQueryData queryStations(const Fmi::Database::PostgreSQLConnection &connection,
+                                 QueryOptions &queryOptions,
                                  bool validateQuery) const;
   StationQueryData queryMessages(const Fmi::Database::PostgreSQLConnection &connection,
                                  const StationIdList &stationIdList,

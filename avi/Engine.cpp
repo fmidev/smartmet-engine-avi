@@ -2,8 +2,8 @@
 
 #include "Engine.h"
 #include <boost/algorithm/string/trim.hpp>
-#include <macgyver/StringConversion.h>
 #include <macgyver/Exception.h>
+#include <macgyver/StringConversion.h>
 #include <stdexcept>
 
 using namespace std;
@@ -213,7 +213,7 @@ QueryTable messageQueryTables[] = {
     {stationTableName, stationTableAlias, stationQueryColumns, stationTableJoin},
     {"", "", nullptr, ""}};
 
-Column noQueryColumns[] = { {None, "", ""} };
+Column noQueryColumns[] = {{None, "", ""}};
 
 QueryTable requestStationsTable = {
     "request_stations", requestStationsTableAlias, noQueryColumns, requestStationsTableJoin};
@@ -384,7 +384,7 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
     if (locationOptions.itsWKTs.itsWKTs.empty())
       return;
 
-    StringList allMessageTypes = { "" };
+    StringList allMessageTypes = {""};
     const StringList& messageTypes = (messageTypeList.empty() ? allMessageTypes : messageTypeList);
 
     // Determine message scope (station for nonroute query) for station query generation.
@@ -474,13 +474,13 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
         // For a route (a single linestring), limit the stations by their shortest distance to route
         // segments
         //
-        condition << "ST_DWithin(" << geom << "::geography,ST_ClosestPoint(segment,"
-                  << geom << ")::geography," << fixed
-                  << setprecision(0) << locationOptions.itsMaxDistance << ")";
+        condition << "ST_DWithin(" << geom << "::geography,ST_ClosestPoint(segment," << geom
+                  << ")::geography," << fixed << setprecision(0) << locationOptions.itsMaxDistance
+                  << ")";
 
         if (scope == FIRScope)
-          condition << " AND ST_Within(" << stationTableAlias << ".geom,"
-                    << firTableAlias << ".areageom)";
+          condition << " AND ST_Within(" << stationTableAlias << ".geom," << firTableAlias
+                    << ".areageom)";
       }
       else
         // Limit by distance between geometries
@@ -500,8 +500,8 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
     // distance to the start of the segment
 
     if (locationOptions.itsWKTs.isRoute)
-      fromWhereOrderByClause
-          << " ORDER BY segindex,ST_Distance(segstart::geography," << geom << "::geography)";
+      fromWhereOrderByClause << " ORDER BY segindex,ST_Distance(segstart::geography," << geom
+                             << "::geography)";
   }
   catch (...)
   {
@@ -720,13 +720,12 @@ void scopeMessageTypes(const StringList& messageTypeList,
       // Get all message types or all types matching messageScope(s)
       //
       for (auto const& knownType : knownMessageTypes)
-        if (getAll ||
-            (find(messageScopes.begin(), messageScopes.end(), knownType.getScope()) !=
-             messageScopes.end()))
+        if (getAll || (find(messageScopes.begin(), messageScopes.end(), knownType.getScope()) !=
+                       messageScopes.end()))
         {
           auto const& knownTypes = knownType.getMessageTypes();
-          scopeMessageTypeList.insert(scopeMessageTypeList.begin(),
-                                      knownTypes.begin(), knownTypes.end());
+          scopeMessageTypeList.insert(
+              scopeMessageTypeList.begin(), knownTypes.begin(), knownTypes.end());
         }
     }
     else
@@ -736,9 +735,8 @@ void scopeMessageTypes(const StringList& messageTypeList,
       for (auto const& messageType : messageTypeList)
         for (auto const& knownType : knownMessageTypes)
           if ((knownType == messageType) &&
-              (getAll ||
-               (find(messageScopes.begin(), messageScopes.end(), knownType.getScope()) !=
-                messageScopes.end())))
+              (getAll || (find(messageScopes.begin(), messageScopes.end(), knownType.getScope()) !=
+                          messageScopes.end())))
           {
             scopeMessageTypeList.push_back(messageType);
             break;
@@ -765,8 +763,8 @@ void scopeMessageTypes(const StringList& messageTypeList,
     if (messageScope != NoScope)
       messageScopes.push_back(messageScope);
 
-    return scopeMessageTypes(messageTypeList, knownMessageTypes, messageScopes,
-                             scopeMessageTypeList);
+    return scopeMessageTypes(
+        messageTypeList, knownMessageTypes, messageScopes, scopeMessageTypeList);
   }
   catch (...)
   {
@@ -1152,8 +1150,8 @@ string buildMessirHeadingGroupByExpr(const StringList& messageTypeList,
 
 string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTypeList,
                                                      const MessageTypes& knownMessageTypes,
-                                                     const string &observationTime,
-                                                     bool &bStationJoin)
+                                                     const string& observationTime,
+                                                     bool& bStationJoin)
 {
   try
   {
@@ -1170,7 +1168,7 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
       for (auto const& knownType : knownMessageTypes)
         if (knownType.getTimeRangeType() == MessageValidTimeRangeLatest)
         {
-          if ((! knownType.getQueryRestrictionHours().empty()) || bStationJoin)
+          if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
           {
             // Messages (i.e. TAFs) are stored e.g. every n'th (3rd) hour between xx:20 and xx:40
             // and then published; during publication hour delay latest message until xx:40
@@ -1180,20 +1178,21 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                   BCP, "Query time restriction settings not supported for multiple messagetypes");
 
             whereExpr << "(((" << observationTime << " >= " << messageTableAlias
-                      << ".message_time AND " << observationTime << " < "
-                      << messageTableAlias << ".valid_to) AND ((";
+                      << ".message_time AND " << observationTime << " < " << messageTableAlias
+                      << ".valid_to) AND ((";
 
             auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
 
             for (auto const& pattern : icaoPatterns)
-              whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ")
-                        << "(UPPER(" << stationTableAlias << "." << stationIcaoTableColumn
-                        << ") NOT LIKE '" << pattern << "')";
+              whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ") << "(UPPER("
+                        << stationTableAlias << "." << stationIcaoTableColumn << ") NOT LIKE '"
+                        << pattern << "')";
 
             auto countryCodes = knownType.getQueryRestrictionCountryCodes();
 
             for (auto const& code : countryCodes)
-              whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty()) ? "" : " AND ")
+              whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty()) ? ""
+                                                                                       : " AND ")
                         << "(UPPER(" << stationTableAlias << "." << stationCountryCodeTableColumn
                         << ") != '" << code << "')";
 
@@ -1203,13 +1202,12 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                       << knownType.getQueryRestrictionHours() << ")) OR "
                       << "(EXTRACT(MINUTE FROM " << messageTableAlias << ".message_time) < "
                       << knownType.getQueryRestrictionStartMinute() << ") OR "
-                      << "(EXTRACT(MINUTE FROM " << observationTime << ") >= "
-                      << knownType.getQueryRestrictionEndMinute()
-                      << "))) OR (" << messageTableAlias
-                      << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
-                      << observationTime << " >= " << messageTableAlias << ".message_time AND "
-                      << observationTime << " < (" << messageTableAlias << ".message_time + "
-                      << messageValidityTableAlias << ".validityhours))) AND "
+                      << "(EXTRACT(MINUTE FROM " << observationTime
+                      << ") >= " << knownType.getQueryRestrictionEndMinute() << "))) OR ("
+                      << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
+                      << ".valid_to IS NULL AND " << observationTime << " >= " << messageTableAlias
+                      << ".message_time AND " << observationTime << " < (" << messageTableAlias
+                      << ".message_time + " << messageValidityTableAlias << ".validityhours))) AND "
                       << observationTime << " >= " << messageTableAlias << ".created";
 
             bStationJoin = true;
@@ -1217,15 +1215,15 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
           else if (whereExpr.str().empty())
             whereExpr << "((" << observationTime << " BETWEEN " << messageTableAlias
                       << ".message_time AND " << messageTableAlias << ".valid_to)"
-                      << " OR (" << messageTableAlias
-                      << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
-                      << observationTime << " >= " << messageTableAlias << ".message_time AND "
-                      << observationTime << " < (" << messageTableAlias << ".message_time + "
-                      << messageValidityTableAlias << ".validityhours))) AND "
-                      << observationTime << " >= " << messageTableAlias << ".created";
+                      << " OR (" << messageTableAlias << ".valid_from IS NULL AND "
+                      << messageTableAlias << ".valid_to IS NULL AND " << observationTime
+                      << " >= " << messageTableAlias << ".message_time AND " << observationTime
+                      << " < (" << messageTableAlias << ".message_time + "
+                      << messageValidityTableAlias << ".validityhours))) AND " << observationTime
+                      << " >= " << messageTableAlias << ".created";
         }
 
-        return whereExpr.str();
+      return whereExpr.str();
     }
     else
     {
@@ -1237,29 +1235,32 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
           {
             if (knownType.getMessageTypes().front() == messageType)
             {
-              if ((! knownType.getQueryRestrictionHours().empty()) || bStationJoin)
+              if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
               {
                 if (!(whereExpr.str().empty()))
                   throw Fmi::Exception::Trace(
-                      BCP, "Query time restriction settings not supported for multiple messagetypes");
+                      BCP,
+                      "Query time restriction settings not supported for multiple messagetypes");
 
                 whereExpr << "(((" << observationTime << " >= " << messageTableAlias
-                          << ".message_time AND " << observationTime << " < "
-                          << messageTableAlias << ".valid_to) AND ((";
+                          << ".message_time AND " << observationTime << " < " << messageTableAlias
+                          << ".valid_to) AND ((";
 
                 auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
 
                 for (auto const& pattern : icaoPatterns)
-                  whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ")
-                            << "(UPPER(" << stationTableAlias << "." << stationIcaoTableColumn
-                            << ") NOT LIKE '" << pattern << "')";
+                  whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ") << "(UPPER("
+                            << stationTableAlias << "." << stationIcaoTableColumn << ") NOT LIKE '"
+                            << pattern << "')";
 
                 auto countryCodes = knownType.getQueryRestrictionCountryCodes();
 
                 for (auto const& code : countryCodes)
-                  whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty()) ? "" : " AND ")
-                            << "(UPPER(" << stationTableAlias << "." << stationCountryCodeTableColumn
-                            << ") != '" << code << "')";
+                  whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty())
+                                    ? ""
+                                    : " AND ")
+                            << "(UPPER(" << stationTableAlias << "."
+                            << stationCountryCodeTableColumn << ") != '" << code << "')";
 
                 whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
                           << ".message_time) != DATE_TRUNC('hour'," << observationTime << ")) OR "
@@ -1267,12 +1268,12 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                           << knownType.getQueryRestrictionHours() << ")) OR "
                           << "(EXTRACT(MINUTE FROM " << messageTableAlias << ".message_time) < "
                           << knownType.getQueryRestrictionStartMinute() << ") OR "
-                          << "(EXTRACT(MINUTE FROM " << observationTime << ") >= "
-                          << knownType.getQueryRestrictionEndMinute()
-                          << "))) OR (" << messageTableAlias
-                          << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
-                          << observationTime << " >= " << messageTableAlias << ".message_time AND "
-                          << observationTime << " < (" << messageTableAlias << ".message_time + "
+                          << "(EXTRACT(MINUTE FROM " << observationTime
+                          << ") >= " << knownType.getQueryRestrictionEndMinute() << "))) OR ("
+                          << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
+                          << ".valid_to IS NULL AND " << observationTime
+                          << " >= " << messageTableAlias << ".message_time AND " << observationTime
+                          << " < (" << messageTableAlias << ".message_time + "
                           << messageValidityTableAlias << ".validityhours))) AND "
                           << observationTime << " >= " << messageTableAlias << ".created";
 
@@ -1281,10 +1282,10 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
               else if (whereExpr.str().empty())
                 whereExpr << "((" << observationTime << " BETWEEN " << messageTableAlias
                           << ".message_time AND " << messageTableAlias << ".valid_to)"
-                          << " OR (" << messageTableAlias
-                          << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
-                          << observationTime << " >= " << messageTableAlias << ".message_time AND "
-                          << observationTime << " < (" << messageTableAlias << ".message_time + "
+                          << " OR (" << messageTableAlias << ".valid_from IS NULL AND "
+                          << messageTableAlias << ".valid_to IS NULL AND " << observationTime
+                          << " >= " << messageTableAlias << ".message_time AND " << observationTime
+                          << " < (" << messageTableAlias << ".message_time + "
                           << messageValidityTableAlias << ".validityhours))) AND "
                           << observationTime << " >= " << messageTableAlias << ".created";
 
@@ -1314,9 +1315,9 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
 
 string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList,
                                                const MessageTypes& knownMessageTypes,
-                                               const string &startTime,
-                                               const string &endTime,
-                                               bool &bStationJoin)
+                                               const string& startTime,
+                                               const string& endTime,
+                                               bool& bStationJoin)
 {
   try
   {
@@ -1333,7 +1334,7 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
       for (auto const& knownType : knownMessageTypes)
         if (knownType.getTimeRangeType() == MessageValidTimeRangeLatest)
         {
-          if ((! knownType.getQueryRestrictionHours().empty()) || bStationJoin)
+          if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
           {
             // Messages (i.e. TAFs) are stored e.g. every n'th (3rd) hour between xx:20 and xx:40
             // and then published; ignore publication hour's messages unless xx:40 within range
@@ -1348,14 +1349,15 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
             auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
 
             for (auto const& pattern : icaoPatterns)
-              whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ")
-                        << "(UPPER(" << stationTableAlias << "." << stationIcaoTableColumn
-                        << ") NOT LIKE '" << pattern << "')";
+              whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ") << "(UPPER("
+                        << stationTableAlias << "." << stationIcaoTableColumn << ") NOT LIKE '"
+                        << pattern << "')";
 
             auto countryCodes = knownType.getQueryRestrictionCountryCodes();
 
             for (auto const& code : countryCodes)
-              whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty()) ? "" : " AND ")
+              whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty()) ? ""
+                                                                                       : " AND ")
                         << "(UPPER(" << stationTableAlias << "." << stationCountryCodeTableColumn
                         << ") != '" << code << "')";
 
@@ -1365,10 +1367,10 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
                       << knownType.getQueryRestrictionHours() << ")) OR "
                       << "(EXTRACT(MINUTE FROM " << messageTableAlias << ".message_time) < "
                       << knownType.getQueryRestrictionStartMinute() << ") OR "
-                      << "(EXTRACT(MINUTE FROM " << endTime << ") >= "
-                      << knownType.getQueryRestrictionEndMinute()
-                      << "))) OR (" << messageTableAlias
-                      << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
+                      << "(EXTRACT(MINUTE FROM " << endTime
+                      << ") >= " << knownType.getQueryRestrictionEndMinute() << "))) OR ("
+                      << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
+                      << ".valid_to IS NULL AND "
                       << "(" << startTime << " < (" << messageTableAlias << ".message_time + "
                       << messageValidityTableAlias << ".validityhours)"
                       << " AND " << endTime << " > " << messageTableAlias << ".message_time)))";
@@ -1378,14 +1380,13 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
           else if (whereExpr.str().empty())
             whereExpr << "((" << startTime << " < " << messageTableAlias << ".valid_to AND "
                       << endTime << " > " << messageTableAlias << ".message_time) OR ("
-                      << messageTableAlias << ".valid_from IS NULL AND "
-                      << messageTableAlias << ".valid_to IS NULL AND ("
-                      << startTime << " < (" << messageTableAlias << ".message_time + "
-                      << messageValidityTableAlias << ".validityhours) AND "
+                      << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
+                      << ".valid_to IS NULL AND (" << startTime << " < (" << messageTableAlias
+                      << ".message_time + " << messageValidityTableAlias << ".validityhours) AND "
                       << endTime << " > " << messageTableAlias << ".message_time)))";
         }
 
-        return whereExpr.str();
+      return whereExpr.str();
     }
     else
     {
@@ -1397,11 +1398,12 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
           {
             if (knownType.getMessageTypes().front() == messageType)
             {
-              if ((! knownType.getQueryRestrictionHours().empty()) || bStationJoin)
+              if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
               {
                 if (!(whereExpr.str().empty()))
                   throw Fmi::Exception::Trace(
-                      BCP, "Query time restriction settings not supported for multiple messagetypes");
+                      BCP,
+                      "Query time restriction settings not supported for multiple messagetypes");
 
                 whereExpr << "(((" << startTime << " < " << messageTableAlias << ".valid_to AND "
                           << endTime << " > " << messageTableAlias << ".message_time) AND ((";
@@ -1409,16 +1411,18 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
                 auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
 
                 for (auto const& pattern : icaoPatterns)
-                  whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ")
-                            << "(UPPER(" << stationTableAlias << "." << stationIcaoTableColumn
-                            << ") NOT LIKE '" << pattern << "')";
+                  whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ") << "(UPPER("
+                            << stationTableAlias << "." << stationIcaoTableColumn << ") NOT LIKE '"
+                            << pattern << "')";
 
                 auto countryCodes = knownType.getQueryRestrictionCountryCodes();
 
                 for (auto const& code : countryCodes)
-                  whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty()) ? "" : " AND ")
-                            << "(UPPER(" << stationTableAlias << "." << stationCountryCodeTableColumn
-                            << ") != '" << code << "')";
+                  whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty())
+                                    ? ""
+                                    : " AND ")
+                            << "(UPPER(" << stationTableAlias << "."
+                            << stationCountryCodeTableColumn << ") != '" << code << "')";
 
                 whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
                           << ".message_time) != DATE_TRUNC('hour'," << endTime << ")) OR "
@@ -1426,10 +1430,10 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
                           << knownType.getQueryRestrictionHours() << ")) OR "
                           << "(EXTRACT(MINUTE FROM " << messageTableAlias << ".message_time) < "
                           << knownType.getQueryRestrictionStartMinute() << ") OR "
-                          << "(EXTRACT(MINUTE FROM " << endTime << ") >= "
-                          << knownType.getQueryRestrictionEndMinute()
-                          << "))) OR (" << messageTableAlias
-                          << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND "
+                          << "(EXTRACT(MINUTE FROM " << endTime
+                          << ") >= " << knownType.getQueryRestrictionEndMinute() << "))) OR ("
+                          << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
+                          << ".valid_to IS NULL AND "
                           << "(" << startTime << " < (" << messageTableAlias << ".message_time + "
                           << messageValidityTableAlias << ".validityhours)"
                           << " AND " << endTime << " > " << messageTableAlias << ".message_time)))";
@@ -1439,11 +1443,11 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
               else if (whereExpr.str().empty())
                 whereExpr << "((" << startTime << " < " << messageTableAlias << ".valid_to AND "
                           << endTime << " > " << messageTableAlias << ".message_time) OR ("
-                          << messageTableAlias << ".valid_from IS NULL AND "
-                          << messageTableAlias << ".valid_to IS NULL AND ("
-                          << startTime << " < (" << messageTableAlias << ".message_time + "
-                          << messageValidityTableAlias << ".validityhours) AND "
-                          << endTime << " > " << messageTableAlias << ".message_time)))";
+                          << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
+                          << ".valid_to IS NULL AND (" << startTime << " < (" << messageTableAlias
+                          << ".message_time + " << messageValidityTableAlias
+                          << ".validityhours) AND " << endTime << " > " << messageTableAlias
+                          << ".message_time)))";
 
               break;
             }
@@ -1593,8 +1597,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
     string unionOrEmpty = "";
     const string latestMessageIdQueryExpr =
         "DISTINCT first_value(me.message_id) OVER (PARTITION BY me.station_id,";
-    const string latestMessageIdOrderByExpr =
-        " ORDER BY me.message_time DESC,me.created DESC) ";
+    const string latestMessageIdOrderByExpr = " ORDER BY me.message_time DESC,me.created DESC) ";
 
     withClause << latestMessagesTable.itsName << " AS (";
 
@@ -1614,9 +1617,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       string messirHeadingGroupByExpr =
           buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, ValidTimeRangeLatest);
 
-      withClause << "SELECT " << latestMessageIdQueryExpr
-                 << messageTypeGroupByExpr << messirHeadingGroupByExpr
-                 << latestMessageIdOrderByExpr << "AS message_id"
+      withClause << "SELECT " << latestMessageIdQueryExpr << messageTypeGroupByExpr
+                 << messirHeadingGroupByExpr << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
                  << observationTime << " >= " << messageTableAlias << ".valid_from AND "
@@ -1631,23 +1633,22 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 
     if (!messageTypeIn.empty())
     {
-      string messirHeadingGroupByExpr =
-          buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageValidTimeRangeLatest);
+      string messirHeadingGroupByExpr = buildMessirHeadingGroupByExpr(
+          messageTypes, knownMessageTypes, MessageValidTimeRangeLatest);
 
       bool bStationJoin;
-      string stationAndTimeCondition =
-          buildMessageValidTimeRangeLatestTimeCondition(messageTypes, knownMessageTypes,
-                                                        observationTime, bStationJoin);
+      string stationAndTimeCondition = buildMessageValidTimeRangeLatestTimeCondition(
+          messageTypes, knownMessageTypes, observationTime, bStationJoin);
 
-      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
-                 << "mt.type_id" << (distinct ?  "" : ", me.route_id") << messirHeadingGroupByExpr
+      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr << "mt.type_id"
+                 << (distinct ? "" : ", me.route_id") << messirHeadingGroupByExpr
                  << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << (bStationJoin ? (string(",") + stationTableName + " " + stationTableAlias) : "")
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn
-                 << (bStationJoin ? (string(" AND ") + stationTableJoin) : "")
-                 << " AND (" << stationAndTimeCondition << ")";
+                 << (bStationJoin ? (string(" AND ") + stationTableJoin) : "") << " AND ("
+                 << stationAndTimeCondition << ")";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1663,9 +1664,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
           buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
       string whereOrAnd = " WHERE ";
 
-      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
-                 << messageTypeGroupByExpr << messirHeadingGroupByExpr
-                 << latestMessageIdOrderByExpr << "AS message_id"
+      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr << messageTypeGroupByExpr
+                 << messirHeadingGroupByExpr << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias;
 
@@ -1679,8 +1679,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 
         if (filterMETARs)
         {
-          withClause << "((mt.type != 'METAR' OR "
-                     << messageTableAlias << ".message LIKE 'METAR%')";
+          withClause << "((mt.type != 'METAR' OR " << messageTableAlias
+                     << ".message LIKE 'METAR%')";
 
           if (!filterFIMETARxxxExcludeIcaos.empty())
             withClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos)
@@ -1698,11 +1698,11 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       }
 
       withClause << whereOrAnd << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << messageValidityTableJoin << " AND " << observationTime << " >= "
-                 << messageTableAlias << ".message_time AND " << observationTime << " < ("
-                 << messageTableAlias << ".message_time + "
-                 << messageValidityTableAlias << ".validityhours) AND "
-                 << observationTime << " >= " << messageTableAlias << ".created";
+                 << messageValidityTableJoin << " AND " << observationTime
+                 << " >= " << messageTableAlias << ".message_time AND " << observationTime << " < ("
+                 << messageTableAlias << ".message_time + " << messageValidityTableAlias
+                 << ".validityhours) AND " << observationTime << " >= " << messageTableAlias
+                 << ".created";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1715,9 +1715,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       string messirHeadingGroupByExpr = buildMessirHeadingGroupByExpr(
           messageTypes, knownMessageTypes, CreationValidTimeRangeLatest);
 
-      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr
-                 << "mt.type_id" << messirHeadingGroupByExpr
-                 << latestMessageIdOrderByExpr << "AS message_id"
+      withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr << "mt.type_id"
+                 << messirHeadingGroupByExpr << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
                  << observationTime << " >= " << messageTableAlias << ".created AND "
@@ -1748,11 +1747,11 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                  << ",avidb_message_types mt"
                  << "," << messageValidityTable.itsName << " " << messageValidityTableAlias
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << messageValidityTableJoin << " AND " << observationTime << " >= "
-                 << messageTableAlias << ".message_time AND " << observationTime << " < ("
-                 << messageTableAlias << ".message_time + "
-                 << messageValidityTableAlias << ".validityhours) AND "
-                 << observationTime << " >= " << messageTableAlias << ".created";
+                 << messageValidityTableJoin << " AND " << observationTime
+                 << " >= " << messageTableAlias << ".message_time AND " << observationTime << " < ("
+                 << messageTableAlias << ".message_time + " << messageValidityTableAlias
+                 << ".validityhours) AND " << observationTime << " >= " << messageTableAlias
+                 << ".created";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1834,7 +1833,7 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
     if (messageTypeIn.empty())
       return "";
 
-    ostringstream withClause,filterClause;
+    ostringstream withClause, filterClause;
     string whereOrAnd = " WHERE ";
 
     withClause << "," << messageTimeRangeLatestMessagesTableName << " AS ("
@@ -1851,12 +1850,12 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
 
       if (filterMETARs)
       {
-        filterClause << "((mt.type != 'METAR' OR "
-                     << messageTableAlias << ".message LIKE 'METAR%')";
+        filterClause << "((mt.type != 'METAR' OR " << messageTableAlias
+                     << ".message LIKE 'METAR%')";
 
         if (!filterFIMETARxxxExcludeIcaos.empty())
-          filterClause << " OR st.icao_code IN ("
-                       << getStringList(filterFIMETARxxxExcludeIcaos) << ")";
+          filterClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos)
+                       << ")";
 
         filterClause << ")";
       }
@@ -2012,8 +2011,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         if (!messageTypeIn.empty())
         {
           fromWhereOrderByClause << "(" << messageTypeIn << " AND "
-                                 << "(" << queryOptions.itsTimeOptions.itsStartTime
-                                 << " < " << messageTableAlias << ".valid_to"
+                                 << "(" << queryOptions.itsTimeOptions.itsStartTime << " < "
+                                 << messageTableAlias << ".valid_to"
                                  << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
                                  << messageTableAlias << ".valid_from))";
           emptyOrOr = " OR ";
@@ -2029,15 +2028,15 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         if (!messageTypeIn.empty())
         {
           bool bStationJoin;
-          string stationAndTimeRangeCondition = buildMessageValidTimeRangeTimeCondition(
-                                                    queryOptions.itsMessageTypes,
-                                                    knownMessageTypes,
-                                                    queryOptions.itsTimeOptions.itsStartTime,
-                                                    queryOptions.itsTimeOptions.itsEndTime,
-                                                    bStationJoin);
+          string stationAndTimeRangeCondition =
+              buildMessageValidTimeRangeTimeCondition(queryOptions.itsMessageTypes,
+                                                      knownMessageTypes,
+                                                      queryOptions.itsTimeOptions.itsStartTime,
+                                                      queryOptions.itsTimeOptions.itsEndTime,
+                                                      bStationJoin);
 
-          fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn
-                                 << " AND (" << stationAndTimeRangeCondition << "))";
+          fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND ("
+                                 << stationAndTimeRangeCondition << "))";
           emptyOrOr = " OR ";
         }
 
@@ -2084,8 +2083,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
 
         if (!messageTypeIn.empty())
           fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND "
-                                 << "(" << queryOptions.itsTimeOptions.itsStartTime
-                                 << " < " << messageTableAlias << ".valid_to"
+                                 << "(" << queryOptions.itsTimeOptions.itsStartTime << " < "
+                                 << messageTableAlias << ".valid_to"
                                  << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
                                  << messageTableAlias << ".created))";
 
@@ -2117,8 +2116,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
 
         bool filterMETARs = (queryOptions.itsFilterMETARs && config.getFilterFIMETARxxx() &&
                              (messageTypeIn.find("'METAR") != string::npos));
-        bool excludeSPECIs = (queryOptions.itsExcludeSPECIs &&
-                              (messageTypeIn.find("'SPECI'") != string::npos));
+        bool excludeSPECIs =
+            (queryOptions.itsExcludeSPECIs && (messageTypeIn.find("'SPECI'") != string::npos));
 
         if (filterMETARs || excludeSPECIs)
         {
@@ -2152,8 +2151,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
           }
 
           if (excludeSPECIs)
-            fromWhereOrderByClause << (filterMETARs ? " AND " : "")
-                                   << messageTypeTableAlias << ".type != 'SPECI'";
+            fromWhereOrderByClause << (filterMETARs ? " AND " : "") << messageTypeTableAlias
+                                   << ".type != 'SPECI'";
 
           fromWhereOrderByClause << "))";
         }
@@ -2472,8 +2471,8 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
         getQueryColumn(stationQueryColumns, columns, stationIdQueryColumn, duplicate);
 
     if (!queryColumn)
-      throw Fmi::Exception(
-          BCP, "buildStationQuerySelectClause(): internal: Unable to get id column");
+      throw Fmi::Exception(BCP,
+                           "buildStationQuerySelectClause(): internal: Unable to get id column");
 
     Column column(*queryColumn);
     column.itsSelection = Automatic;
@@ -2884,7 +2883,7 @@ void Engine::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
           // Solution is poor, numeric column value 32700 cannot be returned by avi plugin
           // (in practice through, only stationid or messageid could have value 32700).
           //
-          SmartMet::Spine::TimeSeries::Value return_value = SmartMet::Spine::TimeSeries::None();
+          TimeSeries::Value return_value = TimeSeries::None();
           if (!row[column.itsName].is_null())
             return_value = row[column.itsName].as<int>();
 
@@ -2896,7 +2895,7 @@ void Engine::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
           // querying stations with coordinates; for other station queries distance and bearing
           // are not selected at all
           //
-          SmartMet::Spine::TimeSeries::Value return_value = SmartMet::Spine::TimeSeries::None();
+          TimeSeries::Value return_value = TimeSeries::None();
           try
           {
             if (!row[column.itsName].is_null())
@@ -2904,7 +2903,7 @@ void Engine::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
           }
           catch (...)
           {
-            return_value = SmartMet::Spine::TimeSeries::None();
+            return_value = TimeSeries::None();
           }
 
           queryValues[column.itsName].push_back(return_value);
@@ -2925,7 +2924,7 @@ void Engine::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
           }
 
           if (isNull)
-            queryValues[column.itsName].push_back(SmartMet::Spine::TimeSeries::None());
+            queryValues[column.itsName].push_back(TimeSeries::None());
           else
             queryValues[column.itsName].push_back(
                 boost::algorithm::trim_copy(row[column.itsName].as<string>()));
@@ -2935,7 +2934,7 @@ void Engine::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
           // 'latlon' and 'lonlat' are selected as comma separated strings. Return them as
           // SmartMet::Spine::TimeSeries::LonLat for formatted output with TableFeeder
           //
-          SmartMet::Spine::TimeSeries::LonLat lonlat(0, 0);
+          TimeSeries::LonLat lonlat(0, 0);
           string llStr(boost::algorithm::trim_copy(row[column.itsName].as<string>()));
           vector<string> flds;
           boost::split(flds, llStr, boost::is_any_of(","));
@@ -3182,8 +3181,8 @@ void Engine::queryStationsWithWKTs(const Fmi::Database::PostgreSQLConnection& co
 
     ostringstream fromWhereOrderByClause;
 
-    buildStationQueryFromWhereOrderByClause(locationOptions, messageTypes,
-                                            itsConfig->getMessageTypes(), fromWhereOrderByClause);
+    buildStationQueryFromWhereOrderByClause(
+        locationOptions, messageTypes, itsConfig->getMessageTypes(), fromWhereOrderByClause);
 
     // Note: no stations (fromWhereOrderByClause is empty) to restrict messages for route query
     // for global scoped message types (message time and type restriction is generated later)
@@ -3534,7 +3533,8 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
 
     for (auto const& wkt : locationOptions.itsWKTs.itsWKTs)
     {
-      selectFromWhereClause << ((n > 0) ? "),(quote_literal('" : "") << escapeLiteral(wkt) << "')," << n;
+      selectFromWhereClause << ((n > 0) ? "),(quote_literal('" : "") << escapeLiteral(wkt) << "'),"
+                            << n;
       n++;
     }
 
@@ -3731,8 +3731,12 @@ StationQueryData Engine::queryStations(const Fmi::Database::PostgreSQLConnection
                               stationQueryData);
 
     if (!locationOptions.itsWKTs.itsWKTs.empty())
-      queryStationsWithWKTs(connection, locationOptions, queryOptions.itsMessageTypes, selectClause,
-                            queryOptions.itsDebug, stationQueryData);
+      queryStationsWithWKTs(connection,
+                            locationOptions,
+                            queryOptions.itsMessageTypes,
+                            selectClause,
+                            queryOptions.itsDebug,
+                            stationQueryData);
 
     if (!locationOptions.itsBBoxes.empty())
       queryStationsWithBBoxes(
@@ -3894,10 +3898,10 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
                                                  : itsConfig->getMaxMessageStations());
 
     if ((maxStations > 0) && ((int)stationIdList.size() > maxStations))
-      throw Fmi::Exception(
-          BCP,
-          string("Max number of stations exceeded (") + Fmi::to_string(maxStations) + "/" +
-              Fmi::to_string(stationIdList.size()) + "), limit the query");
+      throw Fmi::Exception(BCP,
+                           string("Max number of stations exceeded (") +
+                               Fmi::to_string(maxStations) + "/" +
+                               Fmi::to_string(stationIdList.size()) + "), limit the query");
 
     bool messageColumnSelected = queryOptions.itsMessageColumnSelected;
     const Column* timeRangeColumn = nullptr;
@@ -4077,14 +4081,14 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
       {
         // Build WITH clause for 'latest_messages' table
         //
-        withClause += ("," + buildLatestMessagesWithClause(
-                                 queryOptions.itsMessageTypes,
-                                 itsConfig->getMessageTypes(),
-                                 queryOptions.itsTimeOptions.itsObservationTime,
-                                 filterMETARs,
-                                 excludeSPECIs,
-                                 queryOptions.itsDistinctMessages,
-                                 itsConfig->getFilterFIMETARxxxExcludeIcaos()));
+        withClause +=
+            ("," + buildLatestMessagesWithClause(queryOptions.itsMessageTypes,
+                                                 itsConfig->getMessageTypes(),
+                                                 queryOptions.itsTimeOptions.itsObservationTime,
+                                                 filterMETARs,
+                                                 excludeSPECIs,
+                                                 queryOptions.itsDistinctMessages,
+                                                 itsConfig->getFilterFIMETARxxxExcludeIcaos()));
 
         // Add 'latest_messages' into tablemap
         //
@@ -4095,14 +4099,14 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
         table.subQuery = true;
       }
       else
-        withClause += buildMessageTimeRangeMessagesWithClause(
-            queryOptions.itsMessageTypes,
-            itsConfig->getMessageTypes(),
-            queryOptions.itsTimeOptions.itsStartTime,
-            queryOptions.itsTimeOptions.itsEndTime,
-            filterMETARs,
-            excludeSPECIs,
-            itsConfig->getFilterFIMETARxxxExcludeIcaos());
+        withClause +=
+            buildMessageTimeRangeMessagesWithClause(queryOptions.itsMessageTypes,
+                                                    itsConfig->getMessageTypes(),
+                                                    queryOptions.itsTimeOptions.itsStartTime,
+                                                    queryOptions.itsTimeOptions.itsEndTime,
+                                                    filterMETARs,
+                                                    excludeSPECIs,
+                                                    itsConfig->getFilterFIMETARxxxExcludeIcaos());
 
       withClause += " ";
 
@@ -4112,8 +4116,7 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
       auto it = tableMap.find(messageTableName);
 
       if (it == tableMap.end())
-        throw Fmi::Exception(
-            BCP, "queryMessages: internal: Unable to get avidb_messages table");
+        throw Fmi::Exception(BCP, "queryMessages: internal: Unable to get avidb_messages table");
 
       auto recordSetTable = it->second;
       tableMap.erase(it);
@@ -4134,10 +4137,8 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
           string messageTypeIn = buildMessageTypeInClause(
               queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), list<TimeRangeType>());
 
-          if (
-              (filterMETARs && (messageTypeIn.find("'METAR") != string::npos)) ||
-              (excludeSPECIs && (messageTypeIn.find("'SPECI'") != string::npos))
-             )
+          if ((filterMETARs && (messageTypeIn.find("'METAR") != string::npos)) ||
+              (excludeSPECIs && (messageTypeIn.find("'SPECI'") != string::npos)))
           {
             auto& table = tableMap[stationTableName];
 
@@ -4332,12 +4333,13 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
 
     StationQueryData stationScopeStations, firScopeStations, globalScopeStations;
     StationQueryData stationScopeMessages, firScopeMessages, globalScopeMessages;
-    StationQueryData *data = nullptr;
+    StationQueryData* data = nullptr;
 
-    typedef struct {
+    typedef struct
+    {
       MessageScope scope;
-      StationQueryData &stationData;
-      StationQueryData &messageData;
+      StationQueryData& stationData;
+      StationQueryData& messageData;
     } ScopeData;
 
     MessageScope stationOrAll = NoScope;
@@ -4356,17 +4358,17 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
 
     validateMessageTypes(connection, queryMessageTypes, queryOptions.itsDebug);
 
-    list<ScopeData> scopeDatas = {
-                                  { stationOrAll, stationScopeStations, stationScopeMessages },
-                                  { FIRScope,     firScopeStations,     firScopeMessages },
-                                  { GlobalScope,  globalScopeStations,  globalScopeMessages }
-                                 };
+    list<ScopeData> scopeDatas = {{stationOrAll, stationScopeStations, stationScopeMessages},
+                                  {FIRScope, firScopeStations, firScopeMessages},
+                                  {GlobalScope, globalScopeStations, globalScopeMessages}};
 
     bool validateQuery = true;
 
-    for (auto &scope : scopeDatas)
+    for (auto& scope : scopeDatas)
     {
-      scopeMessageTypes(queryMessageTypes, itsConfig->getMessageTypes(), scope.scope,
+      scopeMessageTypes(queryMessageTypes,
+                        itsConfig->getMessageTypes(),
+                        scope.scope,
                         queryOptions.itsMessageTypes);
 
       if (!queryOptions.itsMessageTypes.empty())
@@ -4382,11 +4384,11 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
 
           if (queryOptions.itsMessageColumnSelected)
           {
-            // Query messages and join station and message data to get distance and bearing values for
-            // message data rows
+            // Query messages and join station and message data to get distance and bearing values
+            // for message data rows
             //
-            scope.messageData = queryMessages(connection, scope.stationData.itsStationIds,
-                                              queryOptions, validateQuery);
+            scope.messageData = queryMessages(
+                connection, scope.stationData.itsStationIds, queryOptions, validateQuery);
             joinStationAndMessageData(scope.stationData, scope.messageData);
 
             // Collect/combine data
@@ -4397,17 +4399,17 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
             if (data != &scope.messageData)
               for (auto station : scope.messageData.itsValues)
               {
-                 auto its = data->itsValues.insert(make_pair(station.first, QueryValues()));
+                auto its = data->itsValues.insert(make_pair(station.first, QueryValues()));
 
-                 if (its.second)
-                   data->itsStationIds.push_back(station.first);
+                if (its.second)
+                  data->itsStationIds.push_back(station.first);
 
-                 for (auto column : station.second)
-                 {
-                   auto itc = its.first->second.insert(make_pair(column.first, ValueVector()));
-                   itc.first->second.insert(itc.first->second.end(),
-                                            column.second.begin(), column.second.end());
-                 }
+                for (auto column : station.second)
+                {
+                  auto itc = its.first->second.insert(make_pair(column.first, ValueVector()));
+                  itc.first->second.insert(
+                      itc.first->second.end(), column.second.begin(), column.second.end());
+                }
               }
           }
           else
