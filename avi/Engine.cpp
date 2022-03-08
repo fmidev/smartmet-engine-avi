@@ -2932,7 +2932,7 @@ void Engine::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
         else if ((column.itsType == TS_LonLat) || (column.itsType == TS_LatLon))
         {
           // 'latlon' and 'lonlat' are selected as comma separated strings. Return them as
-          // SmartMet::Spine::TimeSeries::LonLat for formatted output with TableFeeder
+          // TimeSeries::LonLat for formatted output with TableFeeder
           //
           TimeSeries::LonLat lonlat(0, 0);
           string llStr(boost::algorithm::trim_copy(row[column.itsName].as<string>()));
@@ -3431,7 +3431,7 @@ void Engine::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection
       string icaoCode(boost::get<std::string>(&(queryData.itsValues["icao_code"].front()))
                           ? *(boost::get<std::string>(&(queryData.itsValues["icao_code"].front())))
                           : "?");
-      throw Fmi::Exception(BCP, "Unknown icao code " + icaoCode);
+      throw Fmi::Exception(BCP, "Unknown icao code " + icaoCode).disableLogging();
     }
   }
   catch (...)
