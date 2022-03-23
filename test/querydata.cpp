@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(querydata_member_itsColumns,
 BOOST_AUTO_TEST_CASE(querydata_member_itsValues,
                      *boost::unit_test::depends_on("querydata_constructor_default"))
 {
-  std::map<std::string, std::vector<SmartMet::Spine::TimeSeries::Value> > queryValuesVariable;
+  std::map<std::string, std::vector<SmartMet::TimeSeries::Value> > queryValuesVariable;
 
   QueryData queryData;
   BOOST_CHECK(typeid(queryData.itsValues) == typeid(queryValuesVariable));

@@ -12,6 +12,7 @@ INCLUDES += -Iinclude
 LIBS += -L$(libdir) \
 	-lsmartmet-spine \
 	-lsmartmet-macgyver \
+	-lsmartmet-timeseries \
 	-lpqxx \
 	$(REQUIRED_LIBS) \
 	-lbz2 -lz \

@@ -6,7 +6,8 @@
 #include <boost/test/included/unit_test.hpp>
 #include <spine/Options.h>
 #include <spine/Reactor.h>
-#include <spine/TimeSeriesOutput.h>
+#include <macgyver/ValueFormatter.h>
+#include <timeseries/TimeSeriesOutput.h>
 #include <memory>
 #include <typeinfo>
 
@@ -1032,8 +1033,8 @@ BOOST_AUTO_TEST_CASE(
     BOOST_CHECK_EQUAL(valuesIt->second.size(), 9);
     if (valuesIt->second.size() == 9)
     {
-      Spine::ValueFormatter vf{SmartMet::Spine::ValueFormatterParam()};
-      Spine::TimeSeries::StringVisitor sv(vf, 1);
+      Fmi::ValueFormatter vf{Fmi::ValueFormatterParam()};
+      TimeSeries::StringVisitor sv(vf, 1);
 
       // Test the value of each requested message parameter
       for (QueryValues::const_iterator qvIt = valuesIt->second.begin();
@@ -1135,8 +1136,8 @@ BOOST_AUTO_TEST_CASE(
       // We requested two parameters
       BOOST_CHECK_EQUAL(valuesIt->second.size(), 2);
 
-      Spine::ValueFormatter vf{SmartMet::Spine::ValueFormatterParam()};
-      Spine::TimeSeries::StringVisitor sv(vf, 1);
+      Fmi::ValueFormatter vf{Fmi::ValueFormatterParam()};
+      TimeSeries::StringVisitor sv(vf, 1);
 
       // The result contains only METARs.
       for (QueryValues::const_iterator qvIt = valuesIt->second.begin();
@@ -1292,8 +1293,8 @@ BOOST_AUTO_TEST_CASE(
     BOOST_CHECK_EQUAL(valuesIt->second.size(), 2);
     if (valuesIt->second.size() == 2)
     {
-      Spine::ValueFormatter vf{SmartMet::Spine::ValueFormatterParam()};
-      Spine::TimeSeries::StringVisitor sv(vf, 1);
+      Fmi::ValueFormatter vf{Fmi::ValueFormatterParam()};
+      TimeSeries::StringVisitor sv(vf, 1);
 
       for (QueryValues::const_iterator qvIt = valuesIt->second.begin();
            qvIt != valuesIt->second.end();
