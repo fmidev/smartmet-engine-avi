@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 22.3.8
+Version: 22.5.24
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -16,12 +16,12 @@ BuildRequires: make
 BuildRequires: boost169-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 22.3.8
-BuildRequires: smartmet-library-macgyver >= 22.3.8
-BuildRequires: smartmet-library-macgyver-devel >= 22.3.8
+BuildRequires: smartmet-library-spine-devel >= 22.5.24
+BuildRequires: smartmet-library-macgyver >= 22.5.24
+BuildRequires: smartmet-library-macgyver-devel >= 22.5.24
 Requires: boost169-date-time
-Requires: smartmet-library-macgyver >= 22.3.8
-Requires: smartmet-library-spine >= 22.3.8
+Requires: smartmet-library-macgyver >= 22.5.24
+Requires: smartmet-library-spine >= 22.5.24
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
@@ -74,6 +74,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue May 24 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.5.24-1.fmi
+- Repackaged due to NFmiArea ABI changes
+
 * Tue Mar  8 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.3.8-1.fmi
 - Use the new TimeSeries library
 
