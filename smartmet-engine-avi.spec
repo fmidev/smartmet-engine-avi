@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 22.5.24
+Version: 22.6.17
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -82,6 +82,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Jun 17 2022 Andris Pavēnis <andris.pavenis@fmi.fi> 22.6.17-1.fmi
+- Add support for RHEL9. Update libpqxx to 7.7.0 (rhel8+) and fmt to 8.1.1
+
 * Tue May 24 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.5.24-1.fmi
 - Repackaged due to NFmiArea ABI changes
 
