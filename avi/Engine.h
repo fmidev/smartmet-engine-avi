@@ -109,7 +109,8 @@ typedef enum
 struct QueryOptions
 {
   QueryOptions()
-      : itsMessageTypes(),
+      : itsMessageFormat("TAC"),
+        itsMessageTypes(),
         itsParameters(),
         itsLocationOptions(),
         itsTimeOptions(),
@@ -123,6 +124,7 @@ struct QueryOptions
   {
   }
 
+  std::string itsMessageFormat; // TAC, IWXXM
   StringList itsMessageTypes;
   StringList itsParameters;
   LocationOptions itsLocationOptions;

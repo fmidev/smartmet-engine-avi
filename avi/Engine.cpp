@@ -99,7 +99,8 @@ const char* messageTypeTableAlias = "mt";
 const char* messageTypeTableJoin = "me.type_id = mt.type_id";
 const char* messageFormatTableName = "avidb_message_format";
 const char* messageFormatTableAlias = "mf";
-const char* messageFormatTableJoin = "me.format_id = mf.format_id AND mf.name = 'TAC'";
+const char* messageFormatTableJoinTAC = "me.format_id = mf.format_id AND mf.name = 'TAC'";
+const char* messageFormatTableJoinIWXXM = "me.format_id = mf.format_id AND mf.name = 'IWXXM'";
 const char* messageRouteTableName = "avidb_message_routes";
 const char* messageRouteTableAlias = "mr";
 const char* messageRouteTableJoin = "me.route_id = mr.route_id";
@@ -861,6 +862,7 @@ string buildMessageTypeInClause(const StringList& messageTypeList,
 
 string buildRecordSetWithClause(bool routeQuery,
                                 const StationIdList& stationIdList,
+                                const string &messageFormat,
                                 const StringList& messageTypeList,
                                 const MessageTypes& knownMessageTypes,
                                 unsigned int startTimeOffsetHours,
@@ -910,7 +912,9 @@ string buildRecordSetWithClause(bool routeQuery,
       withClause << "," << messageTypeTableName << " " << messageTypeTableAlias;
 
     withClause << whereStationIdIn << (!stationIdList.empty() ? " AND " : "")
-               << messageFormatTableJoin;
+               << (messageFormat == "TAC"
+                     ? messageFormatTableJoinTAC
+                     : messageFormatTableJoinIWXXM);
 
     if (!messageTypeList.empty())
     {
@@ -3992,6 +3996,7 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
         recordSetWithClause =
             buildRecordSetWithClause(false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
                                      stationIdList,
+                                     queryOptions.itsMessageFormat,
                                      queryOptions.itsMessageTypes,
                                      itsConfig->getMessageTypes(),
                                      itsConfig->getRecordSetStartTimeOffsetHours(),
@@ -4002,6 +4007,7 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
         recordSetWithClause =
             buildRecordSetWithClause(false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
                                      stationIdList,
+                                     queryOptions.itsMessageFormat,
                                      queryOptions.itsMessageTypes,
                                      itsConfig->getMessageTypes(),
                                      itsConfig->getRecordSetStartTimeOffsetHours(),
@@ -4151,11 +4157,13 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
         }
       }
 
-      // Filter by message format (currently 'TAC' only)
+      // Filter by message format
 
       auto& table = tableMap[messageFormatTableName];
       table.itsAlias = messageFormatTableAlias;
-      table.itsJoin = messageFormatTableJoin;
+      table.itsJoin = queryOptions.itsMessageFormat == "TAC"
+                        ? messageFormatTableJoinTAC
+                        : messageFormatTableJoinIWXXM;
     }
 
     // For time range query ensure tablemap contains message_types table for joining into main
