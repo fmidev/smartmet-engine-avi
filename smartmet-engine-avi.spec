@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 22.6.17
+Version: 22.10.6
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -23,12 +23,12 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 22.6.16
-BuildRequires: smartmet-library-macgyver >= 22.6.16
-BuildRequires: smartmet-library-macgyver-devel >= 22.6.16
+BuildRequires: smartmet-library-spine-devel >= 22.9.5
+BuildRequires: smartmet-library-macgyver >= 22.8.23
+BuildRequires: smartmet-library-macgyver-devel >= 22.8.23
 Requires: %{smartmet_boost}-date-time
-Requires: smartmet-library-macgyver >= 22.6.16
-Requires: smartmet-library-spine >= 22.6.16
+Requires: smartmet-library-macgyver >= 22.8.23
+Requires: smartmet-library-spine >= 22.9.5
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
@@ -82,6 +82,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Thu Oct  6 2022 Pertti Kinnia <pertti.kinnia@fmi.fi> 22.10.6-1.fmi
+- Added support for IWXXM messages; BRAINSTORM-905
+
 * Fri Jun 17 2022 Andris Pavēnis <andris.pavenis@fmi.fi> 22.6.17-1.fmi
 - Add support for RHEL9. Update libpqxx to 7.7.0 (rhel8+) and fmt to 8.1.1
 
