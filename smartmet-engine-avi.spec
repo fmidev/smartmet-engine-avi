@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 22.10.6
+Version: 22.12.16
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -23,12 +23,12 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 22.9.5
-BuildRequires: smartmet-library-macgyver >= 22.8.23
-BuildRequires: smartmet-library-macgyver-devel >= 22.8.23
+BuildRequires: smartmet-library-spine-devel >= 22.12.2
+BuildRequires: smartmet-library-macgyver >= 22.12.16
+BuildRequires: smartmet-library-macgyver-devel >= 22.12.16
 Requires: %{smartmet_boost}-date-time
-Requires: smartmet-library-macgyver >= 22.8.23
-Requires: smartmet-library-spine >= 22.9.5
+Requires: smartmet-library-macgyver >= 22.12.16
+Requires: smartmet-library-spine >= 22.12.2
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
@@ -82,6 +82,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Dec 16 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.12.16-1.fmi
+- Repackaged since PostgreSQLConnection ABI changed
+
 * Thu Oct  6 2022 Pertti Kinnia <pertti.kinnia@fmi.fi> 22.10.6-1.fmi
 - Added support for IWXXM messages; BRAINSTORM-905
 
