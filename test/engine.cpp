@@ -29,6 +29,7 @@ Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConf
   return opt;
 }
 
+std::unique_ptr<SmartMet::Spine::Reactor> reactor;
 Engine *engine;
 
 const std::list<std::string> allLocationParameters({"stationid",
@@ -120,9 +121,9 @@ BOOST_AUTO_TEST_CASE(engine_singleton, *boost::unit_test::depends_on("engine_con
 
   engine = nullptr;
 
-  SmartMet::Spine::Reactor reactor(opts);
-  reactor.init();
-  engine = reinterpret_cast<Engine *>(reactor.getSingleton("Avi", NULL));
+  reactor.reset(new SmartMet::Spine::Reactor(opts));
+  reactor->init();
+  engine = reinterpret_cast<Engine *>(reactor->getSingleton("Avi", NULL));
 
   BOOST_CHECK(engine != nullptr);
 }
