@@ -335,7 +335,8 @@ string escapeLiteral(const string& literal)
  */
 // ----------------------------------------------------------------------
 
-void buildStationQueryWhereClause(const string& columnExpression,
+void buildStationQueryWhereClause(const Fmi::Database::PostgreSQLConnection& connection,
+                                  const string& columnExpression,
                                   bool quoteLiteral,
                                   const StringList& stringList,
                                   ostringstream& whereClause)
@@ -349,13 +350,13 @@ void buildStationQueryWhereClause(const string& columnExpression,
 
     size_t n = 0;
 
+    whereClause
+      << (quoteLiteral ? connection.quote(columnExpression) : columnExpression)
+      << " IN (";
+
     for (auto const& str : stringList)
     {
-      if (quoteLiteral)
-        whereClause << ((n == 0) ? ("quote_literal(" + columnExpression + ") IN (") : ",")
-                    << "UPPER(quote_literal('" << escapeLiteral(str) << "'))";
-      else
-        whereClause << ((n == 0) ? (columnExpression + " IN (") : ",") << "UPPER('" << str << "')";
+      whereClause << (n ? "," : "") << "UPPER(" << connection.quote(str) << ")";
 
       n++;
     }
@@ -3091,7 +3092,7 @@ void Engine::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnection& c
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause("UPPER(icao_code)", false, icaoList, whereClause);
+    buildStationQueryWhereClause(connection, "UPPER(icao_code)", false, icaoList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -3122,7 +3123,8 @@ void Engine::queryStationsWithCountries(const Fmi::Database::PostgreSQLConnectio
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause("UPPER(country_code)", false, countryList, whereClause);
+    buildStationQueryWhereClause(connection, "UPPER(country_code)", false,
+        countryList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -3153,7 +3155,8 @@ void Engine::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection& 
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause("UPPER(BTRIM(name))", true, placeIdList, whereClause);
+    buildStationQueryWhereClause(connection, "UPPER(BTRIM(name))", false,
+        placeIdList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
