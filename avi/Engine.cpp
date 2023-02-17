@@ -3413,17 +3413,19 @@ void Engine::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection
 
     size_t n = 0;
 
+    selectFromWhereClause << "SELECT request_icaos.icao_code FROM (VALUES ";
+
     for (auto const& icao : icaoList)
     {
-      selectFromWhereClause << ((n == 0)
-                                    ? "SELECT request_icaos.icao_code FROM (VALUES (quote_literal('"
-                                    : "')),(quote_literal('")
-                            << Fmi::ascii_toupper_copy(escapeLiteral(icao));
+        selectFromWhereClause << (n == 0 ? "" : ",")
+                              << '('
+                              << connection.quote(Fmi::ascii_toupper_copy(escapeLiteral(icao)))
+                              << ')';
       n++;
     }
 
     selectFromWhereClause
-        << "'))) AS request_icaos (icao_code) LEFT JOIN avidb_stations ON "
+        << ") AS request_icaos (icao_code) LEFT JOIN avidb_stations ON "
            "BTRIM(request_icaos.icao_code,'''') = UPPER(avidb_stations.icao_code) "
         << "WHERE avidb_stations.icao_code IS NULL LIMIT 1";
 
