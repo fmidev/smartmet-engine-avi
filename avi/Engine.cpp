@@ -3419,7 +3419,7 @@ void Engine::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection
     {
         selectFromWhereClause << (n == 0 ? "" : ",")
                               << '('
-                              << connection.quote(Fmi::ascii_toupper_copy(escapeLiteral(icao)))
+                              << connection.quote(Fmi::ascii_toupper_copy(icao))
                               << ')';
       n++;
     }
