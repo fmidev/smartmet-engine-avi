@@ -3540,17 +3540,19 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
                           << "CASE WHEN NOT ST_IsValid(ST_GeomFromText(BTRIM(wkt,''''),4326)) OR "
                           << "ST_GeometryType(ST_GeomFromText(BTRIM(wkt,''''),4326)) NOT IN "
                              "('ST_Point','ST_Polygon','ST_LineString') "
-                          << "THEN 0 ELSE 1 END AS isvalid,index FROM (VALUES (quote_literal('";
+                          << "THEN 0 ELSE 1 END AS isvalid,index FROM (VALUES ";
 
     for (auto const& wkt : locationOptions.itsWKTs.itsWKTs)
     {
-      selectFromWhereClause << ((n > 0) ? "),(quote_literal('" : "") << escapeLiteral(wkt) << "'),"
-                            << n;
+      if (n > 0) {
+          //selectFromWhereClause << ',';
+      }
+      selectFromWhereClause << '(' << connection.quote(wkt) << ',' << n << ')';
       n++;
     }
 
     selectFromWhereClause
-        << ")) AS request_wkts (wkt,index)) AS wkts ORDER BY isvalid,CASE geomtype "
+        << ") AS request_wkts (wkt,index)) AS wkts ORDER BY isvalid,CASE geomtype "
            "WHEN 'ST_Point' THEN 0 ELSE 1 END,index";
 
     // If a single LINESTRING (route) is given, the stations (and their messages) will be ordered by
