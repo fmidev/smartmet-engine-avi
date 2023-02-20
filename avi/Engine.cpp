@@ -326,7 +326,6 @@ void buildStationQueryWhereClause(const StationIdList& stationIdList, ostringstr
 
 void buildStationQueryWhereClause(const Fmi::Database::PostgreSQLConnection& connection,
                                   const string& columnExpression,
-                                  bool quoteLiteral,
                                   const StringList& stringList,
                                   ostringstream& whereClause)
 {
@@ -339,9 +338,7 @@ void buildStationQueryWhereClause(const Fmi::Database::PostgreSQLConnection& con
 
     size_t n = 0;
 
-    whereClause
-      << (quoteLiteral ? connection.quote(columnExpression) : columnExpression)
-      << " IN (";
+    whereClause << columnExpression << " IN (";
 
     for (auto const& str : stringList)
     {
@@ -3081,7 +3078,7 @@ void Engine::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnection& c
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause(connection, "UPPER(icao_code)", false, icaoList, whereClause);
+    buildStationQueryWhereClause(connection, "UPPER(icao_code)", icaoList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -3112,8 +3109,7 @@ void Engine::queryStationsWithCountries(const Fmi::Database::PostgreSQLConnectio
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause(connection, "UPPER(country_code)", false,
-        countryList, whereClause);
+    buildStationQueryWhereClause(connection, "UPPER(country_code)", countryList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -3144,8 +3140,7 @@ void Engine::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection& 
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause(connection, "UPPER(BTRIM(name))", false,
-        placeIdList, whereClause);
+    buildStationQueryWhereClause(connection, "UPPER(BTRIM(name))", placeIdList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
