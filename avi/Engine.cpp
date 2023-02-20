@@ -3468,18 +3468,20 @@ void Engine::validateCountries(const Fmi::Database::PostgreSQLConnection& connec
 
     size_t n = 0;
 
+    selectFromWhereClause << "WITH request_countries AS (SELECT country_code FROM (VALUES ";
+
     for (auto const& country : countryList)
     {
       selectFromWhereClause
-          << ((n == 0)
-                  ? "WITH request_countries AS (SELECT country_code FROM (VALUES (quote_literal('"
-                  : "')),(quote_literal('")
-          << Fmi::ascii_toupper_copy(escapeLiteral(country));
+          << ((n == 0) ? "" : ",")
+          << '(' << connection.quote(Fmi::ascii_toupper_copy(country))
+          << ')';
       n++;
     }
+    selectFromWhereClause << ')';
 
     selectFromWhereClause
-        << "'))) AS request_countries (country_code)) SELECT country_code FROM request_countries "
+        << " AS request_countries (country_code)) SELECT country_code FROM request_countries "
         << "WHERE NOT EXISTS (SELECT station_id FROM avidb_stations WHERE "
            "BTRIM(request_countries.country_code,'''') = UPPER(avidb_stations.country_code)) LIMIT "
            "1";
