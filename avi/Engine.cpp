@@ -3534,7 +3534,7 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
     for (auto const& wkt : locationOptions.itsWKTs.itsWKTs)
     {
       if (n > 0) {
-          //selectFromWhereClause << ',';
+        selectFromWhereClause << ',';
       }
       selectFromWhereClause << '(' << connection.quote(wkt) << ',' << n << ')';
       n++;
