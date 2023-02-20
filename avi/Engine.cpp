@@ -320,17 +320,6 @@ void buildStationQueryWhereClause(const StationIdList& stationIdList, ostringstr
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Escape input literal (icao code, place (station name), country code etc)
- */
-// ----------------------------------------------------------------------
-
-string escapeLiteral(const string& literal)
-{
-  return boost::replace_all_copy(literal, "'", "''");
-}
-
-// ----------------------------------------------------------------------
-/*!
  * \brief Build where clause with given icao codes or places (station names) for querying stations
  */
 // ----------------------------------------------------------------------
