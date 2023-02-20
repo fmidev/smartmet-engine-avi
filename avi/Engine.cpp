@@ -320,23 +320,12 @@ void buildStationQueryWhereClause(const StationIdList& stationIdList, ostringstr
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Escape input literal (icao code, place (station name), country code etc)
- */
-// ----------------------------------------------------------------------
-
-string escapeLiteral(const string& literal)
-{
-  return boost::replace_all_copy(literal, "'", "''");
-}
-
-// ----------------------------------------------------------------------
-/*!
  * \brief Build where clause with given icao codes or places (station names) for querying stations
  */
 // ----------------------------------------------------------------------
 
-void buildStationQueryWhereClause(const string& columnExpression,
-                                  bool quoteLiteral,
+void buildStationQueryWhereClause(const Fmi::Database::PostgreSQLConnection& connection,
+                                  const string& columnExpression,
                                   const StringList& stringList,
                                   ostringstream& whereClause)
 {
@@ -349,13 +338,11 @@ void buildStationQueryWhereClause(const string& columnExpression,
 
     size_t n = 0;
 
+    whereClause << columnExpression << " IN (";
+
     for (auto const& str : stringList)
     {
-      if (quoteLiteral)
-        whereClause << ((n == 0) ? ("quote_literal(" + columnExpression + ") IN (") : ",")
-                    << "UPPER(quote_literal('" << escapeLiteral(str) << "'))";
-      else
-        whereClause << ((n == 0) ? (columnExpression + " IN (") : ",") << "UPPER('" << str << "')";
+      whereClause << (n ? "," : "") << "UPPER(" << connection.quote(str) << ")";
 
       n++;
     }
@@ -3091,7 +3078,7 @@ void Engine::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnection& c
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause("UPPER(icao_code)", false, icaoList, whereClause);
+    buildStationQueryWhereClause(connection, "UPPER(icao_code)", icaoList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -3122,7 +3109,7 @@ void Engine::queryStationsWithCountries(const Fmi::Database::PostgreSQLConnectio
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause("UPPER(country_code)", false, countryList, whereClause);
+    buildStationQueryWhereClause(connection, "UPPER(country_code)", countryList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -3153,7 +3140,7 @@ void Engine::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection& 
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause("UPPER(BTRIM(name))", true, placeIdList, whereClause);
+    buildStationQueryWhereClause(connection, "UPPER(BTRIM(name))", placeIdList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -3410,17 +3397,19 @@ void Engine::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection
 
     size_t n = 0;
 
+    selectFromWhereClause << "SELECT request_icaos.icao_code FROM (VALUES ";
+
     for (auto const& icao : icaoList)
     {
-      selectFromWhereClause << ((n == 0)
-                                    ? "SELECT request_icaos.icao_code FROM (VALUES (quote_literal('"
-                                    : "')),(quote_literal('")
-                            << Fmi::ascii_toupper_copy(escapeLiteral(icao));
+        selectFromWhereClause << (n == 0 ? "" : ",")
+                              << '('
+                              << connection.quote(Fmi::ascii_toupper_copy(icao))
+                              << ')';
       n++;
     }
 
     selectFromWhereClause
-        << "'))) AS request_icaos (icao_code) LEFT JOIN avidb_stations ON "
+        << ") AS request_icaos (icao_code) LEFT JOIN avidb_stations ON "
            "BTRIM(request_icaos.icao_code,'''') = UPPER(avidb_stations.icao_code) "
         << "WHERE avidb_stations.icao_code IS NULL LIMIT 1";
 
@@ -3463,18 +3452,20 @@ void Engine::validateCountries(const Fmi::Database::PostgreSQLConnection& connec
 
     size_t n = 0;
 
+    selectFromWhereClause << "WITH request_countries AS (SELECT country_code FROM (VALUES ";
+
     for (auto const& country : countryList)
     {
       selectFromWhereClause
-          << ((n == 0)
-                  ? "WITH request_countries AS (SELECT country_code FROM (VALUES (quote_literal('"
-                  : "')),(quote_literal('")
-          << Fmi::ascii_toupper_copy(escapeLiteral(country));
+          << ((n == 0) ? "" : ",")
+          << '(' << connection.quote(Fmi::ascii_toupper_copy(country))
+          << ')';
       n++;
     }
+    selectFromWhereClause << ')';
 
     selectFromWhereClause
-        << "'))) AS request_countries (country_code)) SELECT country_code FROM request_countries "
+        << " AS request_countries (country_code)) SELECT country_code FROM request_countries "
         << "WHERE NOT EXISTS (SELECT station_id FROM avidb_stations WHERE "
            "BTRIM(request_countries.country_code,'''') = UPPER(avidb_stations.country_code)) LIMIT "
            "1";
@@ -3533,17 +3524,19 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
                           << "CASE WHEN NOT ST_IsValid(ST_GeomFromText(BTRIM(wkt,''''),4326)) OR "
                           << "ST_GeometryType(ST_GeomFromText(BTRIM(wkt,''''),4326)) NOT IN "
                              "('ST_Point','ST_Polygon','ST_LineString') "
-                          << "THEN 0 ELSE 1 END AS isvalid,index FROM (VALUES (quote_literal('";
+                          << "THEN 0 ELSE 1 END AS isvalid,index FROM (VALUES ";
 
     for (auto const& wkt : locationOptions.itsWKTs.itsWKTs)
     {
-      selectFromWhereClause << ((n > 0) ? "),(quote_literal('" : "") << escapeLiteral(wkt) << "'),"
-                            << n;
+      if (n > 0) {
+        selectFromWhereClause << ',';
+      }
+      selectFromWhereClause << '(' << connection.quote(wkt) << ',' << n << ')';
       n++;
     }
 
     selectFromWhereClause
-        << ")) AS request_wkts (wkt,index)) AS wkts ORDER BY isvalid,CASE geomtype "
+        << ") AS request_wkts (wkt,index)) AS wkts ORDER BY isvalid,CASE geomtype "
            "WHEN 'ST_Point' THEN 0 ELSE 1 END,index";
 
     // If a single LINESTRING (route) is given, the stations (and their messages) will be ordered by
