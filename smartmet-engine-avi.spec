@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 23.4.24
+Version: 23.2.20
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -82,9 +82,6 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
-* Mon Apr 24 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> 23.4.24-1.fmi
-- Using prepared SQL to validate nonparsed user input used by message queries (BRAINSTORM-2010)
-
 * Mon Feb 20 2023 Andris Pavēnis <andris.pavenis@fmi.fi> 23.2.20-1.fmi
 - SQL generation update (use PostgreSQLConnection::quote)
 

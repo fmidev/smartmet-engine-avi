@@ -351,9 +351,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   void validateIcaos(const Fmi::Database::PostgreSQLConnection &connection,
                      const StringList &icaoList,
                      bool debug) const;
-  void validatePlaces(const Fmi::Database::PostgreSQLConnection &connection,
-                      const StringList &placeNameList,
-                      bool debug) const;
   void validateCountries(const Fmi::Database::PostgreSQLConnection &connection,
                          const StringList &countryList,
                          bool debug) const;
@@ -387,27 +384,12 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                          bool &distinct) const;
 
   template <typename T>
-  void loadQueryResult(const pqxx::result &result,
-                       bool debug,
-                       T &queryData,
-                       bool distinctRows = true,
-                       int maxRows = 0) const;
-  template <typename T>
   void executeQuery(const Fmi::Database::PostgreSQLConnection &connection,
                     const std::string &query,
                     bool debug,
                     T &queryData,
                     bool distinctRows = true,
                     int maxRows = 0) const;
-  template <typename T, typename T2>
-  void executePreparedQuery(const Fmi::Database::PostgreSQLConnection &connection,
-                            const std::string &statementName,
-                            const std::string &query,
-                            const T2 &queryArgs,
-                            bool debug,
-                            T &queryData,
-                            bool distinctRows = true,
-                            int maxRows = 0) const;
 
   void queryStationsWithIds(const Fmi::Database::PostgreSQLConnection &connection,
                             const StationIdList &stationIdList,
