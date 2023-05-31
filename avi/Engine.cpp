@@ -2805,25 +2805,16 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Execute query and load the result into given data object
+ * \brief Load query result into given data object
  */
 // ----------------------------------------------------------------------
 
 template <typename T>
-void Engine::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
-                          const string& query,
-                          bool debug,
-                          T& queryData,
-                          bool distinctRows,
-                          int maxRows) const
+void Engine::loadQueryResult(
+    const pqxx::result &result, bool debug, T &queryData, bool distinctRows, int maxRows) const
 {
   try
   {
-    if (debug)
-      cerr << "Query: " << query << std::endl;
-
-    auto result = connection.executeNonTransaction(query);
-
     if (debug)
       cerr << "Rows: " << result.size() << std::endl;
 
@@ -2967,6 +2958,89 @@ void Engine::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
         }
       }
     }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Execute query and load the result into given data object
+ */
+// ----------------------------------------------------------------------
+
+template <typename T>
+void Engine::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
+                          const string& query,
+                          bool debug,
+                          T& queryData,
+                          bool distinctRows,
+                          int maxRows) const
+{
+  try
+  {
+    if (debug)
+      cerr << "Query: " << query << std::endl;
+
+    auto result = connection.executeNonTransaction(query);
+
+    loadQueryResult(result, debug, queryData, distinctRows, maxRows);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Execute parametrized query and load query result into given data object
+ */
+// ----------------------------------------------------------------------
+
+template <typename T>
+void Engine::executeParamQuery(const Fmi::Database::PostgreSQLConnection& connection,
+                               const string& query,
+                               const string& queryArg,
+                               bool debug,
+                               T& queryData,
+                               bool distinctRows,
+                               int maxRows) const
+{
+  try
+  {
+    if (debug)
+      cerr << "Query: " << query << std::endl;
+
+    auto result = connection.exec_params(query, queryArg);
+
+    loadQueryResult(result, debug, queryData, distinctRows, maxRows);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
+template <typename T, typename T2>
+void Engine::executeParamQuery(const Fmi::Database::PostgreSQLConnection& connection,
+                               const string& query,
+                               const T2& queryArgs,
+                               bool debug,
+                               T& queryData,
+                               bool distinctRows,
+                               int maxRows) const
+{
+  try
+  {
+    if (debug)
+      cerr << "Query: " << query << std::endl;
+
+    auto result = connection.exec_params_p(query, queryArgs);
+
+    loadQueryResult(result, debug, queryData, distinctRows, maxRows);
   }
   catch (...)
   {
@@ -3129,7 +3203,7 @@ void Engine::queryStationsWithCountries(const Fmi::Database::PostgreSQLConnectio
 // ----------------------------------------------------------------------
 
 void Engine::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection& connection,
-                                     const StringList& placeIdList,
+                                     const StringList& placeNameList,
                                      const string& selectClause,
                                      bool debug,
                                      StationQueryData& stationQueryData) const
@@ -3140,7 +3214,7 @@ void Engine::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection& 
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause(connection, "UPPER(BTRIM(name))", placeIdList, whereClause);
+    buildStationQueryWhereClause(connection, "UPPER(BTRIM(name))", placeNameList, whereClause);
 
     executeQuery<StationQueryData>(connection,
                                    selectClause + " FROM avidb_stations " + whereClause.str(),
@@ -3344,17 +3418,12 @@ void Engine::validateStationIds(const Fmi::Database::PostgreSQLConnection& conne
 
     ostringstream selectFromWhereClause;
 
-    size_t n = 0;
+    selectFromWhereClause << "SELECT request_stations.station_id FROM (VALUES ";
 
-    for (auto stationId : stationIdList)
-    {
-      selectFromWhereClause << ((n == 0) ? "SELECT request_stations.station_id FROM (VALUES ("
-                                         : "),(")
-                            << stationId;
-      n++;
-    }
+    for (size_t n = 1; (n <= stationIdList.size()); n++)
+      selectFromWhereClause << ((n == 1) ? "($" : ",($") << n << ((n == 1) ? "::integer)" : ")");
 
-    selectFromWhereClause << ")) AS request_stations (station_id) LEFT JOIN avidb_stations ON "
+    selectFromWhereClause << ") AS request_stations (station_id) LEFT JOIN avidb_stations ON "
                              "request_stations.station_id = avidb_stations.station_id "
                           << "WHERE avidb_stations.station_id IS NULL LIMIT 1";
 
@@ -3362,7 +3431,8 @@ void Engine::validateStationIds(const Fmi::Database::PostgreSQLConnection& conne
 
     queryData.itsColumns.push_back(Column(Integer, "station_id"));
 
-    executeQuery<QueryData>(connection, selectFromWhereClause.str(), debug, queryData);
+    executeParamQuery<QueryData, StationIdList>(
+        connection, selectFromWhereClause.str(), stationIdList, debug, queryData);
 
     if (!queryData.itsValues.empty())
     {
@@ -3395,29 +3465,22 @@ void Engine::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection
 
     ostringstream selectFromWhereClause;
 
-    size_t n = 0;
-
     selectFromWhereClause << "SELECT request_icaos.icao_code FROM (VALUES ";
 
-    for (auto const& icao : icaoList)
-    {
-        selectFromWhereClause << (n == 0 ? "" : ",")
-                              << '('
-                              << connection.quote(Fmi::ascii_toupper_copy(icao))
-                              << ')';
-      n++;
-    }
+    for (size_t n = 1; (n <= icaoList.size()); n++)
+      selectFromWhereClause << ((n == 1) ? "($" : "),($") << n;
 
     selectFromWhereClause
-        << ") AS request_icaos (icao_code) LEFT JOIN avidb_stations ON "
-           "BTRIM(request_icaos.icao_code,'''') = UPPER(avidb_stations.icao_code) "
+        << ")) AS request_icaos (icao_code) LEFT JOIN avidb_stations ON "
+           "request_icaos.icao_code = UPPER(avidb_stations.icao_code) "
         << "WHERE avidb_stations.icao_code IS NULL LIMIT 1";
 
     QueryData queryData;
 
     queryData.itsColumns.push_back(Column(String, "icao_code"));
 
-    executeQuery<QueryData>(connection, selectFromWhereClause.str(), debug, queryData);
+    executeParamQuery<QueryData, StringList>(
+        connection, selectFromWhereClause.str(), icaoList, debug, queryData);
 
     if (!queryData.itsValues.empty())
     {
@@ -3425,6 +3488,82 @@ void Engine::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection
                           ? *(boost::get<std::string>(&(queryData.itsValues["icao_code"].front())))
                           : "?");
       throw Fmi::Exception(BCP, "Unknown icao code " + icaoCode).disableLogging();
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Check given places (station names) exist
+ */
+// ----------------------------------------------------------------------
+
+void Engine::validatePlaces(const Fmi::Database::PostgreSQLConnection& connection,
+                            StringList& placeNameList,
+                            bool debug) const
+{
+  try
+  {
+    if (placeNameList.empty())
+      return;
+
+    ostringstream selectFromWhereClause;
+
+    /* Since nonexisting station names has been allowed, just strip them off
+     * instead of throwing an error
+
+    selectFromWhereClause << "SELECT request_stations.name FROM (VALUES ";
+
+    for (size_t n = 1; (n <= placeNameList.size()); n++)
+      selectFromWhereClause << ((n == 1) ? "($" : "),($") << n;
+
+    selectFromWhereClause
+        << ")) AS request_stations (name) LEFT JOIN avidb_stations ON "
+           "UPPER(request_stations.name) = UPPER(BTRIM(avidb_stations.name)) "
+        << "WHERE avidb_stations.name IS NULL LIMIT 1";
+
+    QueryData queryData;
+
+    queryData.itsColumns.push_back(Column(String, "name"));
+
+    executeParamQuery<QueryData, StringList>(
+        connection, selectFromWhereClause.str(), placeNameList, debug, queryData);
+
+    if (!queryData.itsValues.empty())
+    {
+      string stationName(boost::get<std::string>(&(queryData.itsValues["name"].front()))
+                           ? *(boost::get<std::string>(&(queryData.itsValues["name"].front())))
+                           : "?");
+      throw Fmi::Exception(BCP, "Unknown station name " + stationName).disableLogging();
+    }
+    */
+
+    StringList places(placeNameList);
+    placeNameList.clear();
+
+    for (auto const &place : places)
+    {
+      QueryData queryData;
+
+      queryData.itsColumns.push_back(Column(String, "name"));
+
+      selectFromWhereClause
+          << "SELECT request_stations.name FROM (VALUES ($1)) "
+          << "AS request_stations (name) LEFT JOIN avidb_stations ON "
+             "UPPER(request_stations.name) = UPPER(BTRIM(avidb_stations.name)) "
+          << "WHERE avidb_stations.name IS NULL";
+
+      executeParamQuery<QueryData>(
+        connection, selectFromWhereClause.str(), place, debug, queryData);
+
+      if (queryData.itsValues.empty())
+        placeNameList.push_back(place);
+
+      selectFromWhereClause.str("");
     }
   }
   catch (...)
@@ -3450,31 +3589,22 @@ void Engine::validateCountries(const Fmi::Database::PostgreSQLConnection& connec
 
     ostringstream selectFromWhereClause;
 
-    size_t n = 0;
-
     selectFromWhereClause << "WITH request_countries AS (SELECT country_code FROM (VALUES ";
 
-    for (auto const& country : countryList)
-    {
-      selectFromWhereClause
-          << ((n == 0) ? "" : ",")
-          << '(' << connection.quote(Fmi::ascii_toupper_copy(country))
-          << ')';
-      n++;
-    }
-    selectFromWhereClause << ')';
+    for (size_t n = 1; (n <= countryList.size()); n++)
+      selectFromWhereClause << ((n == 1) ? "($" : "),($") << n;
 
     selectFromWhereClause
-        << " AS request_countries (country_code)) SELECT country_code FROM request_countries "
+        << ")) AS request_countries (country_code)) SELECT country_code FROM request_countries "
         << "WHERE NOT EXISTS (SELECT station_id FROM avidb_stations WHERE "
-           "BTRIM(request_countries.country_code,'''') = UPPER(avidb_stations.country_code)) LIMIT "
-           "1";
+           "request_countries.country_code = UPPER(avidb_stations.country_code)) LIMIT 1";
 
     QueryData queryData;
 
     queryData.itsColumns.push_back(Column(String, "country_code"));
 
-    executeQuery<QueryData>(connection, selectFromWhereClause.str(), debug, queryData);
+    executeParamQuery<QueryData, StringList>(
+        connection, selectFromWhereClause.str(), countryList, debug, queryData);
 
     if (!queryData.itsValues.empty())
     {
@@ -3513,30 +3643,23 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
 
     ostringstream selectFromWhereClause;
 
-    size_t n = 0;
-
     selectFromWhereClause << "SELECT wkt,geomtype,isvalid,index,"
-                          << "CASE geomtype WHEN 'ST_Point' THEN ST_Y(geom) ELSE 0 END AS lat,CASE "
-                             "geomtype WHEN 'ST_Point' THEN ST_X(geom) ELSE 0 END AS lon "
-                          << "FROM (SELECT wkt,ST_GeomFromText(BTRIM(wkt,''''),4326) as "
-                             "geom,ST_GeometryType(ST_GeomFromText(BTRIM(wkt,''''),4326)) as "
-                             "geomtype,"
-                          << "CASE WHEN NOT ST_IsValid(ST_GeomFromText(BTRIM(wkt,''''),4326)) OR "
-                          << "ST_GeometryType(ST_GeomFromText(BTRIM(wkt,''''),4326)) NOT IN "
+                          << "CASE geomtype WHEN 'ST_Point' THEN ST_Y(geom) ELSE 0 END AS lat,"
+                             "CASE geomtype WHEN 'ST_Point' THEN ST_X(geom) ELSE 0 END AS lon "
+                          << "FROM (SELECT wkt,ST_GeomFromText(wkt,4326) AS geom,"
+                             "ST_GeometryType(ST_GeomFromText(wkt,4326)) AS geomtype,"
+                          << "CASE WHEN NOT ST_IsValid(ST_GeomFromText(wkt,4326)) OR "
+                          << "ST_GeometryType(ST_GeomFromText(wkt,4326)) NOT IN "
                              "('ST_Point','ST_Polygon','ST_LineString') "
                           << "THEN 0 ELSE 1 END AS isvalid,index FROM (VALUES ";
 
-    for (auto const& wkt : locationOptions.itsWKTs.itsWKTs)
-    {
-      if (n > 0) {
-        selectFromWhereClause << ',';
-      }
-      selectFromWhereClause << '(' << connection.quote(wkt) << ',' << n << ')';
-      n++;
-    }
+    size_t wktCnt = locationOptions.itsWKTs.itsWKTs.size();
+
+    for (size_t n = 1; (n <= wktCnt); n++)
+      selectFromWhereClause << ((n == 1) ? "($" : "),($") << n << "," << n - 1;
 
     selectFromWhereClause
-        << ") AS request_wkts (wkt,index)) AS wkts ORDER BY isvalid,CASE geomtype "
+        << ")) AS request_wkts (wkt,index)) AS wkts ORDER BY isvalid,CASE geomtype "
            "WHEN 'ST_Point' THEN 0 ELSE 1 END,index";
 
     // If a single LINESTRING (route) is given, the stations (and their messages) will be ordered by
@@ -3547,7 +3670,7 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
         (locationOptions.itsLonLats.empty() && locationOptions.itsStationIds.empty() &&
          locationOptions.itsIcaos.empty() && locationOptions.itsCountries.empty() &&
          locationOptions.itsPlaces.empty() && locationOptions.itsBBoxes.empty() &&
-         (locationOptions.itsWKTs.itsWKTs.size() == 1));
+         (wktCnt == 1));
 
     QueryData queryData;
 
@@ -3558,9 +3681,11 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
     queryData.itsColumns.push_back(Column(Double, "lat"));
     queryData.itsColumns.push_back(Column(Double, "lon"));
 
-    executeQuery<QueryData>(connection, selectFromWhereClause.str(), debug, queryData);
+    executeParamQuery<QueryData, StringList>(
+        connection, selectFromWhereClause.str(), locationOptions.itsWKTs.itsWKTs,
+        debug, queryData);
 
-    if (queryData.itsValues["wkt"].size() != n)
+    if (queryData.itsValues["wkt"].size() != wktCnt)
       throw Fmi::Exception(
           BCP, "validateWKTs: internal: wkt check query did not return as many rows as expected");
 
@@ -3589,7 +3714,7 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
     StringList::iterator itwkt = locationOptions.itsWKTs.itsWKTs.begin();
     string geomType;
 
-    for (int wktIndex = 0, dataIndex = 0; (n > 0); n--, wktIndex++, dataIndex++)
+    for (int wktIndex = 0, dataIndex = 0; (wktCnt > 0); wktCnt--, wktIndex++, dataIndex++)
     {
       geomType = (boost::get<std::string>(&(queryData.itsValues["geomtype"][dataIndex]))
                       ? *(boost::get<std::string>(&(queryData.itsValues["geomtype"][dataIndex])))
@@ -3661,6 +3786,9 @@ StationQueryData Engine::queryStations(const Fmi::Database::PostgreSQLConnection
 
       if (!locationOptions.itsIcaos.empty())
         validateIcaos(connection, locationOptions.itsIcaos, queryOptions.itsDebug);
+
+      if (!locationOptions.itsPlaces.empty())
+        validatePlaces(connection, locationOptions.itsPlaces, queryOptions.itsDebug);
 
       if (!locationOptions.itsCountries.empty())
         validateCountries(connection, locationOptions.itsCountries, queryOptions.itsDebug);
