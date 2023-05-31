@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 23.2.20
+Version: 23.5.31
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -23,12 +23,12 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 22.12.2
-BuildRequires: smartmet-library-macgyver >= 22.12.16
-BuildRequires: smartmet-library-macgyver-devel >= 22.12.16
+BuildRequires: smartmet-library-spine-devel >= 23.4.27
+BuildRequires: smartmet-library-macgyver >= 23.5.24
+BuildRequires: smartmet-library-macgyver-devel >= 23.5.24
 Requires: %{smartmet_boost}-date-time
-Requires: smartmet-library-macgyver >= 22.12.16
-Requires: smartmet-library-spine >= 22.12.2
+Requires: smartmet-library-macgyver >= 23.5.24
+Requires: smartmet-library-spine >= 23.4.27
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
@@ -82,6 +82,10 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Wed May 31 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> 23.5.31-1.fmi
+- Using parametrized SQL to validate user input (BRAINSTORM-2010)
+- Disabled some deprecated/invalid tests and some test results have changed (new stations added)
+
 * Mon Feb 20 2023 Andris Pavēnis <andris.pavenis@fmi.fi> 23.2.20-1.fmi
 - SQL generation update (use PostgreSQLConnection::quote)
 
