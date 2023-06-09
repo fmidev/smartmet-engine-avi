@@ -945,13 +945,21 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_timestamp
   stationQueryData = engine->queryMessages(stationIdList, queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
 
+  // Throws since query times are now checked with Fmi::TimeParser::parse()
   queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '2015-11-17 00:20:00Z'";
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
+  /*
   stationQueryData = engine->queryMessages(stationIdList, queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+  */
 
+  // Throws since query times are now checked with Fmi::TimeParser::parse()
   queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '2015-11-17 00:20:00+00'";
+  BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
+  /*
   stationQueryData = engine->queryMessages(stationIdList, queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 1);
+  */
 
   queryOptions.itsTimeOptions.itsObservationTime = "timestamptz '20151117'";
   stationQueryData = engine->queryMessages(stationIdList, queryOptions);
@@ -1675,8 +1683,12 @@ BOOST_AUTO_TEST_CASE(engine_querystationsandmessages_queryoptions_with_parameter
   BOOST_CHECK(engine != nullptr);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageParameters.front());
+  // Throws since query times are now checked with Fmi::TimeParser::parse()
+  BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Fmi::Exception);
+  /*
   StationQueryData stationQueryData = engine->queryStationsAndMessages(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
+  */
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1687,8 +1699,12 @@ BOOST_AUTO_TEST_CASE(
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageParameters.front());
   queryOptions.itsValidity = Avi::Accepted;
+  // Throws since query times are now checked with Fmi::TimeParser::parse()
+  BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Fmi::Exception);
+  /*
   StationQueryData stationQueryData = engine->queryStationsAndMessages(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
+  */
 }
 
 BOOST_AUTO_TEST_CASE(
@@ -1721,8 +1737,12 @@ BOOST_AUTO_TEST_CASE(
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allLocationParameters.front());
   queryOptions.itsParameters.push_back(allMessageParameters.front());
+  // Throws since query times are now checked with Fmi::TimeParser::parse()
+  BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Fmi::Exception);
+  /*
   StationQueryData stationQueryData = engine->queryStationsAndMessages(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsValues.size(), 0);
+  */
 }
 
 BOOST_AUTO_TEST_CASE(
