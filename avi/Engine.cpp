@@ -4,6 +4,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
+#include <macgyver/TimeParser.h>
 #include <stdexcept>
 
 using namespace std;
@@ -3296,6 +3297,103 @@ void Engine::queryStationsWithBBoxes(const Fmi::Database::PostgreSQLConnection& 
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Check time parameter values are valid
+ */
+// ----------------------------------------------------------------------
+
+namespace {
+
+boost::posix_time::ptime parseTime(const string &timeName, const string &timeStr)
+{
+  try
+  {
+    // Expecting "timestamptz '<datetime>'"
+
+    const char *timestamptz = "timestamptz";
+    const char *TIMESTAMPTZ = "TIMESTAMPTZ";
+    const char *c = timeStr.c_str(), *c2;
+
+    while (*c == ' ') { c++; }
+
+    while (*c && *timestamptz && ((*c == *timestamptz) || (*c == *TIMESTAMPTZ)))
+    {
+      c++; timestamptz++; TIMESTAMPTZ++;
+    }
+
+    if ((!(*timestamptz)) && (*c == ' '))
+    {
+      do { c++; } while (*c == ' ');
+
+      if ((*c == '\'') && ((c2 = strchr(c + 1,'\'')) > (c + 1)))
+      {
+        auto c3 = c2;
+
+        do { c3++; } while (*c3 == ' ');
+
+        if (!(*c3))
+        {
+          string ts;
+
+          c++;
+          ts.assign(c, c2 - c);
+
+          return Fmi::TimeParser::parse(ts);
+        }
+      }
+    }
+
+    throw Fmi::Exception(
+        BCP, timeName + " \"" + timeStr + "\" is not valid, timestamptz '<datetime>' expected");
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
+}
+
+void Engine::validateTimes(const TimeOptions& timeOptions) const
+{
+  try
+  {
+    // Time range or observation time is required, having "timestamptz '<datetime>'" value(s)
+
+    if (timeOptions.itsStartTime.empty() != timeOptions.itsEndTime.empty())
+      throw Fmi::Exception(BCP, "'starttime' and 'endtime' options must be given simultaneously");
+
+    if (!timeOptions.itsStartTime.empty())
+    {
+      if (!timeOptions.itsObservationTime.empty())
+        throw Fmi::Exception(
+            BCP,
+            "Can't specify both time range ('starttime' and 'endtime') and observation time "
+            "('time')");
+
+      auto st = parseTime("starttime", timeOptions.itsStartTime);
+      auto et = parseTime("endtime", timeOptions.itsEndTime);
+
+      if (st > et)
+        throw Fmi::Exception(BCP, "'starttime' must be earlier than 'endtime'");
+    }
+    else if (!timeOptions.itsObservationTime.empty())
+    {
+      auto s = Fmi::ascii_tolower_copy(boost::algorithm::trim_copy(timeOptions.itsObservationTime));
+
+      if (s != "current_timestamp")
+        parseTime("time", timeOptions.itsObservationTime);
+    }
+    else
+      throw Fmi::Exception(BCP, "Query starttime and endtime or observation time must be given");
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Check requested parameters are known
  */
 // ----------------------------------------------------------------------
@@ -3772,7 +3870,7 @@ StationQueryData Engine::queryStations(const Fmi::Database::PostgreSQLConnection
 {
   try
   {
-    // Validate requested parameters, station id's, icao codes, country codes and wkts
+    // Validate requested times, parameters, station id's, icao codes, country codes and wkts
 
     auto const& paramList = queryOptions.itsParameters;
     auto& locationOptions = queryOptions.itsLocationOptions;
@@ -4033,6 +4131,8 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
 
     if (validateQuery)
     {
+      validateTimes(queryOptions.itsTimeOptions);
+
       validateParameters(queryOptions.itsParameters, AcceptedMessages, messageColumnSelected);
 
       if (!queryOptions.itsMessageTypes.empty())
@@ -4450,6 +4550,8 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
           "queryStationsAndMessages() can't be used to query rejected messages; use "
           "queryRejectedMessages() instead");
 
+    validateTimes(queryOptions.itsTimeOptions);
+
     // Query station scoped, FIR scped and global scoped stations and messages.
     //
     // If route query (single linestring wkt) is requested, query each scope separately;
@@ -4574,13 +4676,14 @@ QueryData Engine::queryRejectedMessages(const QueryOptions& queryOptions) const
 {
   try
   {
-    Fmi::Database::PostgreSQLConnection connection(mk_connection_options(*itsConfig));
-
     // Validate time options, parameters and message types
 
     if (!queryOptions.itsTimeOptions.itsObservationTime.empty())
       throw Fmi::Exception(BCP, "Time range must be used to query rejected messages");
 
+    validateTimes(queryOptions.itsTimeOptions);
+
+    Fmi::Database::PostgreSQLConnection connection(mk_connection_options(*itsConfig));
     bool messageColumnSelected;
 
     validateParameters(queryOptions.itsParameters, Rejected, messageColumnSelected);

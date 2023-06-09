@@ -342,6 +342,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   void shutdown();
 
  private:
+  void validateTimes(const TimeOptions &timeOptions) const;
   void validateParameters(const StringList &paramList,
                           Validity validity,
                           bool &messageColumnSelected) const;
