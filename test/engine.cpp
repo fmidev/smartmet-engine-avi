@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK(engine != nullptr);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
-  queryOptions.itsLocationOptions.itsIcaos.push_back("EFJY");
+  queryOptions.itsLocationOptions.itsIcaos.push_back("efjy");
   StationQueryData stationQueryData = engine->queryStations(queryOptions);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.front(), 10);
