@@ -23,12 +23,12 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 23.6.13
-BuildRequires: smartmet-library-macgyver >= 23.6.6
-BuildRequires: smartmet-library-macgyver-devel >= 23.6.6
+BuildRequires: smartmet-library-spine-devel >= 23.4.27
+BuildRequires: smartmet-library-macgyver >= 23.5.24
+BuildRequires: smartmet-library-macgyver-devel >= 23.5.24
 Requires: %{smartmet_boost}-date-time
-Requires: smartmet-library-macgyver >= 23.6.6
-Requires: smartmet-library-spine >= 23.6.13
+Requires: smartmet-library-macgyver >= 23.5.24
+Requires: smartmet-library-spine >= 23.4.27
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
