@@ -3570,7 +3570,7 @@ void Engine::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection
 
     selectFromWhereClause
         << ")) AS request_icaos (icao_code) LEFT JOIN avidb_stations ON "
-           "request_icaos.icao_code = UPPER(avidb_stations.icao_code) "
+           "UPPER(request_icaos.icao_code) = UPPER(avidb_stations.icao_code) "
         << "WHERE avidb_stations.icao_code IS NULL LIMIT 1";
 
     QueryData queryData;
