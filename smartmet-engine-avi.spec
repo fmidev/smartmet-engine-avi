@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 23.6.14
+Version: 23.7.28
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -82,6 +82,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Jul 28 2023 Andris Pavēnis <andris.pavenis@fmi.fi> 23.7.28-1.fmi
+- Repackage due to bulk ABI changes in macgyver/newbase/spine
+
 * Wed Jun 14 2023 Pertti Kinnia <pertti.kinnia@fmi.fi> 23.6.14-1.fmi
 - Using UPPER(requesticao) when validating request icao codes against station table; UPPER() was left off when code was changed to use parametrized sql
 
