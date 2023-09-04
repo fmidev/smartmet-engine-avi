@@ -35,7 +35,7 @@ GEONAMES_HOST_EDIT := sed -e 's|"@SMARTMET_TEST@"|"$(TEST_DB_DIR)"|g'
 TEST_PREPARE_TARGETS += start-test-db
 TEST_FINISH_TARGETS += stop-test-db
 else
-GEONAMES_HOST_EDIT := cat
+GEONAMES_HOST_EDIT := sed -e 's|"@SMARTMET_TEST@"|"smartmet-test"|g'
 endif
 
 obj/%.o : %.cpp ; @echo Compiling $<
@@ -55,15 +55,16 @@ all:
 clean:
 	rm -rf obj/*.o obj/*.d
 	rm -rf $(TESTSUITE_TARGETS)
-	-$(MAKE) stop-test-db
+	@-$(MAKE) stop-test-db
 	rm -rf tmp-test-database
+	rm tmp-geonames-db.log
 
 test:	$(TEST_PREPARE_TARGETS) $(TESTSUITE_TARGETS)
 	@ok=true; \
 	for test in $(TESTSUITE_TARGETS); do \
 		if ! ./$$test --log_level=message ; then ok=false; fi; \
 	done; \
-	-$(MAKE) $(TEST_FINISH_TARGETS)
+	$(MAKE) $(TEST_FINISH_TARGETS)
 	$$ok;
 
 %.test : obj/%.o ; @echo "Building $@"
@@ -88,6 +89,10 @@ stop-test-db:
 cnf/valid.conf:
 	$(GEONAMES_HOST_EDIT) $@.in >$@
 
+dummy:
+
 ifneq ($(wildcard obj/*.d),)
 -include $(wildcard obj/*.d)
 endif
+
+.PHONY: cnf/valid.conf

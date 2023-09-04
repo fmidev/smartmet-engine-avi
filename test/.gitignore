@@ -1,2 +1,4 @@
 /*.test
 /tmp-test-database
+/cnf/valid.conf
+/tmp-geonames-db.log
