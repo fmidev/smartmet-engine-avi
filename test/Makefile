@@ -27,6 +27,7 @@ INCLUDES := $(LIBWFS_INCLUDES) $(INCLUDES)
 
 TEST_PREPARE_TARGETS := cnf/valid.conf
 TEST_FINISH_TARGETS := dummy
+TEST_CLEAN_TARGETS := dummy
 TEST_DB_DIR := $(shell pwd)/tmp-test-database
 TEST_RUNNER :=
 
@@ -34,6 +35,7 @@ ifdef CI
 GEONAMES_HOST_EDIT := sed -e 's|"@SMARTMET_TEST@"|"$(TEST_DB_DIR)"|g'
 TEST_PREPARE_TARGETS += start-test-db
 TEST_FINISH_TARGETS += stop-test-db
+TEST_CLEAN_TARGETS := clean-test-db
 else
 GEONAMES_HOST_EDIT := sed -e 's|"@SMARTMET_TEST@"|"smartmet-test"|g'
 endif
@@ -55,9 +57,7 @@ all:
 clean:
 	rm -rf obj/*.o obj/*.d
 	rm -rf $(TESTSUITE_TARGETS)
-	@-$(MAKE) stop-test-db
-	rm -rf tmp-test-database
-	rm tmp-geonames-db.log
+	-$(MAKE) $(TEST_CLEAN_TARGETS)
 
 test:	$(TEST_PREPARE_TARGETS) $(TESTSUITE_TARGETS)
 	@ok=true; \
@@ -74,7 +74,7 @@ CFLAGS += -I include -I $(TOP)/libwfs
 
 test-database:
 	@-$(MAKE) stop-test-db
-	rm -rf tmp-geonames-db
+	rm -rf tmp-test-database
 	if ! /usr/share/smartmet/test/db/create-local-db.sh $(TEST_DB_DIR) >tmp-geonames-db.log 2>&1 ; then \
 	    cat tmp-geonames-db.log; \
 	    false; \
@@ -85,6 +85,12 @@ start-test-db: test-database
 
 stop-test-db:
 	-/usr/share/smartmet/test/db/test-db-ctl.sh $(TEST_DB_DIR) stop
+
+clean-test-db:
+	-if test -d tmp-test-database; then $(MAKE) stop-test-db; fi;
+	rm -rf tmp-test-database;
+	rm -f tmp-geonames-db.log;
+
 
 cnf/valid.conf:
 	$(GEONAMES_HOST_EDIT) $@.in >$@
