@@ -4,7 +4,7 @@
 
 postgis:
 {
-	host		= "smartmet-test";
+	host		= "@SMARTMET_TEST@";
 	port		= 5444;
 	database	= "avi";
 	username	= "avi_user";

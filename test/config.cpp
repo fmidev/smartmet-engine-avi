@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(config_accessors,
   const bool boolVariable = true;
 
   BOOST_CHECK(typeid(config.getHost()) == typeid(stringVariable));
-  BOOST_CHECK_EQUAL(config.getHost(), "smartmet-test");
+  //BOOST_CHECK_EQUAL(config.getHost(), "smartmet-test");
 
   BOOST_CHECK(typeid(config.getPort()) == typeid(intVariable));
   BOOST_CHECK_EQUAL(config.getPort(), 5444);
