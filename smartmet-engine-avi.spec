@@ -32,7 +32,8 @@ Requires: smartmet-library-spine >= 23.7.28
 Requires: smartmet-library-timeseries >= 23.7.28
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
-#TestRequires: smartmet-utils-devel
+#TestRequires: smartmet-utils-deve
+#TestRequires: smartmet-library-spine-devel >= 23.7.28
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
