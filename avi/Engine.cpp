@@ -2407,7 +2407,7 @@ const Column* Engine::getQueryColumn(const ColumnTable tableColumns,
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Build select expressions for coordinate dependant derived fields
+ * \brief Build select expressions for coordinate dependent derived fields
  */
 // ----------------------------------------------------------------------
 
@@ -3064,7 +3064,7 @@ void Engine::queryStationsWithCoordinates(const Fmi::Database::PostgreSQLConnect
 {
   try
   {
-    // Build select expressions for coordinate dependant derived columns
+    // Build select expressions for coordinate dependent derived columns
 
     string derivedColumnSelectExpressions =
         buildStationQueryCoordinateExpressions(stationQueryData.itsColumns);
@@ -3611,7 +3611,7 @@ void Engine::validatePlaces(const Fmi::Database::PostgreSQLConnection& connectio
 
     ostringstream selectFromWhereClause;
 
-    /* Since nonexisting station names has been allowed, just strip them off
+    /* Since non-existing station names has been allowed, just strip them off
      * instead of throwing an error
 
     selectFromWhereClause << "SELECT request_stations.name FROM (VALUES ";
@@ -4535,7 +4535,7 @@ StationQueryData& Engine::joinStationAndMessageData(const StationQueryData& stat
 /*!
  * \brief Query stations and/or accepted messages.
  *
- *        This method serves for convenience, by executing station and message querys
+ *        This method serves for convenience, by executing station and message queries
  *        and joining the data.
  */
 // ----------------------------------------------------------------------
