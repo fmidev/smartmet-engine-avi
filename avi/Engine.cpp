@@ -2171,7 +2171,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
       if (queryOptions.itsDistinctMessages)
         // Using message for ordering too (needed to check/skip duplicates)
         //
-        fromWhereOrderByClause << "," << messageTableAlias << "." << messageTableColumn;
+        fromWhereOrderByClause << "," << messageTableAlias << "." << messageTableColumn
+                               << " COLLATE \"C\"";
 
       // Using message id for ordering too (needed to ensure regression tests can succeed)
 
