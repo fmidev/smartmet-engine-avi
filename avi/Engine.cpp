@@ -17,7 +17,7 @@ namespace Avi
 {
 namespace
 {
-boost::local_time::time_zone_ptr tzUTC(new boost::local_time::posix_time_zone("UTC"));
+Fmi::TimeZonePtr tzUTC(new boost::local_time::posix_time_zone("UTC"));
 
 Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConfig)
 {
@@ -2951,9 +2951,9 @@ void Engine::loadQueryResult(
         }
         else
         {
-          boost::local_time::local_date_time utcTime(
+          Fmi::LocalDateTime utcTime(
               row[column.itsName].is_null()
-                  ? boost::posix_time::ptime()
+                  ? Fmi::DateTime()
                   : boost::posix_time::time_from_string(row[column.itsName].as<string>()),
               tzUTC);
           queryValues[column.itsName].push_back(utcTime);
@@ -3304,7 +3304,7 @@ void Engine::queryStationsWithBBoxes(const Fmi::Database::PostgreSQLConnection& 
 
 namespace {
 
-boost::posix_time::ptime parseTime(const string &timeName, const string &timeStr)
+Fmi::DateTime parseTime(const string &timeName, const string &timeStr)
 {
   try
   {
