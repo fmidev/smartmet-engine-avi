@@ -1,6 +1,7 @@
 // ======================================================================
 
 #include "Engine.h"
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
@@ -17,7 +18,7 @@ namespace Avi
 {
 namespace
 {
-Fmi::TimeZonePtr tzUTC(new boost::local_time::posix_time_zone("UTC"));
+Fmi::TimeZonePtr& tzUTC = Fmi::TimeZonePtr::utc;
 
 Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConfig)
 {
@@ -2921,7 +2922,7 @@ void Engine::loadQueryResult(
           TimeSeries::LonLat lonlat(0, 0);
           string llStr(boost::algorithm::trim_copy(row[column.itsName].as<string>()));
           vector<string> flds;
-          boost::split(flds, llStr, boost::is_any_of(","));
+          boost::algorithm::split(flds, llStr, boost::is_any_of(","));
           bool lonlatValid = false;
 
           if (flds.size() == 2)
@@ -2954,7 +2955,7 @@ void Engine::loadQueryResult(
           Fmi::LocalDateTime utcTime(
               row[column.itsName].is_null()
                   ? Fmi::DateTime()
-                  : boost::posix_time::time_from_string(row[column.itsName].as<string>()),
+                  : Fmi::DateTime::from_string(row[column.itsName].as<string>()),
               tzUTC);
           queryValues[column.itsName].push_back(utcTime);
         }
