@@ -26,7 +26,6 @@ BuildRequires: bzip2-devel
 BuildRequires: smartmet-library-spine-devel >= 24.2.8
 BuildRequires: smartmet-library-macgyver-devel >= 24.1.17
 BuildRequires: smartmet-library-timeseries-devel >= 24.2.23
-Requires: %{smartmet_boost}-date-time
 Requires: smartmet-library-macgyver >= 24.5.6
 Requires: smartmet-library-spine >= 24.5.6
 Requires: smartmet-library-timeseries >= 24.5.6
