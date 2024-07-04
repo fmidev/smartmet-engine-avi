@@ -1061,17 +1061,17 @@ BOOST_AUTO_TEST_CASE(
         auto vvIt = qvIt->second.begin();
         if (name == "messageid")
         {
-          std::string value = boost::apply_visitor(sv, *vvIt);
+          std::string value = std::visit(sv, *vvIt);
           BOOST_CHECK_EQUAL(value, "34867711");
         }
         else if (name == "message")
         {
-          std::string value = boost::apply_visitor(sv, *vvIt);
+          std::string value = std::visit(sv, *vvIt);
           BOOST_CHECK_EQUAL(value, "METAR EFHK 170020Z 15012KT 9999 -RA BKN008 06/05 Q1004 NOSIG=");
         }
         else if (name == "messagetime")
         {
-          std::string value = boost::apply_visitor(sv, *vvIt);
+          std::string value = std::visit(sv, *vvIt);
           BOOST_CHECK_EQUAL(value, "2015-11-17T00:20:00");
         }
         else if (name == "messagevalidfrom")
@@ -1083,7 +1083,7 @@ BOOST_AUTO_TEST_CASE(
           // For METAR messagevalidfrom is missing
           // Throws "[Out of range] Year is out of valid range: 1400..10000"
           //
-          // BOOST_CHECK_THROW(boost::apply_visitor(sv, *vvIt), Fmi::Exception);
+          // BOOST_CHECK_THROW(std::visit(sv, *vvIt), Fmi::Exception);
         }
         else if (name == "messagevalidto")
         {
@@ -1094,26 +1094,26 @@ BOOST_AUTO_TEST_CASE(
           // For METAR messagevalidto is missing
           //  [Out of range] Year is out of valid range: 1400..10000
           //
-          // BOOST_CHECK_THROW(boost::apply_visitor(sv, *vvIt), Fmi::Exception);
+          // BOOST_CHECK_THROW(std::visit(sv, *vvIt), Fmi::Exception);
         }
         else if (name == "messagecreated")
         {
-          std::string value = boost::apply_visitor(sv, *vvIt);
+          std::string value = std::visit(sv, *vvIt);
           BOOST_CHECK_EQUAL(value, "2015-11-17T00:18:02,130243");
         }
         else if (name == "messagefilemodified")
         {
-          std::string value = boost::apply_visitor(sv, *vvIt);
+          std::string value = std::visit(sv, *vvIt);
           BOOST_CHECK_EQUAL(value, "2015-11-17T00:17:20");
         }
         else if (name == "messirheading")
         {
-          std::string value = boost::apply_visitor(sv, *vvIt);
+          std::string value = std::visit(sv, *vvIt);
           BOOST_CHECK_EQUAL(value, "SAFI31 EFHK 170020");
         }
         else if (name == "messageversion")
         {
-          std::string value = boost::apply_visitor(sv, *vvIt);
+          std::string value = std::visit(sv, *vvIt);
           BOOST_CHECK_EQUAL(value, "");
         }
         else
@@ -1175,7 +1175,7 @@ BOOST_AUTO_TEST_CASE(
         {
           for (const auto &value : qvIt->second)
           {
-            std::string valueStr = boost::apply_visitor(sv, value);
+            std::string valueStr = std::visit(sv, value);
             BOOST_CHECK_EQUAL(valueStr, "METAR");
           }
         }
@@ -1331,7 +1331,7 @@ BOOST_AUTO_TEST_CASE(
         {
           for (const auto &value : qvIt->second)
           {
-            std::string valueStr = boost::apply_visitor(sv, value);
+            std::string valueStr = std::visit(sv, value);
             if (valueStr != "ARS" and valueStr != "WRNG")
             {
               std::string msg = "Unexpected messagetype '";
