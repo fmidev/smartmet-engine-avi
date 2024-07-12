@@ -3,6 +3,7 @@
 #pragma once
 
 #include <spine/ConfigBase.h>
+#include <algorithm>
 #include <list>
 
 namespace SmartMet
