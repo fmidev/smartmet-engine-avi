@@ -9,7 +9,7 @@ DEFINES = -DUNIX -D_REENTRANT
 
 INCLUDES += -Iinclude
 
-LIBS += -L$(libdir) \
+LIBS += $(PREFIX_LDFLAGS) \
 	-lsmartmet-spine \
 	-lsmartmet-macgyver \
 	-lsmartmet-timeseries \

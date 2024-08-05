@@ -32,6 +32,13 @@ Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConf
   return opt;
 }
 
+template <typename Type, typename... Parts>
+Type value_or(const std::variant<Parts...>& arg, const Type& value)
+{
+  const Type* ptr = std::get_if<Type>(&arg);
+  return ptr ? *ptr : value;
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Return derived column select expression
@@ -3536,9 +3543,8 @@ void Engine::validateStationIds(const Fmi::Database::PostgreSQLConnection& conne
 
     if (!queryData.itsValues.empty())
     {
-      int stationId(boost::get<int>(&(queryData.itsValues["station_id"].front()))
-                        ? *(boost::get<int>(&(queryData.itsValues["station_id"].front())))
-                        : -1);
+      const auto* id = std::get_if<int>(&queryData.itsValues["station_id"].front());
+      const int stationId = id ? *id : -1;
       throw Fmi::Exception(BCP, "Unknown station id " + Fmi::to_string(stationId));
     }
   }
@@ -3584,9 +3590,8 @@ void Engine::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection
 
     if (!queryData.itsValues.empty())
     {
-      string icaoCode(boost::get<std::string>(&(queryData.itsValues["icao_code"].front()))
-                          ? *(boost::get<std::string>(&(queryData.itsValues["icao_code"].front())))
-                          : "?");
+      const auto* ptr = std::get_if<std::string>(&(queryData.itsValues["icao_code"].front()));
+      string icaoCode = ptr ? *ptr : "?";
       throw Fmi::Exception(BCP, "Unknown icao code " + icaoCode).disableLogging();
     }
   }
@@ -3708,10 +3713,8 @@ void Engine::validateCountries(const Fmi::Database::PostgreSQLConnection& connec
 
     if (!queryData.itsValues.empty())
     {
-      string countryCode(
-          boost::get<std::string>(&(queryData.itsValues["country_code"].front()))
-              ? *(boost::get<std::string>(&(queryData.itsValues["country_code"].front())))
-              : "?");
+      const auto* ptr = std::get_if<std::string>(&(queryData.itsValues["country_code"].front()));
+      string countryCode = ptr ? *ptr : "?";
       throw Fmi::Exception(BCP, "Unknown country code " + countryCode);
     }
   }
@@ -3789,18 +3792,13 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
       throw Fmi::Exception(
           BCP, "validateWKTs: internal: wkt check query did not return as many rows as expected");
 
-    bool isValid = ((boost::get<int>(&(queryData.itsValues["isvalid"].front()))
-                         ? *(boost::get<int>(&(queryData.itsValues["isvalid"].front())))
-                         : 0) == 1);
+    bool isValid = value_or<int>(queryData.itsValues["isvalid"].front(), 0);
 
     if (!isValid)
     {
-      string wkt(boost::get<std::string>(&(queryData.itsValues["wkt"].front()))
-                     ? *(boost::get<std::string>(&(queryData.itsValues["wkt"].front())))
-                     : "?");
-      string geomType(boost::get<std::string>(&(queryData.itsValues["geomtype"].front()))
-                          ? *(boost::get<std::string>(&(queryData.itsValues["geomtype"].front())))
-                          : "?");
+      string wkt = value_or<std::string>(queryData.itsValues["wkt"].front(), "?");
+
+      const string geomType = value_or<std::string>(queryData.itsValues["geomtype"].front(), "?"); 
 
       if ((geomType == "ST_Point") || (geomType == "ST_Polygon") || (geomType == "ST_LineString"))
         throw Fmi::Exception(BCP, "Invalid wkt " + wkt);
@@ -3816,16 +3814,12 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
 
     for (int wktIndex = 0, dataIndex = 0; (wktCnt > 0); wktCnt--, wktIndex++, dataIndex++)
     {
-      geomType = (boost::get<std::string>(&(queryData.itsValues["geomtype"][dataIndex]))
-                      ? *(boost::get<std::string>(&(queryData.itsValues["geomtype"][dataIndex])))
-                      : "?");
+      geomType = value_or<std::string>(queryData.itsValues["geomtype"][dataIndex], "?");
 
       if (geomType != "ST_Point")
         break;
 
-      int index = (boost::get<int>(&(queryData.itsValues["index"][dataIndex]))
-                       ? *(boost::get<int>(&(queryData.itsValues["index"][dataIndex])))
-                       : -1);
+      int index = value_or<int>(queryData.itsValues["index"][dataIndex], -1);
 
       if (index >= 0)
       {
@@ -3836,12 +3830,9 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
       if ((index < 0) || (itwkt == locationOptions.itsWKTs.itsWKTs.end()))
         throw Fmi::Exception(BCP, "validateWKTs: internal: wkt index is invalid");
 
-      double lat = (boost::get<double>(&(queryData.itsValues["lat"][dataIndex]))
-                        ? *(boost::get<double>(&(queryData.itsValues["lat"][dataIndex])))
-                        : 0);
-      double lon = (boost::get<double>(&(queryData.itsValues["lon"][dataIndex]))
-                        ? *(boost::get<double>(&(queryData.itsValues["lon"][dataIndex])))
-                        : 0);
+
+      double lat = value_or<double>(queryData.itsValues["lat"][dataIndex], 0);
+      double lon = value_or<double>(queryData.itsValues["lon"][dataIndex], 0);
 
       locationOptions.itsLonLats.push_back(LonLat(lon, lat));
 
@@ -4497,9 +4488,10 @@ StationQueryData& Engine::joinStationAndMessageData(const StationQueryData& stat
             auto const& distanceValue =
                 station.second.find(stationDistanceQueryColumn)->second.front();
 
-            if (boost::get<double>(&distanceValue))
+            const double* distancePtr = std::get_if<double>(&distanceValue);
+            if (distancePtr)
             {
-              auto stationDistance = *(boost::get<double>(&distanceValue));
+              auto stationDistance = *distancePtr;
 
               for (auto& distance :
                    messageData.itsValues[station.first][stationDistanceQueryColumn])
@@ -4514,9 +4506,9 @@ StationQueryData& Engine::joinStationAndMessageData(const StationQueryData& stat
             auto const& bearingValue =
                 station.second.find(stationBearingQueryColumn)->second.front();
 
-            if (boost::get<double>(&bearingValue))
+            if (const double* bearingPtr = std::get_if<double>(&bearingValue))
             {
-              auto stationBearing = *(boost::get<double>(&bearingValue));
+              auto stationBearing = *bearingPtr;
 
               for (auto& bearing : messageData.itsValues[station.first][stationBearingQueryColumn])
                 bearing = stationBearing;
