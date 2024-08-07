@@ -37,18 +37,18 @@ Requires: smartmet-library-timeseries >= 24.8.7
 #TestRequires: zlib-devel
 #TestRequires: bzip2-devel
 
-%if %{defined el7}
-Requires: libpqxx < 1:7.0
-BuildRequires: libpqxx-devel < 1:7.0
-#TestRequires: libpqxx-devel <= 1:7.0
-%else
-%if 0%{?rhel} && 0%{rhel} >= 8
+%if 0%{?rhel} && 0%{rhel} == 8
 Requires: libpqxx >= 1:7.7.0, libpqxx < 1:7.8.0
 BuildRequires: libpqxx-devel >= 1:7.7.0, libpqxx-devel < 1:7.8.0
 #TestRequires: libpqxx-devel >= 1:7.7.0, libpqxx-devel < 1:7.8.0
 %else
+%if 0%{?rhel} && 0%{rhel} >= 9
+Requires: libpqxx >= 1:7.9.0, libpqxx < 1:8.0.0
+BuildRequires: libpqxx-devel >= 1:7.9.0, libpqxx-devel < 1:8.0.0
+#TestRequires: libpqxx-devel >= 1:7.9.0, libpqxx-devel < 1:8.0.0
 Requires: libpqxx
 BuildRequires: libpqxx-devel
+#TestRequires: libpqxx-devel
 %endif
 %endif
 
