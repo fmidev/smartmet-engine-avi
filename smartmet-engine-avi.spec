@@ -3,8 +3,8 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 24.8.7
-Release: 2%{?dist}.fmi
+Version: 24.9.28
+Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-avi
@@ -23,16 +23,16 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 24.8.7
-BuildRequires: smartmet-library-macgyver-devel >= 24.8.7
+BuildRequires: smartmet-library-spine-devel >= 24.8.1224.9.28
+BuildRequires: smartmet-library-macgyver-devel >= 24.9.28
 BuildRequires: smartmet-library-timeseries-devel >= 24.8.7
-Requires: smartmet-library-macgyver >= 24.8.7
-Requires: smartmet-library-spine >= 24.8.7
+Requires: smartmet-library-macgyver >= 24.9.28
+Requires: smartmet-library-spine >= 24.8.1224.9.28
 Requires: smartmet-library-timeseries >= 24.8.7
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
 #TestRequires: smartmet-utils-devel
-#TestRequires: smartmet-library-spine-devel >= 24.8.7
+#TestRequires: smartmet-library-spine-devel >= 24.8.1224.9.28
 #TestRequires: smartmet-library-timeseries-devel >= 24.8.7
 #TestRequires: zlib-devel
 #TestRequires: bzip2-devel
@@ -90,6 +90,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Sat Sep 28 2024 Mika Heiskanen <mika.heiskanen@fmi.fi> - 24.9.28-1.fmi
+- Repackaged due to PostgreSQLConnection ABI change
+
 * Wed Aug  7 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.8.7-2.fmi
 - Fix requires (RHEL9, libpxx)
 
