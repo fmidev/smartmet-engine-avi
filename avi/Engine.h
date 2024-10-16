@@ -114,6 +114,7 @@ struct QueryOptions
         itsLocationOptions(),
         itsTimeOptions(),
         itsValidity(Accepted),
+        itsMessageColumnSelected(false),
         itsMaxMessageStations(-1),
         itsMaxMessageRows(-1),
         itsDistinctMessages(true),
