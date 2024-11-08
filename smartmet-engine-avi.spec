@@ -23,17 +23,17 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 24.8.1224.9.28
-BuildRequires: smartmet-library-macgyver-devel >= 24.9.28
-BuildRequires: smartmet-library-timeseries-devel >= 24.8.7
-Requires: smartmet-library-macgyver >= 24.9.28
-Requires: smartmet-library-spine >= 24.8.1224.9.28
-Requires: smartmet-library-timeseries >= 24.8.7
+BuildRequires: smartmet-library-spine-devel >= 24.11.8
+BuildRequires: smartmet-library-macgyver-devel >= 24.10.28
+BuildRequires: smartmet-library-timeseries-devel >= 24.11.8
+Requires: smartmet-library-macgyver >= 24.10.28
+Requires: smartmet-library-spine >= 24.11.8
+Requires: smartmet-library-timeseries >= 24.11.8
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
 #TestRequires: smartmet-utils-devel
-#TestRequires: smartmet-library-spine-devel >= 24.8.1224.9.28
-#TestRequires: smartmet-library-timeseries-devel >= 24.8.7
+#TestRequires: smartmet-library-spine-devel >= 24.11.8
+#TestRequires: smartmet-library-timeseries-devel >= 24.11.8
 #TestRequires: zlib-devel
 #TestRequires: bzip2-devel
 
