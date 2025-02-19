@@ -514,22 +514,25 @@ void buildStationQueryFromWhereOrderByClause(const LocationOptions& locationOpti
 
 void buildStationQueryWhereClause(const BBoxList& bboxList,
                                   double maxDistance,
-                                  ostringstream& whereClause)
+                                  ostringstream& whereClause,
+                                  const string &whereOrEmpty = "WHERE ",
+                                  const string &geomTableAlias = "")
 {
   try
   {
     if (bboxList.empty())
       return;
 
-    whereClause << (whereClause.str().empty() ? "WHERE " : " OR ");
+    whereClause << (whereClause.str().empty() ? whereOrEmpty : " OR ");
 
+    string geom(geomTableAlias.empty() ? "geom" : (geomTableAlias + ".geom"));
     size_t n = 0;
 
     for (auto const& bbox : bboxList)
     {
       ostringstream condition;
 
-      condition << "(ST_Length(ST_ShortestLine(geom,ST_SetSRID(ST_MakeBox2D(ST_Point("
+      condition << "(ST_Length(ST_ShortestLine(" << geom << ",ST_SetSRID(ST_MakeBox2D(ST_Point("
                 << setprecision(10) << bbox.itsWest << "," << bbox.itsSouth << "),ST_Point("
                 << bbox.itsEast << "," << bbox.itsNorth << ")),4326))::geography) <= " << fixed
                 << setprecision(0) << maxDistance << ")";
@@ -856,7 +859,8 @@ string buildMessageTypeInClause(const StringList& messageTypeList,
  */
 // ----------------------------------------------------------------------
 
-string buildRecordSetWithClause(bool routeQuery,
+string buildRecordSetWithClause(bool bboxQuery,
+                                bool routeQuery,
                                 const StationIdList& stationIdList,
                                 const string &messageFormat,
                                 const StringList& messageTypeList,
@@ -887,7 +891,7 @@ string buildRecordSetWithClause(bool routeQuery,
     ostringstream withClause;
     string whereStationIdIn;
 
-    if (!stationIdList.empty())
+    if ((!bboxQuery) && (!stationIdList.empty()))
       if (!routeQuery)
         buildMessageQueryWhereStationIdInClause(stationIdList, withClause);
       else
@@ -907,7 +911,7 @@ string buildRecordSetWithClause(bool routeQuery,
     if (!messageTypeList.empty())
       withClause << "," << messageTypeTableName << " " << messageTypeTableAlias;
 
-    withClause << whereStationIdIn << (!stationIdList.empty() ? " AND " : "")
+    withClause << whereStationIdIn << ((!bboxQuery) && (!stationIdList.empty()) ? " AND " : "")
                << (messageFormat == "TAC"
                      ? messageFormatTableJoinTAC
                      : messageFormatTableJoinIWXXM);
@@ -2161,6 +2165,23 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
     else
     {
       // Message restriction made by join to latest_messages.message_id
+    }
+
+    if (!queryOptions.itsLocationOptions.itsBBoxes.empty())
+    {
+      // BRAINSTORM-3136; when using bbox(es), message query now filters stations with
+      // bbox(es)/maxdistance, not with preselected station id list
+      //
+      // Avi plugin was also modified not to allow use of multiple location options (it has
+      // been the configured case anyway), it was the simpliest way to handle the change
+
+      ostringstream whereStationClause;
+
+      buildStationQueryWhereClause(queryOptions.itsLocationOptions.itsBBoxes,
+                                   queryOptions.itsLocationOptions.itsMaxDistance,
+                                   whereStationClause, "", stationTableAlias);
+
+      fromWhereOrderByClause << " AND (" << whereStationClause.str() << ")";
     }
 
     // ORDER BY { st.icao_code | rs.position } [,me.message] [,me.message_id]
@@ -4208,7 +4229,8 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
 
       if (queryOptions.itsTimeOptions.itsObservationTime.empty())
         recordSetWithClause =
-            buildRecordSetWithClause(false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
+            buildRecordSetWithClause(!queryOptions.itsLocationOptions.itsBBoxes.empty(),
+                                     false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
                                      stationIdList,
                                      queryOptions.itsMessageFormat,
                                      queryOptions.itsMessageTypes,
@@ -4219,7 +4241,8 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
                                      queryOptions.itsTimeOptions.itsEndTime);
       else
         recordSetWithClause =
-            buildRecordSetWithClause(false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
+            buildRecordSetWithClause(!queryOptions.itsLocationOptions.itsBBoxes.empty(),
+                                     false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
                                      stationIdList,
                                      queryOptions.itsMessageFormat,
                                      queryOptions.itsMessageTypes,

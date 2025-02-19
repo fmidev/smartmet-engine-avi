@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 24.11.8
+Version: 25.2.19
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -23,17 +23,17 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 24.11.8
-BuildRequires: smartmet-library-macgyver-devel >= 24.10.28
-BuildRequires: smartmet-library-timeseries-devel >= 24.11.8
-Requires: smartmet-library-macgyver >= 24.10.28
-Requires: smartmet-library-spine >= 24.11.8
-Requires: smartmet-library-timeseries >= 24.11.8
+BuildRequires: smartmet-library-spine-devel >= 25.1.17
+BuildRequires: smartmet-library-macgyver-devel >= 25.2.5
+BuildRequires: smartmet-library-timeseries-devel >= 25.1.17
+Requires: smartmet-library-macgyver >= 25.2.5
+Requires: smartmet-library-spine >= 25.1.17
+Requires: smartmet-library-timeseries >= 25.1.17
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
 #TestRequires: smartmet-utils-devel
-#TestRequires: smartmet-library-spine-devel >= 24.11.8
-#TestRequires: smartmet-library-timeseries-devel >= 24.11.8
+#TestRequires: smartmet-library-spine-devel >= 25.1.17
+#TestRequires: smartmet-library-timeseries-devel >= 25.1.17
 #TestRequires: zlib-devel
 #TestRequires: bzip2-devel
 
@@ -90,6 +90,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Wed Feb 19 2025 Pertti Kinnia <pertti.kinnia@fmi.fi> 25.2.19-1.fmi
+- When using bbox(es), message query now filters stations with given bbox(es)/maxdistance, not with preselected station id list (BRAINSTORM-3136)
+
 * Fri Nov  8 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.11.8-1.fmi
 - Repackage due to smartmet-library-spine ABI changes
 
