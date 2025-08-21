@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Config.h"
 #include <spine/SmartMetEngine.h>
 #include <timeseries/TimeSeries.h>
 #include <list>

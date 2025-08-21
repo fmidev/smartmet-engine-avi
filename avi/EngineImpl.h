@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Engine.h"
+#include "Config.h"
 #include <macgyver/PostgreSQLConnection.h>
+
 
 namespace SmartMet
 {
