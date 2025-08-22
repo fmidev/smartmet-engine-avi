@@ -27,8 +27,12 @@ vpath %.h $(SUBNAME)
 
 # The files to be compiled
 
+INTERNAL_HDRS = \
+	avi/EngineImpl.h \
+	avi/Config.h
+
 SRCS = $(wildcard $(SUBNAME)/*.cpp)
-HDRS = $(wildcard $(SUBNAME)/*.h)
+HDRS = $(filter-out $(INTERNAL_HDRS),$(wildcard $(SUBNAME)/*.h))
 OBJS = $(patsubst %.cpp, obj/%.o, $(notdir $(SRCS)))
 
 INCLUDES := -Iinclude $(INCLUDES)
