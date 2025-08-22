@@ -1,11 +1,13 @@
 // ======================================================================
 
-#include "Engine.h"
+#include "EngineImpl.h"
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <macgyver/AnsiEscapeCodes.h>
 #include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
+#include <spine/Convenience.h>
 #include <stdexcept>
 
 using namespace std;
@@ -19,6 +21,7 @@ namespace Avi
 namespace
 {
 Fmi::TimeZonePtr& tzUTC = Fmi::TimeZonePtr::utc;
+
 
 Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConfig)
 {
@@ -2350,7 +2353,7 @@ void sortColumnList(Columns& columns)
  */
 // ----------------------------------------------------------------------
 
-Engine::Engine(const std::string& theConfigFileName) : itsConfigFileName(theConfigFileName) {}
+EngineImpl::EngineImpl(const std::string& theConfigFileName) : itsConfigFileName(theConfigFileName) {}
 
 // ----------------------------------------------------------------------
 /*!
@@ -2362,7 +2365,7 @@ Engine::Engine(const std::string& theConfigFileName) : itsConfigFileName(theConf
  */
 // ----------------------------------------------------------------------
 
-void Engine::init()
+void EngineImpl::init()
 {
   try
   {
@@ -2380,7 +2383,7 @@ void Engine::init()
  */
 // ----------------------------------------------------------------------
 
-void Engine::shutdown()
+void EngineImpl::shutdown()
 {
   std::cout << "  -- Shutdown requested (aviengine)\n";
 }
@@ -2391,7 +2394,7 @@ void Engine::shutdown()
  */
 // ----------------------------------------------------------------------
 
-const Column* Engine::getQueryColumn(const ColumnTable tableColumns,
+const Column* EngineImpl::getQueryColumn(const ColumnTable tableColumns,
                                      Columns& columns,
                                      const string& theQueryColumnName,
                                      bool& duplicate,
@@ -2441,7 +2444,7 @@ const Column* Engine::getQueryColumn(const ColumnTable tableColumns,
  */
 // ----------------------------------------------------------------------
 
-string Engine::buildStationQueryCoordinateExpressions(const Columns& columns) const
+string EngineImpl::buildStationQueryCoordinateExpressions(const Columns& columns) const
 {
   try
   {
@@ -2470,7 +2473,7 @@ string Engine::buildStationQueryCoordinateExpressions(const Columns& columns) co
  */
 // ----------------------------------------------------------------------
 
-Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
+Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
                                               bool selectStationListOnly,
                                               bool autoSelectDistance,
                                               string& selectClause) const
@@ -2586,7 +2589,7 @@ Columns Engine::buildStationQuerySelectClause(const StringList& paramList,
  */
 // ----------------------------------------------------------------------
 
-TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
+TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
                                                const StationIdList& stationIdList,
                                                const StringList& messageTypeList,
                                                const StringList& paramList,
@@ -2841,7 +2844,7 @@ TableMap Engine::buildMessageQuerySelectClause(QueryTable* queryTables,
 // ----------------------------------------------------------------------
 
 template <typename T>
-void Engine::loadQueryResult(
+void EngineImpl::loadQueryResult(
     const pqxx::result &result, bool debug, T &queryData, bool distinctRows, int maxRows) const
 {
   try
@@ -3003,7 +3006,7 @@ void Engine::loadQueryResult(
 // ----------------------------------------------------------------------
 
 template <typename T>
-void Engine::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
                           const string& query,
                           bool debug,
                           T& queryData,
@@ -3032,7 +3035,7 @@ void Engine::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
 // ----------------------------------------------------------------------
 
 template <typename T>
-void Engine::executeParamQuery(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::executeParamQuery(const Fmi::Database::PostgreSQLConnection& connection,
                                const string& query,
                                const string& queryArg,
                                bool debug,
@@ -3056,7 +3059,7 @@ void Engine::executeParamQuery(const Fmi::Database::PostgreSQLConnection& connec
 }
 
 template <typename T, typename T2>
-void Engine::executeParamQuery(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::executeParamQuery(const Fmi::Database::PostgreSQLConnection& connection,
                                const string& query,
                                const T2& queryArgs,
                                bool debug,
@@ -3085,7 +3088,7 @@ void Engine::executeParamQuery(const Fmi::Database::PostgreSQLConnection& connec
  */
 // ----------------------------------------------------------------------
 
-void Engine::queryStationsWithCoordinates(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::queryStationsWithCoordinates(const Fmi::Database::PostgreSQLConnection& connection,
                                           const LocationOptions& locationOptions,
                                           const StringList& messageTypes,
                                           const string& selectClause,
@@ -3140,7 +3143,7 @@ void Engine::queryStationsWithCoordinates(const Fmi::Database::PostgreSQLConnect
  */
 // ----------------------------------------------------------------------
 
-void Engine::queryStationsWithIds(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::queryStationsWithIds(const Fmi::Database::PostgreSQLConnection& connection,
                                   const StationIdList& stationIdList,
                                   const string& selectClause,
                                   bool debug,
@@ -3171,7 +3174,7 @@ void Engine::queryStationsWithIds(const Fmi::Database::PostgreSQLConnection& con
  */
 // ----------------------------------------------------------------------
 
-void Engine::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnection& connection,
                                     const StringList& icaoList,
                                     const string& selectClause,
                                     bool debug,
@@ -3202,7 +3205,7 @@ void Engine::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnection& c
  */
 // ----------------------------------------------------------------------
 
-void Engine::queryStationsWithCountries(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::queryStationsWithCountries(const Fmi::Database::PostgreSQLConnection& connection,
                                         const StringList& countryList,
                                         const string& selectClause,
                                         bool debug,
@@ -3233,7 +3236,7 @@ void Engine::queryStationsWithCountries(const Fmi::Database::PostgreSQLConnectio
  */
 // ----------------------------------------------------------------------
 
-void Engine::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection& connection,
                                      const StringList& placeNameList,
                                      const string& selectClause,
                                      bool debug,
@@ -3264,7 +3267,7 @@ void Engine::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection& 
  */
 // ----------------------------------------------------------------------
 
-void Engine::queryStationsWithWKTs(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::queryStationsWithWKTs(const Fmi::Database::PostgreSQLConnection& connection,
                                    const LocationOptions& locationOptions,
                                    const StringList& messageTypes,
                                    const string& selectClause,
@@ -3299,7 +3302,7 @@ void Engine::queryStationsWithWKTs(const Fmi::Database::PostgreSQLConnection& co
  */
 // ----------------------------------------------------------------------
 
-void Engine::queryStationsWithBBoxes(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::queryStationsWithBBoxes(const Fmi::Database::PostgreSQLConnection& connection,
                                      const LocationOptions& locationOptions,
                                      const string& selectClause,
                                      bool debug,
@@ -3383,7 +3386,7 @@ Fmi::DateTime parseTime(const string &timeName, const string &timeStr)
 
 }
 
-void Engine::validateTimes(const TimeOptions& timeOptions) const
+void EngineImpl::validateTimes(const TimeOptions& timeOptions) const
 {
   try
   {
@@ -3428,7 +3431,7 @@ void Engine::validateTimes(const TimeOptions& timeOptions) const
  */
 // ----------------------------------------------------------------------
 
-void Engine::validateParameters(const StringList& paramList,
+void EngineImpl::validateParameters(const StringList& paramList,
                                 Validity validity,
                                 bool& messageColumnSelected) const
 {
@@ -3535,7 +3538,7 @@ void Engine::validateParameters(const StringList& paramList,
  */
 // ----------------------------------------------------------------------
 
-void Engine::validateStationIds(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::validateStationIds(const Fmi::Database::PostgreSQLConnection& connection,
                                 const StationIdList& stationIdList,
                                 bool debug) const
 {
@@ -3581,7 +3584,7 @@ void Engine::validateStationIds(const Fmi::Database::PostgreSQLConnection& conne
  */
 // ----------------------------------------------------------------------
 
-void Engine::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection,
                            const StringList& icaoList,
                            bool debug) const
 {
@@ -3628,7 +3631,7 @@ void Engine::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection
  */
 // ----------------------------------------------------------------------
 
-void Engine::validatePlaces(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::validatePlaces(const Fmi::Database::PostgreSQLConnection& connection,
                             StringList& placeNameList,
                             bool debug) const
 {
@@ -3704,7 +3707,7 @@ void Engine::validatePlaces(const Fmi::Database::PostgreSQLConnection& connectio
  */
 // ----------------------------------------------------------------------
 
-void Engine::validateCountries(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::validateCountries(const Fmi::Database::PostgreSQLConnection& connection,
                                const StringList& countryList,
                                bool debug) const
 {
@@ -3752,7 +3755,7 @@ void Engine::validateCountries(const Fmi::Database::PostgreSQLConnection& connec
  */
 // ----------------------------------------------------------------------
 
-void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
                           LocationOptions& locationOptions,
                           bool debug) const
 {
@@ -3878,7 +3881,7 @@ void Engine::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
 //
 // private
 //
-StationQueryData Engine::queryStations(const Fmi::Database::PostgreSQLConnection& connection,
+StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnection& connection,
                                        QueryOptions& queryOptions,
                                        bool validateQuery) const
 {
@@ -4011,7 +4014,7 @@ StationQueryData Engine::queryStations(const Fmi::Database::PostgreSQLConnection
 //
 // public api stub
 //
-StationQueryData Engine::queryStations(QueryOptions& queryOptions) const
+StationQueryData EngineImpl::queryStations(QueryOptions& queryOptions) const
 {
   try
   {
@@ -4033,7 +4036,7 @@ StationQueryData Engine::queryStations(QueryOptions& queryOptions) const
  */
 // ----------------------------------------------------------------------
 
-void Engine::validateMessageTypes(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::validateMessageTypes(const Fmi::Database::PostgreSQLConnection& connection,
                                   const StringList& messageTypeList,
                                   bool debug) const
 {
@@ -4092,7 +4095,7 @@ void Engine::validateMessageTypes(const Fmi::Database::PostgreSQLConnection& con
  */
 // ----------------------------------------------------------------------
 
-const Column* Engine::getMessageTableTimeColumn(const string& timeColumn) const
+const Column* EngineImpl::getMessageTableTimeColumn(const string& timeColumn) const
 {
   try
   {
@@ -4121,7 +4124,7 @@ const Column* Engine::getMessageTableTimeColumn(const string& timeColumn) const
 //
 // private
 //
-StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection& connection,
+StationQueryData EngineImpl::queryMessages(const Fmi::Database::PostgreSQLConnection& connection,
                                        const StationIdList& stationIdList,
                                        const QueryOptions& queryOptions,
                                        bool validateQuery) const
@@ -4453,7 +4456,7 @@ StationQueryData Engine::queryMessages(const Fmi::Database::PostgreSQLConnection
 //
 // public api stub
 //
-StationQueryData Engine::queryMessages(const StationIdList& stationIdList,
+StationQueryData EngineImpl::queryMessages(const StationIdList& stationIdList,
                                        const QueryOptions& queryOptions) const
 {
   try
@@ -4474,7 +4477,7 @@ StationQueryData Engine::queryMessages(const StationIdList& stationIdList,
  */
 // ----------------------------------------------------------------------
 
-StationQueryData& Engine::joinStationAndMessageData(const StationQueryData& stationData,
+StationQueryData& EngineImpl::joinStationAndMessageData(const StationQueryData& stationData,
                                                     StationQueryData& messageData) const
 {
   try
@@ -4557,7 +4560,7 @@ StationQueryData& Engine::joinStationAndMessageData(const StationQueryData& stat
  */
 // ----------------------------------------------------------------------
 
-StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) const
+StationQueryData EngineImpl::queryStationsAndMessages(QueryOptions& queryOptions) const
 {
   try
   {
@@ -4689,7 +4692,7 @@ StationQueryData Engine::queryStationsAndMessages(QueryOptions& queryOptions) co
  */
 // ----------------------------------------------------------------------
 
-QueryData Engine::queryRejectedMessages(const QueryOptions& queryOptions) const
+QueryData EngineImpl::queryRejectedMessages(const QueryOptions& queryOptions) const
 {
   try
   {
@@ -4769,7 +4772,40 @@ QueryData Engine::queryRejectedMessages(const QueryOptions& queryOptions) const
 
 extern "C" void* engine_class_creator(const char* theConfigFileName, void* /* user_data */)
 {
-  return new SmartMet::Engine::Avi::Engine(theConfigFileName);
+  //return new SmartMet::Engine::Avi::EngineImpl(theConfigFileName);
+  {
+  try
+  {
+    using SmartMet::Spine::log_time_str;
+    const bool disabled = [&theConfigFileName]()
+    {
+      const char *name = "SmartMet::Engine::Avi::Engine::create";
+      if (theConfigFileName == nullptr || *theConfigFileName == 0)
+      {
+        std::cout << log_time_str() << ' ' << ANSI_FG_RED << name
+                  << ": configuration file not specified or its name is empty string: "
+                  << "engine disabled." << ANSI_FG_DEFAULT << std::endl;
+        return true;
+      }
+
+      SmartMet::Spine::ConfigBase cfg(theConfigFileName);
+      const bool result = cfg.get_optional_config_param<bool>("disabled", false);
+      if (result)
+        std::cout << log_time_str() << ' ' << ANSI_FG_RED << name << ": engine disabled"
+                  << ANSI_FG_DEFAULT << std::endl;
+      return result;
+    }();
+
+    if (disabled)
+      return new SmartMet::Engine::Avi::Engine();
+
+    return new SmartMet::Engine::Avi::EngineImpl(theConfigFileName);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
 }
 
 extern "C" const char* engine_name()

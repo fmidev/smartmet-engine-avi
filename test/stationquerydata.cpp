@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE "StationQueryDataClassModule"
 
 #include "Config.h"
-#include "Engine.h"
+#include "EngineImpl.h"
 
 #include <boost/test/included/unit_test.hpp>
 #include <typeinfo>

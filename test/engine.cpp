@@ -1,6 +1,6 @@
 #define BOOST_TEST_MODULE "EngineClassModule"
 
-#include "Engine.h"
+#include "EngineImpl.h"
 #include "Config.h"
 
 #include <boost/test/included/unit_test.hpp>
@@ -17,6 +17,7 @@ namespace Engine
 {
 namespace Avi
 {
+
 Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConfig)
 {
   Fmi::Database::PostgreSQLConnectionOptions opt;
@@ -109,7 +110,7 @@ const std::list<std::string> allValidRejectedMessagesParameters({"message",
 BOOST_AUTO_TEST_CASE(engine_constructor, *boost::unit_test::depends_on(""))
 {
   const std::string filename = "cnf/valid.conf";
-  Engine engine(filename);
+  EngineImpl engine(filename);
 }
 
 BOOST_AUTO_TEST_CASE(engine_singleton, *boost::unit_test::depends_on("engine_constructor"))
