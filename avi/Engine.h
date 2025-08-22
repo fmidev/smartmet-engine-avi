@@ -6,7 +6,7 @@
 #include <timeseries/TimeSeries.h>
 #include <list>
 #include <map>
-#include <pqxx/pqxx>
+#include <pqxx/result>
 
 #define stationIdQueryColumn "stationid"
 #define messageQueryColumn "message"
@@ -317,23 +317,42 @@ struct StationQueryData
                                    // returned
 };
 
-// Abstract base class for AVI engine
+/**
+ * @brief Base class for AVI engine
+ *
+ * Actual implementation and private API is intentionally hidden in derived class EngineImpl.
+ * All methods in this base class are defined inline in header file to avoid unresolved
+ * symbols during linking in case when actual AVI engine is not loaded.
+ *
+ */
 class Engine  : public SmartMet::Spine::SmartMetEngine
 {
  public:
   Engine() = default;
-  ~Engine() = default;
 
-  virtual StationQueryData queryStations(QueryOptions &queryOptions) const = 0;
+  virtual ~Engine() = default;
+
+  virtual StationQueryData queryStations(QueryOptions &queryOptions) const { unavailable(BCP); }
 
   virtual StationQueryData queryMessages(const StationIdList &stationIdList,
-                                         const QueryOptions &queryOptions) const = 0;
+                                         const QueryOptions &queryOptions) const { unavailable(BCP); }
   virtual StationQueryData &joinStationAndMessageData(const StationQueryData &stationData,
-                                                      StationQueryData &messageData) const = 0;
+                                                      StationQueryData &messageData) const { unavailable(BCP); }
 
-  virtual StationQueryData queryStationsAndMessages(QueryOptions &queryOptions) const = 0;
+  virtual StationQueryData queryStationsAndMessages(QueryOptions &queryOptions) const { unavailable(BCP); }
 
-  virtual QueryData queryRejectedMessages(const QueryOptions &queryOptions) const = 0;
+  virtual QueryData queryRejectedMessages(const QueryOptions &queryOptions) const { unavailable(BCP); }
+
+ protected:
+  virtual void init() {}
+
+  virtual void shutdown() {}
+
+ private:
+  [[noreturn]] inline void unavailable(const char* file ,int line, const char* function) const
+  {
+    throw Fmi::Exception(file, line, function, "AVI engine not available");
+  }
 };
 
 // The engine

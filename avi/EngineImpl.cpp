@@ -3,9 +3,11 @@
 #include "EngineImpl.h"
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <macgyver/AnsiEscapeCodes.h>
 #include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
+#include <spine/Convenience.h>
 #include <stdexcept>
 
 using namespace std;
@@ -4770,7 +4772,40 @@ QueryData EngineImpl::queryRejectedMessages(const QueryOptions& queryOptions) co
 
 extern "C" void* engine_class_creator(const char* theConfigFileName, void* /* user_data */)
 {
-  return new SmartMet::Engine::Avi::EngineImpl(theConfigFileName);
+  //return new SmartMet::Engine::Avi::EngineImpl(theConfigFileName);
+  {
+  try
+  {
+    using SmartMet::Spine::log_time_str;
+    const bool disabled = [&theConfigFileName]()
+    {
+      const char *name = "SmartMet::Engine::Avi::Engine::create";
+      if (theConfigFileName == nullptr || *theConfigFileName == 0)
+      {
+        std::cout << log_time_str() << ' ' << ANSI_FG_RED << name
+                  << ": configuration file not specified or its name is empty string: "
+                  << "engine disabled." << ANSI_FG_DEFAULT << std::endl;
+        return true;
+      }
+
+      SmartMet::Spine::ConfigBase cfg(theConfigFileName);
+      const bool result = cfg.get_optional_config_param<bool>("disabled", false);
+      if (result)
+        std::cout << log_time_str() << ' ' << ANSI_FG_RED << name << ": engine disabled"
+                  << ANSI_FG_DEFAULT << std::endl;
+      return result;
+    }();
+
+    if (disabled)
+      return new SmartMet::Engine::Avi::Engine();
+
+    return new SmartMet::Engine::Avi::EngineImpl(theConfigFileName);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
 }
 
 extern "C" const char* engine_name()
