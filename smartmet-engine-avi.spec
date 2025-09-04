@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 25.8.22
+Version: 25.9.4
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -100,6 +100,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Thu Sep  4 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.9.4-1.fmi
+- Use Fmi::Database::PostgreSQLConnectionPool instead of opening new connection each time
+
 * Fri Aug 22 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.8.22-1.fmi
 - Move engine engine implementation to derived class and add support of engine disabling
 
