@@ -2370,6 +2370,11 @@ void EngineImpl::init()
   try
   {
     itsConfig.reset(new Config(itsConfigFileName));
+
+    itsConnectionPool = std::make_unique<Fmi::Database::PostgreSQLConnectionPool>(
+        itsConfig->getStartConnections(),
+        itsConfig->getMaxConnections(),
+        mk_connection_options(*itsConfig));
   }
   catch (...)
   {
@@ -4018,7 +4023,8 @@ StationQueryData EngineImpl::queryStations(QueryOptions& queryOptions) const
 {
   try
   {
-    Fmi::Database::PostgreSQLConnection connection(mk_connection_options(*itsConfig));
+    auto connectionPtr = itsConnectionPool->get();
+    auto& connection = *connectionPtr.get();
 
     queryOptions.itsLocationOptions.itsWKTs.isRoute = false;
 
@@ -4461,7 +4467,8 @@ StationQueryData EngineImpl::queryMessages(const StationIdList& stationIdList,
 {
   try
   {
-    Fmi::Database::PostgreSQLConnection connection(mk_connection_options(*itsConfig));
+    auto connectionPtr = itsConnectionPool->get();
+    auto& connection = *connectionPtr.get();
 
     return queryMessages(connection, stationIdList, queryOptions, true);
   }
@@ -4577,7 +4584,8 @@ StationQueryData EngineImpl::queryStationsAndMessages(QueryOptions& queryOptions
     // If route query (single linestring wkt) is requested, query each scope separately;
     // otherwise fetch all messages (message types) with single query
 
-    Fmi::Database::PostgreSQLConnection connection(mk_connection_options(*itsConfig));
+    auto connectionPtr = itsConnectionPool->get();
+    auto& connection = *connectionPtr.get();
 
     StringList queryMessageTypes(queryOptions.itsMessageTypes.begin(),
                                  queryOptions.itsMessageTypes.end());
@@ -4703,7 +4711,9 @@ QueryData EngineImpl::queryRejectedMessages(const QueryOptions& queryOptions) co
 
     validateTimes(queryOptions.itsTimeOptions);
 
-    Fmi::Database::PostgreSQLConnection connection(mk_connection_options(*itsConfig));
+    auto connectionPtr = itsConnectionPool->get();
+    auto& connection = *connectionPtr.get();
+
     bool messageColumnSelected;
 
     validateParameters(queryOptions.itsParameters, Rejected, messageColumnSelected);

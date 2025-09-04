@@ -140,6 +140,8 @@ class Config : public SmartMet::Spine::ConfigBase
   const std::string &getUsername() const { return itsUsername; }
   const std::string &getPassword() const { return itsPassword; }
   const std::string &getEncoding() const { return itsEncoding; }
+  unsigned getStartConnections() const { return startConnections; }
+  unsigned getMaxConnections() const { return maxConnections; }
   int getMaxMessageStations() const { return itsMaxMessageStations; }
   int getMaxMessageRows() const { return itsMaxMessages; }
   int getRecordSetStartTimeOffsetHours() const { return itsRecordSetStartTimeOffsetHours; }
@@ -159,6 +161,9 @@ class Config : public SmartMet::Spine::ConfigBase
   std::string itsUsername;
   std::string itsPassword;
   std::string itsEncoding;
+
+  unsigned startConnections = 5;
+  unsigned maxConnections = 10;
 
   int itsMaxMessageStations;  // if config/query value not given or <= 0, unlimited
   int itsMaxMessages;         // if config/query value not given or <= 0, unlimited

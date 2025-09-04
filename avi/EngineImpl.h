@@ -156,6 +156,7 @@ class EngineImpl : public Engine
 
   std::string itsConfigFileName;
   std::shared_ptr<Config> itsConfig;
+  std::unique_ptr<Fmi::Database::PostgreSQLConnectionPool> itsConnectionPool;
 
 };  // class EngineImpl
 

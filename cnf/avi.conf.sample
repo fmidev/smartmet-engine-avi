@@ -12,6 +12,9 @@ postgis:
 	username	= "avi_user";
 	password	= "avi_pw";
 	encoding	= "UTF8";
+
+	startconnections = 5;  # Start size of database connection pool
+	maxconnections = 10;   # Max size of database connection pool
 };
 
 message:

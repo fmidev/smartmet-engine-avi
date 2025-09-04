@@ -82,6 +82,17 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
     theConfig.lookupValue("postgis.password", itsPassword);
     theConfig.lookupValue("postgis.encoding", itsEncoding);
 
+    if (theConfig.exists("postgis.startconnections"))
+    {
+      theConfig.lookupValue("postgis.startconnections", startConnections);
+    }
+
+    if (theConfig.exists("postgis.maxconnections"))
+    {
+      theConfig.lookupValue("postgis.maxconnections", maxConnections);
+      maxConnections = std::max(startConnections, maxConnections);
+    }
+
     // Max # of stations allowed in message query; if <= 0, unlimited
 
     if (theConfig.exists("message.maxstations"))
