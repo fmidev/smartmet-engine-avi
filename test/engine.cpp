@@ -31,7 +31,29 @@ Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConf
 }
 
 std::unique_ptr<SmartMet::Spine::Reactor> reactor;
-Engine *engine;
+std::shared_ptr<Engine> engine;
+
+struct TestFixture
+{
+  TestFixture()
+  {
+    SmartMet::Spine::Options opts;
+    opts.defaultlogging = false;
+    opts.configfile = "cnf/reactor.conf";
+    opts.parseConfig();
+
+    reactor.reset(new SmartMet::Spine::Reactor(opts));
+    reactor->init();
+    engine = reactor->getEngine<Engine>("Avi", NULL);
+  }
+
+  ~TestFixture()
+  {
+    engine.reset();
+    reactor.reset();
+  }
+};
+
 
 const std::list<std::string> allLocationParameters({"stationid",
                                                     "icao",
@@ -113,58 +135,40 @@ BOOST_AUTO_TEST_CASE(engine_constructor, *boost::unit_test::depends_on(""))
   EngineImpl engine(filename);
 }
 
-BOOST_AUTO_TEST_CASE(engine_singleton, *boost::unit_test::depends_on("engine_constructor"))
-{
-  SmartMet::Spine::Options opts;
-  opts.defaultlogging = false;
-  opts.configfile = "cnf/reactor.conf";
-  opts.parseConfig();
-
-  engine = nullptr;
-
-  reactor.reset(new SmartMet::Spine::Reactor(opts));
-  reactor->init();
-  engine = reinterpret_cast<Engine *>(reactor->getSingleton("Avi", NULL));
-
-  BOOST_CHECK(engine != nullptr);
-}
+BOOST_AUTO_TEST_SUITE(engine_tests, *boost::unit_test::fixture<TestFixture>())
 
 //
 // Tests for Engine::queryStations method with parameter list query option
 //
 
-BOOST_AUTO_TEST_CASE(engine_queryStations_with_empty_queryoptions_fail,
-                     *boost::unit_test::depends_on("engine_singleton"))
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_empty_queryoptions_fail)
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
-BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_fail,
-                     *boost::unit_test::depends_on("engine_singleton"))
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_fail)
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("dummyparam");
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
-    engine_queryStations_with_parameterlist_queryoption_zero_length_parametername_fail,
-    *boost::unit_test::depends_on("engine_singleton"))
+    engine_queryStations_with_parameterlist_queryoption_zero_length_parametername_fail)
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("");
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
 BOOST_AUTO_TEST_CASE(
-    engine_queryStations_with_parameterlist_queryoption_duplicate_parametername_fail,
-    *boost::unit_test::depends_on("engine_singleton"))
+    engine_queryStations_with_parameterlist_queryoption_duplicate_parametername_fail)
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsParameters.push_back("name");
@@ -172,10 +176,9 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK_THROW({ engine->queryStations(queryOptions); }, Fmi::Exception);
 }
 
-BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_stationid,
-                     *boost::unit_test::depends_on("engine_singleton"))
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_stationid)
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   StationQueryData stationQueryData = engine->queryStations(queryOptions);
@@ -186,10 +189,9 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_s
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }
 
-BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_name,
-                     *boost::unit_test::depends_on("engine_singleton"))
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_name)
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("name");
   StationQueryData stationQueryData = engine->queryStations(queryOptions);
@@ -202,10 +204,9 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_valid_parameterlist_queryoption_n
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }
 
-BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_order,
-                     *boost::unit_test::depends_on("engine_singleton"))
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_order)
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   // stationid is always the first one in a result even when it is
   // not the first one in the itsParameters list of QueryOptions.
@@ -232,20 +233,18 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_order,
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 0);
 }
 
-BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_case_insensitivity_fail,
-                     *boost::unit_test::depends_on("engine_singleton"))
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_case_insensitivity_fail)
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("elevation");
   queryOptions.itsParameters.push_back("StationId");
   BOOST_CHECK_THROW(engine->queryStations(queryOptions), Fmi::Exception);
 }
 
-BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_all_valid_parameters,
-                     *boost::unit_test::depends_on("engine_singleton"))
+BOOST_AUTO_TEST_CASE(engine_queryStations_with_parameterlist_queryoption_all_valid_parameters)
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters = allValidParameters;
   StationQueryData stationQueryData = engine->queryStations(queryOptions);
@@ -261,7 +260,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_stationid,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsStationIds.push_back(10);  //!< EFJY
@@ -282,7 +281,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_stationid_fail,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsStationIds.push_back(-1);
@@ -293,7 +292,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_stationid_outofrange_fail,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsStationIds.push_back(std::numeric_limits<unsigned int>::max());
@@ -304,7 +303,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_stationid_duplicate,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsStationIds.push_back(10);
@@ -319,7 +318,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_icao,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsIcaos.push_back("efjy");
@@ -332,7 +331,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_invalid_icao_fail,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsIcaos.push_back("XXxx");
@@ -343,7 +342,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_icao_duplicate,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsIcaos.push_back("EFJY");
@@ -360,7 +359,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_bbox,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsBBoxes.push_back(
@@ -374,7 +373,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_bbox_value_order,
     *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_bbox"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   // Latitude and longitude values can be given either min,max or max,min order.
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
@@ -388,7 +387,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_multiple_bbox,
     *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_bbox"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsBBoxes.push_back(
@@ -409,7 +408,7 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_locationoption_queryoption_multip
                      *boost::unit_test::depends_on(
                          "engine_queryStations_with_locationoption_queryoption_multiple_bbox"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsBBoxes.push_back(
@@ -433,7 +432,7 @@ BOOST_AUTO_TEST_CASE(engine_queryStations_with_locationoption_queryoption_oversi
                      *boost::unit_test::depends_on(
                          "engine_queryStations_with_locationoption_queryoption_multiple_bbox"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   // Test bboxes over the edges of the WGS84 bbox [-90,-180,90,180]
   // [lat_min,lon_min,lat_max,lon_max]
   QueryOptions queryOptions;
@@ -449,7 +448,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_place,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
 
@@ -470,7 +469,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_place_with_special_chars,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsPlaces.push_back(
@@ -500,7 +499,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_invalid_place_noresult,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
 
@@ -513,7 +512,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_invalid_place2_noresult,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsPlaces.push_back(
@@ -526,7 +525,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_country,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsCountries = {"FI"};
@@ -546,7 +545,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_empty_country_fail,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsCountries = {""};
@@ -557,7 +556,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_lonlat,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
 
@@ -605,7 +604,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_wkt_polygon,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
@@ -704,7 +703,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_wkt_polygon_non_closed_fail,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
 
@@ -718,7 +717,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_wkt_polygon_with_two_loops_fail,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
 
@@ -732,7 +731,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_wkt_multipolygon_fail,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   // The first polygon around EFHK and the second around ILHK station.
@@ -745,7 +744,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_wkt_point,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
 
@@ -770,7 +769,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_wkt_multipoint_fail,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
@@ -782,7 +781,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_wkt_linestring,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
 
@@ -828,7 +827,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryStations_with_locationoption_queryoption_wkt_multilinestring_fail,
     *boost::unit_test::depends_on("engine_queryStations_with_valid_parameterlist_queryoption_name"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsWKTs.itsWKTs.push_back(
@@ -843,7 +842,7 @@ BOOST_AUTO_TEST_CASE(
 BOOST_AUTO_TEST_CASE(engine_querymessages_stationidlist_and_queryoptions_empty_fail,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList;
   const QueryOptions queryOptions;
   BOOST_CHECK_THROW(engine->queryMessages(stationIdList, queryOptions), Fmi::Exception);
@@ -852,7 +851,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_stationidlist_and_queryoptions_empty_f
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_unknown_dummyparam_fail,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("dummyparam");
@@ -862,7 +861,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_unknown_dummyparam_fail,
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_allvalidparameters_fail,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsParameters = allValidParameters;
@@ -872,7 +871,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_allvalidparameters_fail,
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_parameter_locationparameter_fail,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allLocationParameters.front());
@@ -882,7 +881,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_parameter_locationparamet
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_parameter_messagetypeparameter_fail,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
@@ -892,7 +891,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_parameter_messagetypepara
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_iso_fail,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {1};
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
@@ -913,7 +912,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_iso_fail,
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_timestamptz,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
@@ -986,7 +985,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_timestamp
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_current_timestamp,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
@@ -999,7 +998,7 @@ BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_observationtime_current_t
 BOOST_AUTO_TEST_CASE(engine_querymessages_queryoptions_starttime_endtime,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageTypesParameters.front());
@@ -1027,7 +1026,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_timerange_return_one_metar_message,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions;
 
@@ -1132,7 +1131,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_stations_filtered_out,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   const StationIdList stationIdList = {6, 27};  //!< EFHF and EFUT
   QueryOptions queryOptions;
@@ -1198,7 +1197,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_messagetype_ars,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T08:42:00Z'";
@@ -1215,7 +1214,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_messagetype_wxrep,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-21T13:05:00Z'";
@@ -1232,7 +1231,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_messagetype_wrng,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T08:43:00Z'";
@@ -1249,7 +1248,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_messagetype_taf,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T02:34:00Z'";
@@ -1266,7 +1265,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_messagetype_sigmet,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {7972};  //!< UMMS
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T08:20:00Z'";
@@ -1283,7 +1282,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_messagetype_gafor,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T02:00:00Z'";
@@ -1300,7 +1299,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_messagetype_ars_and_wrng,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T08:42:00Z'";
@@ -1359,7 +1358,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_stationidlist_with_multiple_stations,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList = {8, 9, 10, 11, -1};  //!< EFIV,EFJO,EFJY,EFKE,DUMMY
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
@@ -1374,7 +1373,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_stationidlist_and_maxmessagestations,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList = {8, 9, 10, 11, -1};  //!< EFIV,EFJO,EFJY,EFKE,DUMMY
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
@@ -1393,7 +1392,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_locationsoptions_stationids_with_multiple_stations_fail,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
@@ -1415,7 +1414,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_locationsoptions_icaos_with_multiple_stations_fail,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
@@ -1437,7 +1436,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_locationsoptions_bboxes_fail,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
@@ -1462,7 +1461,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_locationsoptions_lonlats_fail,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
@@ -1485,7 +1484,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_locationsoptions_wkts_fail,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
@@ -1508,7 +1507,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_locationsoptions_places_fail,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
@@ -1530,7 +1529,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_locationsoptions_countries_fail,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList;
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
@@ -1552,7 +1551,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_queryoptions_maxmessagerows,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList = {8};
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
@@ -1602,7 +1601,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_queryoptions_distinctmessages,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList = {7};
   QueryOptions queryOptions;
   queryOptions.itsTimeOptions.itsStartTime = "timestamptz '2015-11-17T00:10:00Z'";
@@ -1647,7 +1646,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querymessages_queryoptions_filterfimetarxxx,
     *boost::unit_test::depends_on("engine_querymessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   StationIdList stationIdList = {8, 27};  //!< EFHK, EFUT
 
   // In the configuration there is filtering settings for EFHF and EFHK.
@@ -1673,7 +1672,7 @@ BOOST_AUTO_TEST_CASE(
 BOOST_AUTO_TEST_CASE(engine_querystationsandmessages_queryoptions_empty_fail,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Fmi::Exception);
 }
@@ -1681,7 +1680,7 @@ BOOST_AUTO_TEST_CASE(engine_querystationsandmessages_queryoptions_empty_fail,
 BOOST_AUTO_TEST_CASE(engine_querystationsandmessages_queryoptions_with_parameter,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageParameters.front());
   // Throws since query times are now checked with Fmi::TimeParser::parse()
@@ -1696,7 +1695,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querystationsandmessages_queryoptions_with_validity_accepted,
     *boost::unit_test::depends_on("engine_querystationsandmessages_queryoptions_with_parameter"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageParameters.front());
   queryOptions.itsValidity = Avi::Accepted;
@@ -1712,7 +1711,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querystationsandmessages_queryoptions_with_validity_rejected_fail,
     *boost::unit_test::depends_on("engine_querystationsandmessages_queryoptions_with_parameter"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageParameters.front());
   queryOptions.itsValidity = Avi::Rejected;
@@ -1723,7 +1722,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querystationsandmessages_queryoptions_with_stationid_fail,
     *boost::unit_test::depends_on("engine_querystationsandmessages_queryoptions_with_parameter"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsLocationOptions.itsStationIds = {8};
   queryOptions.itsParameters.push_back(allMessageParameters.front());
@@ -1734,7 +1733,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querystationsandmessages_queryoptions_with_stationid_and_messageparameter,
     *boost::unit_test::depends_on("engine_querystationsandmessages_queryoptions_with_parameter"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allLocationParameters.front());
   queryOptions.itsParameters.push_back(allMessageParameters.front());
@@ -1750,7 +1749,7 @@ BOOST_AUTO_TEST_CASE(
     engine_querystationsandmessages_queryoptions_with_valid_values,
     *boost::unit_test::depends_on("engine_querystationsandmessages_queryoptions_with_parameter"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsLocationOptions.itsStationIds.push_back(8);
   queryOptions.itsParameters.push_back(allLocationParameters.front());
@@ -1769,7 +1768,7 @@ BOOST_AUTO_TEST_CASE(
     engine_joinstationandmessagedata_empty_inputs,
     *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_stationid"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   const StationQueryData stationQueryData1;
   StationQueryData stationQueryData2;
   StationQueryData joinedStationQueryData;
@@ -1783,7 +1782,7 @@ BOOST_AUTO_TEST_CASE(
     engine_joinstationandmessagedata_the_first_has_station,
     *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_stationid"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsStationIds.push_back(10);  //!< EFJY
@@ -1810,7 +1809,7 @@ BOOST_AUTO_TEST_CASE(
     engine_joinstationandmessagedata_the_second_has_station,
     *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_stationid"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsStationIds.push_back(10);  //!< EFJY
@@ -1841,7 +1840,7 @@ BOOST_AUTO_TEST_CASE(
     engine_joinstationandmessagedata_the_both_have_station,
     *boost::unit_test::depends_on("engine_queryStations_with_locationoption_queryoption_stationid"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back("stationid");
   queryOptions.itsLocationOptions.itsStationIds.push_back(10);  //!< EFJY
@@ -1879,7 +1878,7 @@ BOOST_AUTO_TEST_CASE(
     engine_joinstationandmessagedata_the_first_has_message,
     *boost::unit_test::depends_on("engine_querymessages_timerange_return_one_metar_message"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions1;
@@ -1912,7 +1911,7 @@ BOOST_AUTO_TEST_CASE(
     engine_joinstationandmessagedata_the_second_has_message,
     *boost::unit_test::depends_on("engine_querymessages_timerange_return_one_metar_message"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   const StationQueryData stationQueryData1;
   const StationIdList stationIdList = {7};  //!< EFHK
@@ -1941,7 +1940,7 @@ BOOST_AUTO_TEST_CASE(
     engine_joinstationandmessagedata_the_first_has_station_the_second_has_message,
     *boost::unit_test::depends_on("engine_querymessages_timerange_return_one_metar_message"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   QueryOptions queryOptions1;
   std::copy(
@@ -1982,7 +1981,7 @@ BOOST_AUTO_TEST_CASE(
     engine_joinstationandmessagedata_the_first_has_message_the_second_has_station,
     *boost::unit_test::depends_on("engine_querymessages_timerange_return_one_metar_message"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   const StationIdList stationIdList = {7};  //!< EFHK
   QueryOptions queryOptions1;
@@ -2024,7 +2023,7 @@ BOOST_AUTO_TEST_CASE(
     engine_joinstationandmessagedata_the_first_has_station_the_second_has_message_from_the_same_station,
     *boost::unit_test::depends_on("engine_querymessages_timerange_return_one_metar_message"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   QueryOptions queryOptions1;
   std::copy(
@@ -2069,7 +2068,7 @@ BOOST_AUTO_TEST_CASE(
 BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_empty_fail,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
   QueryOptions queryOptions;
   BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Fmi::Exception);
 }
@@ -2077,7 +2076,7 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_empty_fail,
 BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_two_parameters_fail,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.front());
@@ -2088,7 +2087,7 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_two_parameters_fa
 BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_starttime_endtime,
                      *boost::unit_test::depends_on("engine_singleton"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.front());
@@ -2104,7 +2103,7 @@ BOOST_AUTO_TEST_CASE(
     engine_queryrejectedmessages_queryoptions_produce_valid_response,
     *boost::unit_test::depends_on("engine_queryrejectedmessages_queryoptions_starttime_endtime"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.front());
@@ -2129,7 +2128,7 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_allvalidrejectedm
                      *boost::unit_test::depends_on(
                          "engine_queryrejectedmessages_queryoptions_produce_valid_response"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   QueryOptions queryOptions;
   queryOptions.itsParameters = allValidRejectedMessagesParameters;
@@ -2143,7 +2142,7 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_messagetype_metar
                      *boost::unit_test::depends_on(
                          "engine_queryrejectedmessages_queryoptions_produce_valid_response"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.front());
@@ -2160,7 +2159,7 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_maxmessagerows,
                      *boost::unit_test::depends_on(
                          "engine_queryrejectedmessages_queryoptions_produce_valid_response"))
 {
-  BOOST_CHECK(engine != nullptr);
+  BOOST_CHECK(engine);
 
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allValidRejectedMessagesParameters.front());
@@ -2176,6 +2175,9 @@ BOOST_AUTO_TEST_CASE(engine_queryrejectedmessages_queryoptions_maxmessagerows,
   queryOptions.itsMaxMessageRows = 5;
   BOOST_CHECK_THROW(engine->queryRejectedMessages(queryOptions), Fmi::Exception);
 }
+
+BOOST_AUTO_TEST_SUITE_END()
+
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
