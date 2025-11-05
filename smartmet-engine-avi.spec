@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 25.10.30
+Version: 25.11.5
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -100,6 +100,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Wed Nov  5 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.11.5-1.fmi
+- Repackage due to Fmi::PostgreSQLConnection changes
+
 * Thu Oct 30 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.10.30-1.fmi
 - Repackage due to Fmi::Pool<> bugfix (smartmet-library-macgyver)
 
