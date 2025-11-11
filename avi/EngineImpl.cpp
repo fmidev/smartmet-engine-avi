@@ -88,6 +88,9 @@ const char* dfBearing = "DEGREES(ST_Azimuth(geom,ST_SetSRID(coordinates.coordina
 
 const char* firTableName = "icao_fir_yhdiste";
 const char* firTableAlias = "fi";
+const char* firTableJoin = "ST_Contains(fi.areageom,st.geom)";
+const char* firIdTableColumn = "gid";
+const char* firIdQueryColumn = "firid";
 const char* stationTableName = "avidb_stations";
 const char* stationTableAlias = "st";
 const char* stationTableJoin = "st.station_id = me.station_id";
@@ -130,6 +133,15 @@ const char* messageValidityTableJoin = "mv.type = mt.type";
 const char* messageTimeRangeLatestMessagesTableName = "messagetimerangelatest_messages";
 
 // Table/query column mapping
+
+Column firQueryColumns[] = {
+    //
+    // Table columns
+    //
+    // Type, Table column, Query column
+    //
+    {Integer, firIdTableColumn, firIdQueryColumn},
+    {None, "", "", nullptr, nullptr}};
 
 Column stationQueryColumns[] = {
     //
@@ -215,6 +227,10 @@ Column rejectedMessageQueryColumns[] = {
     {String, "version", "messageversion"},
     {Integer, "reject_reason", "messagerejectedreason"},
     {None, "", ""}};
+
+QueryTable firQueryTables[] = {
+    {firTableName, firTableAlias, firQueryColumns, firTableJoin},
+    {"", "", nullptr, ""}};
 
 QueryTable messageQueryTables[] = {
     {messageTableName, messageTableAlias, messageQueryColumns, ""},
@@ -2481,7 +2497,8 @@ string EngineImpl::buildStationQueryCoordinateExpressions(const Columns& columns
 Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
                                               bool selectStationListOnly,
                                               bool autoSelectDistance,
-                                              string& selectClause) const
+                                              string& selectClause,
+                                              bool& firIdQuery) const
 {
   try
   {
@@ -2494,6 +2511,7 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
     bool duplicate;
 
     selectClause.clear();
+    firIdQuery = false;
 
     // Station id is automatically selected
 
@@ -2575,6 +2593,21 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
 
         columns.push_back(*queryColumn);
         columns.back().itsNumber = columnNumber;
+      }
+      else if ((!queryColumn) && (! duplicate) && (!selectStationListOnly))
+      {
+        queryColumn =
+            getQueryColumn(firQueryColumns, columns, param, duplicate, columnNumber);
+
+        if (queryColumn)
+        {
+          firIdQuery = true;
+          selectClause += (string(",") + firTableAlias + "." + firIdTableColumn +
+                           " AS " + queryColumn->itsName);
+
+          columns.push_back(*queryColumn);
+          columns.back().itsNumber = columnNumber;
+        }
       }
 
       columnNumber++;
@@ -2743,7 +2776,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
               selectClause += (string(" AS ") + queryColumn->itsName);
           }
 
-          if (queryTable.itsName != stationTableName)
+          if ((queryTable.itsName != stationTableName) && (queryTable.itsName != firTableName))
           {
             if (queryTable.itsName == messageTableName)
             {
@@ -3182,6 +3215,7 @@ void EngineImpl::queryStationsWithIds(const Fmi::Database::PostgreSQLConnection&
 void EngineImpl::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnection& connection,
                                     const StringList& icaoList,
                                     const string& selectClause,
+                                    bool firIdQuery,
                                     bool debug,
                                     StationQueryData& stationQueryData) const
 {
@@ -3191,10 +3225,18 @@ void EngineImpl::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnectio
 
     ostringstream whereClause;
 
+    string fromClause(string(" FROM avidb_stations ") + stationTableAlias);
+
     buildStationQueryWhereClause(connection, "UPPER(icao_code)", icaoList, whereClause);
 
+    if (firIdQuery)
+    {
+      fromClause += (string(",") + firTableName + " AS " + firTableAlias);
+      whereClause << " AND " << firTableJoin;
+    }
+
     executeQuery<StationQueryData>(connection,
-                                   selectClause + " FROM avidb_stations " + whereClause.str(),
+                                   selectClause + fromClause + " " + whereClause.str(),
                                    debug,
                                    stationQueryData);
   }
@@ -3213,6 +3255,7 @@ void EngineImpl::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnectio
 void EngineImpl::queryStationsWithCountries(const Fmi::Database::PostgreSQLConnection& connection,
                                         const StringList& countryList,
                                         const string& selectClause,
+                                        bool firIdQuery,
                                         bool debug,
                                         StationQueryData& stationQueryData) const
 {
@@ -3222,10 +3265,18 @@ void EngineImpl::queryStationsWithCountries(const Fmi::Database::PostgreSQLConne
 
     ostringstream whereClause;
 
+    string fromClause(string(" FROM avidb_stations ") + stationTableAlias);
+
     buildStationQueryWhereClause(connection, "UPPER(country_code)", countryList, whereClause);
 
+    if (firIdQuery)
+    {
+      fromClause += (string(",") + firTableName + " AS " + firTableAlias);
+      whereClause << " AND " << firTableJoin;
+    }
+
     executeQuery<StationQueryData>(connection,
-                                   selectClause + " FROM avidb_stations " + whereClause.str(),
+                                   selectClause + fromClause + " " + whereClause.str(),
                                    debug,
                                    stationQueryData);
   }
@@ -3469,6 +3520,11 @@ void EngineImpl::validateParameters(const StringList& paramList,
           if (queryTables == messageQueryTables)
           {
             qt = queryTables = rejectedMessageQueryTables;
+            continue;
+          }
+          else if (queryTables == rejectedMessageQueryTables)
+          {
+            qt = queryTables = firQueryTables;
             continue;
           }
 
@@ -3930,10 +3986,11 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
     bool selectStationListOnly = queryOptions.itsMessageColumnSelected;
     bool autoSelectDistance =
         ((!locationOptions.itsLonLats.empty()) && (locationOptions.itsNumberOfNearestStations > 0));
+    bool firIdQuery;
     string selectClause;
 
     stationQueryData.itsColumns = buildStationQuerySelectClause(
-        paramList, selectStationListOnly, autoSelectDistance, selectClause);
+        paramList, selectStationListOnly, autoSelectDistance, selectClause, firIdQuery);
 
     // Query separately with each type of location options, adding the unique results to 'queryData'
     //
@@ -3958,6 +4015,7 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
       queryStationsWithIcaos(connection,
                              locationOptions.itsIcaos,
                              selectClause,
+                             firIdQuery,
                              queryOptions.itsDebug,
                              stationQueryData);
 
@@ -3965,6 +4023,7 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
       queryStationsWithCountries(connection,
                                  locationOptions.itsCountries,
                                  selectClause,
+                                 firIdQuery,
                                  queryOptions.itsDebug,
                                  stationQueryData);
 
@@ -4774,6 +4833,75 @@ QueryData EngineImpl::queryRejectedMessages(const QueryOptions& queryOptions) co
   }
 }
 
+// ----------------------------------------------------------------------
+/*!
+ * \brief Query FIR areas
+ */
+// ----------------------------------------------------------------------
+
+const FIRQueryData &EngineImpl::queryFIRAreas() const
+{
+  try
+  {
+    auto ptr = itsFIRAreasPtr.load(std::memory_order_relaxed);
+
+    if (ptr)
+      return *ptr;
+
+    std::unique_lock<std::mutex> lock(itsFIRMutex);
+
+    loadFIRAreas();
+
+    if (! itsFIRAreas.empty())
+      itsFIRAreasPtr.store(&itsFIRAreas, std::memory_order_relaxed);
+
+    return itsFIRAreas;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Load/store FIR areas
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::loadFIRAreas() const
+{
+  try
+  {
+    auto connectionPtr = itsConnectionPool->get();
+    auto &connection = *connectionPtr.get();
+
+    string query("SELECT gid, ST_AsText(areageom) AS geom,"
+                 "ST_XMin(areageom) AS xmin,ST_YMin(areageom) AS ymin,"
+                 "ST_XMax(areageom) AS xmax,ST_YMax(areageom) AS ymax"
+                 " FROM icao_fir_yhdiste ORDER BY 1");
+
+    auto result = connection.executeNonTransaction(query);
+
+    for (pqxx::result::const_iterator row = result.begin(); (row != result.end()); row++)
+    {
+      auto gid = row["gid"].as<int>();
+      auto geom = row["geom"].as<string>();
+      auto xmin = row["xmin"].as<double>();
+      auto ymin = row["ymin"].as<double>();
+      auto xmax = row["xmax"].as<double>();
+      auto ymax = row["ymax"].as<double>();
+
+      BBox bbox(xmin, xmax, ymin, ymax);
+
+      itsFIRAreas.insert(std::make_pair(gid, std::make_pair(geom, bbox)));
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet

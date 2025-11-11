@@ -27,6 +27,11 @@ struct BBox
   {
   }
 
+  double getXMin() const { return itsEast; }
+  double getYMin() const { return itsSouth; }
+  double getXMax() const { return itsWest; }
+  double getYMax() const { return itsNorth; }
+
   double itsWest;
   double itsEast;
   double itsSouth;
@@ -317,6 +322,9 @@ struct StationQueryData
                                    // returned
 };
 
+typedef std::pair<std::string, BBox> FIRAreaAndBBox;
+typedef std::map<int, FIRAreaAndBBox> FIRQueryData;
+
 /**
  * @brief Base class for AVI engine
  *
@@ -342,6 +350,8 @@ class Engine  : public SmartMet::Spine::SmartMetEngine
   virtual StationQueryData queryStationsAndMessages(QueryOptions &queryOptions) const { unavailable(BCP); }
 
   virtual QueryData queryRejectedMessages(const QueryOptions &queryOptions) const { unavailable(BCP); }
+
+  virtual const FIRQueryData &queryFIRAreas() const { unavailable(BCP); }
 
  protected:
   virtual void init() {}

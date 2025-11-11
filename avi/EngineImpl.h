@@ -28,6 +28,8 @@ class EngineImpl : public Engine
 
   QueryData queryRejectedMessages(const QueryOptions &queryOptions) const override;
 
+  const FIRQueryData &queryFIRAreas() const override;
+
  protected:
   virtual void init();
   void shutdown();
@@ -68,7 +70,8 @@ class EngineImpl : public Engine
   Columns buildStationQuerySelectClause(const StringList &paramList,
                                         bool selectStationListOnly,
                                         bool autoSelectDistance,
-                                        std::string &selectClause) const;
+                                        std::string &selectClause,
+                                        bool& firIdQuery) const;
   TableMap buildMessageQuerySelectClause(QueryTable *queryTables,
                                          const StationIdList &stationIdList,
                                          const StringList &messageTypeList,
@@ -116,11 +119,13 @@ class EngineImpl : public Engine
   void queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnection &connection,
                               const StringList &icaoList,
                               const std::string &selectClause,
+                              bool firIdQuery,
                               bool debug,
                               StationQueryData &queryData) const;
   void queryStationsWithCountries(const Fmi::Database::PostgreSQLConnection &connection,
                                   const StringList &countryList,
                                   const std::string &selectClause,
+                                  bool firIdQuery,
                                   bool debug,
                                   StationQueryData &stationQueryData) const;
   void queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection &connection,
@@ -154,10 +159,15 @@ class EngineImpl : public Engine
                                  const QueryOptions &queryOptions,
                                  bool validateQuery) const;
 
+  void loadFIRAreas() const;
+
   std::string itsConfigFileName;
   std::shared_ptr<Config> itsConfig;
   std::unique_ptr<Fmi::Database::PostgreSQLConnectionPool> itsConnectionPool;
 
+  mutable std::mutex                  itsFIRMutex;
+  mutable FIRQueryData                itsFIRAreas;
+  mutable std::atomic<FIRQueryData *> itsFIRAreasPtr = nullptr;
 };  // class EngineImpl
 
 }  // namespace Avi
