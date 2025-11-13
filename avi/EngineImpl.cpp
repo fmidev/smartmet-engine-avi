@@ -4876,7 +4876,7 @@ void EngineImpl::loadFIRAreas() const
     auto connectionPtr = itsConnectionPool->get();
     auto &connection = *connectionPtr.get();
 
-    string query("SELECT gid, ST_AsGeoJSON(areageom) AS geom,"
+    string query("SELECT gid, ST_AsGeoJSON(ST_ForcePolygonCCW(areageom)) AS geom,"
                  "ST_XMin(areageom) AS xmin,ST_YMin(areageom) AS ymin,"
                  "ST_XMax(areageom) AS xmax,ST_YMax(areageom) AS ymax"
                  " FROM icao_fir_yhdiste ORDER BY 1");
