@@ -35,7 +35,7 @@ class EngineImpl : public Engine
   void shutdown();
 
  private:
-  void validateTimes(const TimeOptions &timeOptions) const;
+  void validateTimes(const QueryOptions &queryOptions) const;
   void validateParameters(const StringList &paramList,
                           Validity validity,
                           bool &messageColumnSelected) const;
@@ -45,6 +45,7 @@ class EngineImpl : public Engine
   void validateIcaos(const Fmi::Database::PostgreSQLConnection &connection,
                      const StringList &icaoList,
                      bool debug) const;
+  void validateIcaoFilters(const LocationOptions &locationOptions) const;
   void validatePlaces(const Fmi::Database::PostgreSQLConnection &connection,
                       StringList &placeNameList,
                       bool debug) const;
@@ -124,6 +125,7 @@ class EngineImpl : public Engine
                               StationQueryData &queryData) const;
   void queryStationsWithCountries(const Fmi::Database::PostgreSQLConnection &connection,
                                   const StringList &countryList,
+                                  const StringList &excludeIcaoList,
                                   const std::string &selectClause,
                                   bool firIdQuery,
                                   bool debug,
