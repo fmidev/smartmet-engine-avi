@@ -542,7 +542,9 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
       // when querying messages with polygon to restrict the stations like metadata query does
       // (otherwise e.g. swedish stations are included by the query)
       //
-      if (! locationOptions.itsCountryFilters.empty())
+      // For edr SIGMET collection icao code filter (e.g. "EFIN") must be applied
+      //
+      if (! locationOptions.itsIncludeCountryFilters.empty())
       {
         n = 0;
 
@@ -550,7 +552,7 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
                                << stationTableAlias << "." << stationCountryCodeTableColumn
                                << " ILIKE ALL (ARRAY[";
 
-        for (auto const &str : locationOptions.itsCountryFilters)
+        for (auto const &str : locationOptions.itsIncludeCountryFilters)
         {
           fromWhereOrderByClause << (n ? "," : "") << connection.quote(str);
           n++;
@@ -559,7 +561,25 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
         fromWhereOrderByClause << "])";
       }
 
-      if (! locationOptions.itsIcaoFilters.empty())
+      if (! locationOptions.itsIncludeIcaoFilters.empty())
+      {
+        n = 0;
+
+        fromWhereOrderByClause << " AND "
+                               << stationTableAlias << "." << stationIcaoTableColumn
+                               << " ILIKE ALL (ARRAY[";
+
+        for (auto const &str : locationOptions.itsIncludeIcaoFilters)
+        {
+          fromWhereOrderByClause << (n ? "," : "")
+                                 << connection.quote(str + ((str.size() < 4) ? "%" : ""));
+          n++;
+        }
+
+        fromWhereOrderByClause << "])";
+      }
+
+      if (! locationOptions.itsExcludeIcaoFilters.empty())
       {
         n = 0;
 
@@ -567,7 +587,7 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
                                << stationTableAlias << "." << stationIcaoTableColumn
                                << " NOT ILIKE ALL (ARRAY[";
 
-        for (auto const &str : locationOptions.itsIcaoFilters)
+        for (auto const &str : locationOptions.itsExcludeIcaoFilters)
         {
           fromWhereOrderByClause << (n ? "," : "")
                                  << connection.quote(str + ((str.size() < 4) ? "%" : ""));
@@ -3364,7 +3384,7 @@ void EngineImpl::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnectio
 
 void EngineImpl::queryStationsWithCountries(const Fmi::Database::PostgreSQLConnection& connection,
                                         const StringList& countryList,
-                                        const StringList& icaoFilterList,
+                                        const StringList& excludeIcaoFilters,
                                         const string& selectClause,
                                         bool firIdQuery,
                                         bool debug,
@@ -3379,7 +3399,7 @@ void EngineImpl::queryStationsWithCountries(const Fmi::Database::PostgreSQLConne
     string fromClause(string(" FROM avidb_stations ") + stationTableAlias);
 
     buildStationQueryWhereClause(
-        connection, "UPPER(country_code)", countryList, "UPPER(icao_code)", icaoFilterList,
+        connection, "UPPER(country_code)", countryList, "icao_code", excludeIcaoFilters,
         whereClause);
 
     if (firIdQuery)
@@ -3818,9 +3838,10 @@ void EngineImpl::validateIcaoFilters(const LocationOptions &locationOptions) con
 {
   try
   {
-    auto const &icaoFilterList = locationOptions.itsIcaoFilters;
+    auto const &includeIcaoFilters = locationOptions.itsIncludeIcaoFilters;
+    auto const &excludeIcaoFilters = locationOptions.itsExcludeIcaoFilters;
 
-    if (icaoFilterList.empty())
+    if (includeIcaoFilters.empty() && excludeIcaoFilters.empty())
       return;
 
     if (locationOptions.itsCountries.empty() && locationOptions.itsWKTs.itsWKTs.empty())
@@ -3828,7 +3849,12 @@ void EngineImpl::validateIcaoFilters(const LocationOptions &locationOptions) con
           BCP, "Icao code filters are applicable with country code and polygon queries only"
                           ).disableLogging();
 
-    for (auto const &filter : icaoFilterList)
+    for (auto const &filter : includeIcaoFilters)
+      if (filter.empty() || (filter.size() > 4) || strpbrk(filter.c_str(),"%_"))
+        throw Fmi::Exception(
+          BCP, "1-4 letter icao code filter expected, no wildcards: " + filter).disableLogging();
+
+    for (auto const &filter : excludeIcaoFilters)
       if (filter.empty() || (filter.size() > 4) || strpbrk(filter.c_str(),"%_"))
         throw Fmi::Exception(
           BCP, "1-4 letter icao code filter expected, no wildcards: " + filter).disableLogging();
@@ -4116,7 +4142,10 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
       if (!locationOptions.itsIcaos.empty())
         validateIcaos(connection, locationOptions.itsIcaos, queryOptions.itsDebug);
 
-      if (!locationOptions.itsIcaoFilters.empty())
+      if (
+          (!locationOptions.itsIncludeIcaoFilters.empty()) ||
+          (!locationOptions.itsExcludeIcaoFilters.empty())
+         )
         validateIcaoFilters(locationOptions);
 
       if (!locationOptions.itsPlaces.empty())
@@ -4178,7 +4207,7 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
     if (!locationOptions.itsCountries.empty())
       queryStationsWithCountries(connection,
                                  locationOptions.itsCountries,
-                                 locationOptions.itsIcaoFilters,
+                                 locationOptions.itsExcludeIcaoFilters,
                                  selectClause,
                                  firIdQuery,
                                  queryOptions.itsDebug,

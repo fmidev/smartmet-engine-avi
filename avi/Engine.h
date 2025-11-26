@@ -70,10 +70,11 @@ typedef struct
   unsigned int itsNumberOfNearestStations;
   // BRAINSTORM-3288, BRAINSTORM-3300
   //
-  // Country and icao code filters to include (countries) and exclude (icaofilters) stations
+  // Country and icao code filters to include/exclude stations
   //
-  StringList itsCountryFilters;
-  StringList itsIcaoFilters;
+  StringList itsIncludeCountryFilters;
+  StringList itsIncludeIcaoFilters;
+  StringList itsExcludeIcaoFilters;
 } LocationOptions;
 
 // Type for passing time related options
