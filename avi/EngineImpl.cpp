@@ -3845,9 +3845,17 @@ void EngineImpl::validateIcaoFilters(const LocationOptions &locationOptions) con
       return;
 
     if (locationOptions.itsCountries.empty() && locationOptions.itsWKTs.itsWKTs.empty())
+    {
+      // edr sets filters for queries which do not use them; ignore them instead of error
+      //
+      return;
+
+      /*
       throw Fmi::Exception(
           BCP, "Icao code filters are applicable with country code and polygon queries only"
                           ).disableLogging();
+      */
+    }
 
     for (auto const &filter : includeIcaoFilters)
       if (filter.empty() || (filter.size() > 4) || strpbrk(filter.c_str(),"%_"))
