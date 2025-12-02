@@ -4,7 +4,7 @@
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
 Version: 25.12.2
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-avi
@@ -29,7 +29,7 @@ BuildRequires: bzip2-devel
 BuildRequires: smartmet-library-spine-devel >= 25.9.16
 BuildRequires: smartmet-library-macgyver-devel >= 25.12.2
 BuildRequires: smartmet-library-timeseries-devel >= 25.8.1
-Requires: smartmet-library-macgyver >= 25.11.05
+Requires: smartmet-library-macgyver >= 25.12.2
 Requires: smartmet-library-spine >= 25.9.16
 Requires: smartmet-library-timeseries >= 25.8.1
 #TestRequires: smartmet-library-spine-plugin-test
@@ -100,7 +100,7 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
-* Tue Dec  2 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.12.2-1.fmi
+* Tue Dec  2 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.12.2-2.fmi
 - Repackage due to Fmi::Pool<> changes
 
 * Wed Nov  5 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.11.5-1.fmi
