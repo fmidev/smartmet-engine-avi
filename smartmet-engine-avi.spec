@@ -4,7 +4,7 @@
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
 Version: 25.12.8
-Release: 2%{?dist}.fmi
+Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-avi
