@@ -27,6 +27,11 @@ struct BBox
   {
   }
 
+  double getXMin() const { return itsEast; }
+  double getYMin() const { return itsSouth; }
+  double getXMax() const { return itsWest; }
+  double getYMax() const { return itsNorth; }
+
   double itsWest;
   double itsEast;
   double itsSouth;
@@ -63,6 +68,13 @@ typedef struct
   StringList itsCountries;
   double itsMaxDistance;
   unsigned int itsNumberOfNearestStations;
+  // BRAINSTORM-3288, BRAINSTORM-3300
+  //
+  // Country and icao code filters to include/exclude stations
+  //
+  StringList itsIncludeCountryFilters;
+  StringList itsIncludeIcaoFilters;
+  StringList itsExcludeIcaoFilters;
 } LocationOptions;
 
 // Type for passing time related options
@@ -77,12 +89,19 @@ struct TimeOptions
   }
 
   std::string itsObservationTime;   // Observation time (defaults to current time)
+  std::string itsMessageCreatedTime;// Message creation time (defaults to observation time)
   std::string itsStartTime;         // Time range start time
   std::string itsEndTime;           // Time range end time
   std::string itsTimeFormat;        // Fmi::TimeFormatter type; iso, timestamp, sql, xml or epoch
   std::string itsTimeZone;          // tz for localtime output
   bool itsQueryValidRangeMessages;  // Whether to query valid accepted messages or accepted messages
                                     // created within time range
+  // BRAINSTORM-3301
+  //
+  // If false, do not check/filter if messages were created after the given messagetime and
+  // do not apply message query time restrictions (used for TAFs)
+  //
+  bool itsMessageTimeChecks = true;
 
   const std::string &getMessageTableTimeRangeColumn() const
   {
@@ -126,7 +145,7 @@ struct QueryOptions
   StringList itsMessageTypes;
   StringList itsParameters;
   LocationOptions itsLocationOptions;
-  TimeOptions itsTimeOptions;
+  mutable TimeOptions itsTimeOptions;
   Validity itsValidity;  // Whether to select accepted or rejected messages
 
   bool itsMessageColumnSelected;  // Whether any avidb_messages column is requested or not
@@ -317,6 +336,9 @@ struct StationQueryData
                                    // returned
 };
 
+typedef std::pair<std::string, BBox> FIRAreaAndBBox;
+typedef std::map<int, FIRAreaAndBBox> FIRQueryData;
+
 /**
  * @brief Base class for AVI engine
  *
@@ -343,6 +365,8 @@ class Engine  : public SmartMet::Spine::SmartMetEngine
 
   virtual QueryData queryRejectedMessages(const QueryOptions &queryOptions) const { unavailable(BCP); }
 
+  virtual const FIRQueryData &queryFIRAreas() const { unavailable(BCP); }
+
  protected:
   virtual void init() {}
 
@@ -360,7 +384,6 @@ class Engine  : public SmartMet::Spine::SmartMetEngine
 class EngineImpl;
 
 // ======================================================================
-
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet
