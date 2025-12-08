@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 25.12.2
+Version: 25.12.8
 Release: 2%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -26,16 +26,16 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 25.9.16
+BuildRequires: smartmet-library-spine-devel >= 25.11.19
 BuildRequires: smartmet-library-macgyver-devel >= 25.12.2
 BuildRequires: smartmet-library-timeseries-devel >= 25.8.1
 Requires: smartmet-library-macgyver >= 25.12.2
-Requires: smartmet-library-spine >= 25.9.16
+Requires: smartmet-library-spine >= 25.11.19
 Requires: smartmet-library-timeseries >= 25.8.1
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
 #TestRequires: smartmet-utils-devel
-#TestRequires: smartmet-library-spine-devel >= 25.9.16
+#TestRequires: smartmet-library-spine-devel >= 25.11.19
 #TestRequires: smartmet-library-timeseries-devel >= 25.8.1
 #TestRequires: zlib-devel
 #TestRequires: bzip2-devel
@@ -100,6 +100,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Mon Dec  8 2025 Pertti Kinnia <pertti.kinnia@fmi.fi> 25.12.8-1.fmi
+- New release version; changes needed by edr SWIM requirements (BRAINSTORM-3256)
+
 * Tue Dec  2 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.12.2-2.fmi
 - Repackage due to Fmi::Pool<> changes
 
