@@ -236,7 +236,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       exception.addParameter("Attribute", "message.types");
       throw exception;
     }
-    else if (messageTypes.getLength() == 0)
+    if (messageTypes.getLength() == 0)
     {
       Fmi::Exception exception(BCP, "Empty configuration attribute value!");
       exception.addDetail("The attribute value is empty.");
@@ -277,7 +277,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", blockName + ".names");
           throw exception;
         }
-        else if (namesSetting.getLength() == 0)
+        if (namesSetting.getLength() == 0)
         {
           Fmi::Exception exception(BCP, "Empty configuration attribute value!");
           exception.addDetail("The attribute value is empty.");
@@ -512,7 +512,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", attrBlockName);
           throw exception;
         }
-        else if (patternsSetting.getLength() == 0)
+        if (patternsSetting.getLength() == 0)
         {
           Fmi::Exception exception(BCP, "Empty configuration attribute value!");
           exception.addDetail("The attribute value is empty.");
@@ -604,7 +604,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", attrBlockName);
           throw exception;
         }
-        else if (hoursSetting.getLength() == 0)
+        if (hoursSetting.getLength() == 0)
         {
           Fmi::Exception exception(BCP, "Empty configuration attribute value!");
           exception.addDetail("The attribute value is empty.");
@@ -678,7 +678,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", attrBlockName);
           throw exception;
         }
-        else if (!hasPatterns)
+        if (!hasPatterns)
         {
           Fmi::Exception exception(BCP, "Missing configuration attribute value!");
           exception.addDetail(
@@ -752,7 +752,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", codeAttrBlockName);
           throw exception;
         }
-        else if (!hasCodes)
+        if (!hasCodes)
         {
           Fmi::Exception exception(BCP, "Missing configuration attribute value!");
           exception.addDetail(
@@ -844,7 +844,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", hasStart ? startBlockName : endBlockName);
           throw exception;
         }
-        else if ((!hasStart) || (!hasEnd))
+        if ((!hasStart) || (!hasEnd))
         {
           Fmi::Exception exception(BCP, "Missing configuration attribute value!");
           exception.addDetail(
