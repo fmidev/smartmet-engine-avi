@@ -2629,7 +2629,7 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
 
     // Station id is automatically selected
 
-    auto queryColumn =
+    const auto* queryColumn =
         getQueryColumn(stationQueryColumns, columns, stationIdQueryColumn, duplicate);
 
     if (!queryColumn)
@@ -2647,7 +2647,7 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
 
     if (autoSelectDistance)
     {
-      auto queryColumn =
+      const auto* queryColumn =
           getQueryColumn(stationQueryColumns, columns, stationDistanceQueryColumn, duplicate);
 
       if (!queryColumn)
@@ -2668,7 +2668,7 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
       // (instead of 'Automatic') type for the user requested fields (stationid) to indicate they
       // shall be returned
       //
-      auto queryColumn =
+      const auto* queryColumn =
           getQueryColumn(stationQueryColumns, columns, param, duplicate, columnNumber);
 
       if (queryColumn && ((!selectStationListOnly) || queryColumn->itsCoordinateExpression))
@@ -2753,8 +2753,11 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
     // Selected tables/columns
 
     TableMap tableMap;
-    bool leftOuter = true, icaoSelected = false, duplicate;
-    bool distinctMessages = distinct, checkDuplicateMessages = false;
+    bool leftOuter = true;
+    bool icaoSelected = false;
+    bool duplicate = false;
+    bool distinctMessages = distinct;
+    bool checkDuplicateMessages = false;
     int columnNumber = 0;
 
     selectClause.clear();
@@ -2793,7 +2796,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
           table.itsAlias = queryTable.itsAlias;
           table.itsJoin = queryTable.itsJoin;
 
-          auto queryColumn = getQueryColumn(
+          const auto* queryColumn = getQueryColumn(
               queryTable.itsColumns, table.itsSelectedColumns, stationIdQueryColumn, duplicate);
 
           if (!queryColumn)
@@ -2813,7 +2816,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
           table.itsAlias = queryTable.itsAlias;
           table.itsJoin = queryTable.itsJoin;
 
-          auto queryColumn = getQueryColumn(
+          const auto* queryColumn = getQueryColumn(
               queryTable.itsColumns, table.itsSelectedColumns, stationIcaoQueryColumn, duplicate);
 
           if (!queryColumn)
@@ -2849,7 +2852,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
           break;
 
         auto& table = tableMap[queryTable.itsName];
-        auto queryColumn = getQueryColumn(
+        const auto* queryColumn = getQueryColumn(
             queryTable.itsColumns, table.itsSelectedColumns, param, duplicate, columnNumber);
 
         if (queryColumn)
@@ -2924,7 +2927,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
       // 'message' column was not selected by the caller; select it to skip duplicates
       //
       auto& table = tableMap[messageTableName];
-      auto queryColumn = getQueryColumn(
+      const auto* queryColumn = getQueryColumn(
           messageQueryColumns, table.itsSelectedColumns, messageQueryColumn, duplicate);
 
       if (!queryColumn)
@@ -3644,7 +3647,8 @@ void EngineImpl::validateParameters(const StringList& paramList,
       throw Fmi::Exception(BCP, "The 'param'option is missing or empty!");
 
     Columns columns;
-    bool paramKnown, duplicate;
+    bool paramKnown = false;
+    bool duplicate = false;
 
     for (auto const& param : paramList)
     {
@@ -3671,7 +3675,7 @@ void EngineImpl::validateParameters(const StringList& paramList,
           break;
         }
 
-        auto queryColumn = getQueryColumn(queryTable.itsColumns, columns, param, duplicate);
+        const auto* queryColumn = getQueryColumn(queryTable.itsColumns, columns, param, duplicate);
 
         if (queryColumn)
         {
@@ -4352,7 +4356,7 @@ const Column* EngineImpl::getMessageTableTimeColumn(const string& timeColumn) co
     Columns columns;
     bool duplicate = false;
 
-    auto queryColumn = getQueryColumn(messageQueryColumns, columns, timeColumn, duplicate);
+    const auto* queryColumn = getQueryColumn(messageQueryColumns, columns, timeColumn, duplicate);
 
     if ((!queryColumn) || (queryColumn->itsType != ColumnType::DateTime))
       throw Fmi::Exception(
