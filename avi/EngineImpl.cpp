@@ -4848,12 +4848,12 @@ StationQueryData EngineImpl::queryStationsAndMessages(QueryOptions& queryOptions
     StationQueryData stationScopeMessages, firScopeMessages, globalScopeMessages;
     StationQueryData* data = nullptr;
 
-    typedef struct
+    struct ScopeData
     {
       MessageScope scope;
       StationQueryData& stationData;
       StationQueryData& messageData;
-    } ScopeData;
+    };
 
     MessageScope stationOrAll = MessageScope::NoScope;
 
