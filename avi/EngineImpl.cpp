@@ -1183,7 +1183,7 @@ string buildMessirHeadingGroupByExpr(const StringList& messageTypeList,
           auto const& knownTypes = knownType.getMessageTypes();
           auto const& messirPatterns = knownType.getMessirPatterns();
 
-          if (messirPatterns.size() >= 1)
+          if (!messirPatterns.empty())
           {
             // We don't expect/support 'grouped' messagetypes (e.g. METREP,SPECIAL) currently
             //
@@ -1211,7 +1211,7 @@ string buildMessirHeadingGroupByExpr(const StringList& messageTypeList,
             {
               auto const& messirPatterns = knownType.getMessirPatterns();
 
-              if (messirPatterns.size() >= 1)
+              if (!messirPatterns.empty())
               {
                 size_t nn = 1;
 
@@ -2538,7 +2538,7 @@ void EngineImpl::shutdown()
  */
 // ----------------------------------------------------------------------
 
-const Column* EngineImpl::getQueryColumn(const ColumnTable tableColumns,
+const Column* EngineImpl::getQueryColumn(const ColumnTable& tableColumns,
                                          Columns& columns,
                                          const string& theQueryColumnName,
                                          bool& duplicate,
