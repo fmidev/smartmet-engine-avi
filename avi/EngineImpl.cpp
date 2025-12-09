@@ -866,8 +866,7 @@ void scopeMessageTypes(const StringList& messageTypeList,
     if (messageScope != MessageScope::NoScope)
       messageScopes.push_back(messageScope);
 
-    return scopeMessageTypes(
-        messageTypeList, knownMessageTypes, messageScopes, scopeMessageTypeList);
+    scopeMessageTypes(messageTypeList, knownMessageTypes, messageScopes, scopeMessageTypeList);
   }
   catch (...)
   {
