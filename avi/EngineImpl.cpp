@@ -4298,9 +4298,9 @@ StationQueryData EngineImpl::queryStations(QueryOptions& queryOptions) const
  */
 // ----------------------------------------------------------------------
 
-void EngineImpl::validateMessageTypes(const Fmi::Database::PostgreSQLConnection& connection,
+void EngineImpl::validateMessageTypes(const Fmi::Database::PostgreSQLConnection& /*connection*/,
                                       const StringList& messageTypeList,
-                                      bool debug) const
+                                      bool /*debug*/) const
 {
   try
   {

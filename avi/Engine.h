@@ -353,25 +353,28 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   ~Engine() override;
   Engine() = default;
 
-  virtual StationQueryData queryStations(QueryOptions &queryOptions) const { unavailable(BCP); }
-
-  virtual StationQueryData queryMessages(const StationIdList &stationIdList,
-                                         const QueryOptions &queryOptions) const
-  {
-    unavailable(BCP);
-  }
-  virtual StationQueryData &joinStationAndMessageData(const StationQueryData &stationData,
-                                                      StationQueryData &messageData) const
+  virtual StationQueryData queryStations(QueryOptions & /* queryOptions */) const
   {
     unavailable(BCP);
   }
 
-  virtual StationQueryData queryStationsAndMessages(QueryOptions &queryOptions) const
+  virtual StationQueryData queryMessages(const StationIdList & /* stationIdList */,
+                                         const QueryOptions & /* queryOptions */) const
+  {
+    unavailable(BCP);
+  }
+  virtual StationQueryData &joinStationAndMessageData(const StationQueryData & /* stationData */,
+                                                      StationQueryData & /*messageData*/) const
   {
     unavailable(BCP);
   }
 
-  virtual QueryData queryRejectedMessages(const QueryOptions &queryOptions) const
+  virtual StationQueryData queryStationsAndMessages(QueryOptions & /*queryOptions*/) const
+  {
+    unavailable(BCP);
+  }
+
+  virtual QueryData queryRejectedMessages(const QueryOptions & /*queryOptions*/) const
   {
     unavailable(BCP);
   }
