@@ -140,8 +140,8 @@ Column firQueryColumns[] = {
     //
     // Type, Table column, Query column
     //
-    {Integer, firIdTableColumn, firIdQueryColumn},
-    {None, "", "", nullptr, nullptr}};
+    {ColumnType::Integer, firIdTableColumn, firIdQueryColumn},
+    {ColumnType::None, "", "", nullptr, nullptr}};
 
 Column stationQueryColumns[] = {
     //
@@ -149,26 +149,26 @@ Column stationQueryColumns[] = {
     //
     // Type, Table column, Query column
     //
-    {Integer, "station_id", stationIdQueryColumn},
-    {String, stationIcaoTableColumn, stationIcaoQueryColumn},
-    {String, "name", "name"},
-    {Integer, "elevation", "elevation"},
-    {DateTime, "valid_from", "stationvalidfrom"},
-    {DateTime, "valid_to", "stationvalidto"},
-    {DateTime, "modified_last", "stationmodified"},
-    {String, stationCountryCodeTableColumn, "iso2"},
+    {ColumnType::Integer, "station_id", stationIdQueryColumn},
+    {ColumnType::String, stationIcaoTableColumn, stationIcaoQueryColumn},
+    {ColumnType::String, "name", "name"},
+    {ColumnType::Integer, "elevation", "elevation"},
+    {ColumnType::DateTime, "valid_from", "stationvalidfrom"},
+    {ColumnType::DateTime, "valid_to", "stationvalidto"},
+    {ColumnType::DateTime, "modified_last", "stationmodified"},
+    {ColumnType::String, stationCountryCodeTableColumn, "iso2"},
     //
     // Derived columns
     //
     // Type, Derived column, Query column, f(Table column), f(Table column)
     //
-    {Double, dfLongitude, "longitude", derivedExpression, nullptr},
-    {Double, dfLatitude, "latitude", derivedExpression, nullptr},
-    {TS_LonLat, dfLonLat, stationLonLatQueryColumn, derivedExpression, nullptr},
-    {TS_LatLon, dfLatLon, stationLatLonQueryColumn, derivedExpression, nullptr},
-    {Double, dfDistance, stationDistanceQueryColumn, nullptr, derivedExpression},
-    {Double, dfBearing, stationBearingQueryColumn, nullptr, derivedExpression},
-    {None, "", "", nullptr, nullptr}};
+    {ColumnType::Double, dfLongitude, "longitude", derivedExpression, nullptr},
+    {ColumnType::Double, dfLatitude, "latitude", derivedExpression, nullptr},
+    {ColumnType::TS_LonLat, dfLonLat, stationLonLatQueryColumn, derivedExpression, nullptr},
+    {ColumnType::TS_LatLon, dfLatLon, stationLatLonQueryColumn, derivedExpression, nullptr},
+    {ColumnType::Double, dfDistance, stationDistanceQueryColumn, nullptr, derivedExpression},
+    {ColumnType::Double, dfBearing, stationBearingQueryColumn, nullptr, derivedExpression},
+    {ColumnType::None, "", "", nullptr, nullptr}};
 
 Column messageTypeQueryColumns[] = {
     //
@@ -176,10 +176,10 @@ Column messageTypeQueryColumns[] = {
     //
     // Type, Table column, Query column
     //
-    {String, "type", "messagetype"},
-    {String, "description", "messagetypedescription"},
-    {DateTime, "modified_last", "messagetypemodified"},
-    {None, "", ""}};
+    {ColumnType::String, "type", "messagetype"},
+    {ColumnType::String, "description", "messagetypedescription"},
+    {ColumnType::DateTime, "modified_last", "messagetypemodified"},
+    {ColumnType::None, "", ""}};
 
 Column messageRouteQueryColumns[] = {
     //
@@ -187,10 +187,10 @@ Column messageRouteQueryColumns[] = {
     //
     // Type, Table column, Query column
     //
-    {String, "name", "route"},
-    {String, "description", "routedescription"},
-    {DateTime, "modified_last", "routemodified"},
-    {None, "", ""}};
+    {ColumnType::String, "name", "route"},
+    {ColumnType::String, "description", "routedescription"},
+    {ColumnType::DateTime, "modified_last", "routemodified"},
+    {ColumnType::None, "", ""}};
 
 Column messageQueryColumns[] = {
     //
@@ -198,17 +198,17 @@ Column messageQueryColumns[] = {
     //
     // Type, Table column, Query column
     //
-    {Integer, "station_id", stationIdQueryColumn},
-    {Integer, messageIdTableColumn, "messageid"},
-    {String, messageTableColumn, messageQueryColumn},
-    {DateTime, "message_time", "messagetime"},
-    {DateTime, "valid_from", "messagevalidfrom"},
-    {DateTime, "valid_to", "messagevalidto"},
-    {DateTime, "created", "messagecreated"},
-    {DateTime, "file_modified", "messagefilemodified"},
-    {String, "messir_heading", "messirheading"},
-    {String, "version", "messageversion"},
-    {None, "", ""}};
+    {ColumnType::Integer, "station_id", stationIdQueryColumn},
+    {ColumnType::Integer, messageIdTableColumn, "messageid"},
+    {ColumnType::String, messageTableColumn, messageQueryColumn},
+    {ColumnType::DateTime, "message_time", "messagetime"},
+    {ColumnType::DateTime, "valid_from", "messagevalidfrom"},
+    {ColumnType::DateTime, "valid_to", "messagevalidto"},
+    {ColumnType::DateTime, "created", "messagecreated"},
+    {ColumnType::DateTime, "file_modified", "messagefilemodified"},
+    {ColumnType::String, "messir_heading", "messirheading"},
+    {ColumnType::String, "version", "messageversion"},
+    {ColumnType::None, "", ""}};
 
 Column rejectedMessageQueryColumns[] = {
     //
@@ -216,17 +216,17 @@ Column rejectedMessageQueryColumns[] = {
     //
     // Type, Table column, Query column
     //
-    {String, "icao_code", "messagerejectedicao"},
-    {String, "message", "message"},
-    {DateTime, "message_time", "messagetime"},
-    {DateTime, "valid_from", "messagevalidfrom"},
-    {DateTime, "valid_to", "messagevalidto"},
-    {DateTime, "created", "messagecreated"},
-    {DateTime, "file_modified", "messagefilemodified"},
-    {String, "messir_heading", "messirheading"},
-    {String, "version", "messageversion"},
-    {Integer, "reject_reason", "messagerejectedreason"},
-    {None, "", ""}};
+    {ColumnType::String, "icao_code", "messagerejectedicao"},
+    {ColumnType::String, "message", "message"},
+    {ColumnType::DateTime, "message_time", "messagetime"},
+    {ColumnType::DateTime, "valid_from", "messagevalidfrom"},
+    {ColumnType::DateTime, "valid_to", "messagevalidto"},
+    {ColumnType::DateTime, "created", "messagecreated"},
+    {ColumnType::DateTime, "file_modified", "messagefilemodified"},
+    {ColumnType::String, "messir_heading", "messirheading"},
+    {ColumnType::String, "version", "messageversion"},
+    {ColumnType::Integer, "reject_reason", "messagerejectedreason"},
+    {ColumnType::None, "", ""}};
 
 QueryTable firQueryTables[] = {{firTableName, firTableAlias, firQueryColumns, firTableJoin},
                                {"", "", nullptr, ""}};
@@ -241,7 +241,7 @@ QueryTable messageQueryTables[] = {
     {stationTableName, stationTableAlias, stationQueryColumns, stationTableJoin},
     {"", "", nullptr, ""}};
 
-Column noQueryColumns[] = {{None, "", ""}};
+Column noQueryColumns[] = {{ColumnType::None, "", ""}};
 
 QueryTable requestStationsTable = {
     "request_stations", requestStationsTableAlias, noQueryColumns, requestStationsTableJoin};
@@ -425,20 +425,21 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
     // Determine message scope (station for nonroute query) for station query generation.
     // All given message types must have same scope (station, fir or global) for route query
 
-    MessageScope scope = (locationOptions.itsWKTs.isRoute ? NoScope : StationScope);
+    MessageScope scope =
+        (locationOptions.itsWKTs.isRoute ? MessageScope::NoScope : MessageScope::StationScope);
 
-    if (scope == NoScope)
+    if (scope == MessageScope::NoScope)
     {
       for (auto const& messageType : messageTypes)
       {
-        MessageScope knownScope = NoScope;
+        MessageScope knownScope = MessageScope::NoScope;
 
         for (auto const& knownType : knownMessageTypes)
           if (messageType.empty() || (knownType == messageType))
           {
             knownScope = knownType.getScope();
 
-            if (scope != NoScope)
+            if (scope != MessageScope::NoScope)
             {
               if (knownScope != scope)
                 throw Fmi::Exception::Trace(
@@ -451,7 +452,7 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
               break;
           }
 
-        if (knownScope == NoScope)
+        if (knownScope == MessageScope::NoScope)
           throw Fmi::Exception::Trace(
               BCP, "buildStationQueryFromWhereOrderByClause: internal: message scope unknown");
       }
@@ -459,9 +460,9 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
 
     string geom;
 
-    if (scope == StationScope)
+    if (scope == MessageScope::StationScope)
       geom = string(stationTableAlias) + ".geom";
-    else if (scope == FIRScope)
+    else if (scope == MessageScope::FIRScope)
       geom = string(firTableAlias) + ".areageom";
     else
       return;
@@ -484,7 +485,7 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
       //	     ) AS segpoints
       // ) AS segments
       //
-      if (scope == FIRScope)
+      if (scope == MessageScope::FIRScope)
         fromWhereOrderByClause << "," << firTableName << " " << firTableAlias;
 
       fromWhereOrderByClause
@@ -513,7 +514,7 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
                   << ")::geography," << fixed << setprecision(0) << locationOptions.itsMaxDistance
                   << ")";
 
-        if (scope == FIRScope)
+        if (scope == MessageScope::FIRScope)
           condition << " AND ST_Within(" << stationTableAlias << ".geom," << firTableAlias
                     << ".areageom)";
       }
@@ -862,7 +863,7 @@ void scopeMessageTypes(const StringList& messageTypeList,
 
     // If no scope, get all message types by passing on empty list
 
-    if (messageScope != NoScope)
+    if (messageScope != MessageScope::NoScope)
       messageScopes.push_back(messageScope);
 
     return scopeMessageTypes(
@@ -1272,7 +1273,7 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
       // Only one type (i.e. TAF) currently supported
       //
       for (auto const& knownType : knownMessageTypes)
-        if (knownType.getTimeRangeType() == MessageValidTimeRangeLatest)
+        if (knownType.getTimeRangeType() == TimeRangeType::MessageValidTimeRangeLatest)
         {
           if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
           {
@@ -1340,7 +1341,7 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
       //
       for (auto const& messageType : messageTypeList)
         for (auto const& knownType : knownMessageTypes)
-          if (knownType.getTimeRangeType() == MessageValidTimeRangeLatest)
+          if (knownType.getTimeRangeType() == TimeRangeType::MessageValidTimeRangeLatest)
           {
             if (knownType.getMessageTypes().front() == messageType)
             {
@@ -1446,7 +1447,7 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
       // Only one type (i.e. TAF) currently supported
       //
       for (auto const& knownType : knownMessageTypes)
-        if (knownType.getTimeRangeType() == MessageValidTimeRangeLatest)
+        if (knownType.getTimeRangeType() == TimeRangeType::MessageValidTimeRangeLatest)
         {
           if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
           {
@@ -1515,7 +1516,7 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
       //
       for (auto const& messageType : messageTypeList)
         for (auto const& knownType : knownMessageTypes)
-          if (knownType.getTimeRangeType() == MessageValidTimeRangeLatest)
+          if (knownType.getTimeRangeType() == TimeRangeType::MessageValidTimeRangeLatest)
           {
             if (knownType.getMessageTypes().front() == messageType)
             {
@@ -1732,21 +1733,21 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 
     withClause << latestMessagesTable.itsName << " AS (";
 
-    string messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, ValidTimeRangeLatest);
+    string messageTypeIn = buildMessageTypeInClause(
+        messageTypes, knownMessageTypes, TimeRangeType::ValidTimeRangeLatest);
 
     if (!messageTypeIn.empty())
     {
       // Depending on configuration the latest message for group(s) of types might be returned
       //
-      string messageTypeGroupByExpr =
-          buildMessageTypeGroupByExpr(messageTypes, knownMessageTypes, ValidTimeRangeLatest);
+      string messageTypeGroupByExpr = buildMessageTypeGroupByExpr(
+          messageTypes, knownMessageTypes, TimeRangeType::ValidTimeRangeLatest);
 
       // Depending on configuration messir_heading LIKE pattern(s) might be used for additional
       // grouping
 
-      string messirHeadingGroupByExpr =
-          buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, ValidTimeRangeLatest);
+      string messirHeadingGroupByExpr = buildMessirHeadingGroupByExpr(
+          messageTypes, knownMessageTypes, TimeRangeType::ValidTimeRangeLatest);
 
       withClause << "SELECT " << latestMessageIdQueryExpr << messageTypeGroupByExpr
                  << messirHeadingGroupByExpr << latestMessageIdOrderByExpr << "AS message_id"
@@ -1759,13 +1760,13 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       unionOrEmpty = " UNION ALL ";
     }
 
-    messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, MessageValidTimeRangeLatest);
+    messageTypeIn = buildMessageTypeInClause(
+        messageTypes, knownMessageTypes, TimeRangeType::MessageValidTimeRangeLatest);
 
     if (!messageTypeIn.empty())
     {
       string messirHeadingGroupByExpr = buildMessirHeadingGroupByExpr(
-          messageTypes, knownMessageTypes, MessageValidTimeRangeLatest);
+          messageTypes, knownMessageTypes, TimeRangeType::MessageValidTimeRangeLatest);
 
       bool bStationJoin;
       string stationAndTimeCondition = buildMessageValidTimeRangeLatestTimeCondition(
@@ -1784,15 +1785,15 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       unionOrEmpty = " UNION ALL ";
     }
 
-    messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
+    messageTypeIn = buildMessageTypeInClause(
+        messageTypes, knownMessageTypes, TimeRangeType::MessageTimeRangeLatest);
 
     if (!messageTypeIn.empty())
     {
-      string messageTypeGroupByExpr =
-          buildMessageTypeGroupByExpr(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
-      string messirHeadingGroupByExpr =
-          buildMessirHeadingGroupByExpr(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
+      string messageTypeGroupByExpr = buildMessageTypeGroupByExpr(
+          messageTypes, knownMessageTypes, TimeRangeType::MessageTimeRangeLatest);
+      string messirHeadingGroupByExpr = buildMessirHeadingGroupByExpr(
+          messageTypes, knownMessageTypes, TimeRangeType::MessageTimeRangeLatest);
       string whereOrAnd = " WHERE ";
 
       withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr << messageTypeGroupByExpr
@@ -1838,13 +1839,13 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       unionOrEmpty = " UNION ALL ";
     }
 
-    messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, CreationValidTimeRangeLatest);
+    messageTypeIn = buildMessageTypeInClause(
+        messageTypes, knownMessageTypes, TimeRangeType::CreationValidTimeRangeLatest);
 
     if (!messageTypeIn.empty())
     {
       string messirHeadingGroupByExpr = buildMessirHeadingGroupByExpr(
-          messageTypes, knownMessageTypes, CreationValidTimeRangeLatest);
+          messageTypes, knownMessageTypes, TimeRangeType::CreationValidTimeRangeLatest);
 
       withClause << unionOrEmpty << "SELECT " << latestMessageIdQueryExpr << "mt.type_id"
                  << messirHeadingGroupByExpr << latestMessageIdOrderByExpr << "AS message_id"
@@ -1856,7 +1857,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       unionOrEmpty = " UNION ALL ";
     }
 
-    messageTypeIn = buildMessageTypeInClause(messageTypes, knownMessageTypes, ValidTimeRange);
+    messageTypeIn =
+        buildMessageTypeInClause(messageTypes, knownMessageTypes, TimeRangeType::ValidTimeRange);
 
     if (!messageTypeIn.empty())
     {
@@ -1870,7 +1872,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       unionOrEmpty = " UNION ALL ";
     }
 
-    messageTypeIn = buildMessageTypeInClause(messageTypes, knownMessageTypes, MessageTimeRange);
+    messageTypeIn =
+        buildMessageTypeInClause(messageTypes, knownMessageTypes, TimeRangeType::MessageTimeRange);
 
     if (!messageTypeIn.empty())
     {
@@ -1887,8 +1890,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       unionOrEmpty = " UNION ALL ";
     }
 
-    messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, CreationValidTimeRange);
+    messageTypeIn = buildMessageTypeInClause(
+        messageTypes, knownMessageTypes, TimeRangeType::CreationValidTimeRange);
 
     if (!messageTypeIn.empty())
       withClause << unionOrEmpty << "SELECT message_id FROM record_set " << messageTableAlias
@@ -1958,8 +1961,8 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
     MessageTimeRangeLatest time restriction) latest message would be returned for each group's type
     */
 
-    string messageTypeIn =
-        buildMessageTypeInClause(messageTypes, knownMessageTypes, MessageTimeRangeLatest);
+    string messageTypeIn = buildMessageTypeInClause(
+        messageTypes, knownMessageTypes, TimeRangeType::MessageTimeRangeLatest);
 
     if (messageTypeIn.empty())
       return "";
@@ -2132,8 +2135,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         fromWhereOrderByClause << whereOrAnd << "(";
 
         list<TimeRangeType> timeRangeTypes;
-        timeRangeTypes.push_back(ValidTimeRange);
-        timeRangeTypes.push_back(ValidTimeRangeLatest);
+        timeRangeTypes.push_back(TimeRangeType::ValidTimeRange);
+        timeRangeTypes.push_back(TimeRangeType::ValidTimeRangeLatest);
 
         string messageTypeIn = buildMessageTypeInClause(
             queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
@@ -2150,8 +2153,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         }
 
         timeRangeTypes.clear();
-        timeRangeTypes.push_back(MessageValidTimeRange);
-        timeRangeTypes.push_back(MessageValidTimeRangeLatest);
+        timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRange);
+        timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRangeLatest);
 
         messageTypeIn = buildMessageTypeInClause(
             queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
@@ -2179,7 +2182,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         }
 
         messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, MessageTimeRange);
+            queryOptions.itsMessageTypes, knownMessageTypes, TimeRangeType::MessageTimeRange);
 
         if (!messageTypeIn.empty())
         {
@@ -2202,7 +2205,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         // somehow fooled by the query)
 
         messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, MessageTimeRangeLatest);
+            queryOptions.itsMessageTypes, knownMessageTypes, TimeRangeType::MessageTimeRangeLatest);
 
         if (!messageTypeIn.empty())
         {
@@ -2213,8 +2216,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         }
 
         timeRangeTypes.clear();
-        timeRangeTypes.push_back(CreationValidTimeRange);
-        timeRangeTypes.push_back(CreationValidTimeRangeLatest);
+        timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRange);
+        timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRangeLatest);
 
         messageTypeIn = buildMessageTypeInClause(
             queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
@@ -2557,9 +2560,9 @@ const Column* EngineImpl::getQueryColumn(const ColumnTable tableColumns,
         for (auto& column : columns)
           if (column.itsName == theQueryColumnName)
           {
-            if (column.itsSelection == Automatic)
+            if (column.itsSelection == ColumnSelection::Automatic)
             {
-              column.itsSelection = AutomaticRequested;
+              column.itsSelection = ColumnSelection::AutomaticRequested;
               column.itsNumber = columnNumber;
             }
 
@@ -2643,7 +2646,7 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
                            "buildStationQuerySelectClause(): internal: Unable to get id column");
 
     Column column(*queryColumn);
-    column.itsSelection = Automatic;
+    column.itsSelection = ColumnSelection::Automatic;
     columns.push_back(column);
 
     selectClause =
@@ -2661,7 +2664,7 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
             BCP, "buildStationQuerySelectClause(): internal: Unable to get distance column");
 
       Column column(*queryColumn);
-      column.itsSelection = Automatic;
+      column.itsSelection = ColumnSelection::Automatic;
       columns.push_back(column);
     }
 
@@ -2702,10 +2705,10 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
           selectClause +=
               (string(selectClause.empty() ? "SELECT " : ",") + queryColumn->itsTableColumnName);
 
-          if (queryColumn->itsType == DateTime)
+          if (queryColumn->itsType == ColumnType::DateTime)
             selectClause += string(" AT TIME ZONE 'UTC'");
 
-          if ((queryColumn->itsType == DateTime) ||
+          if ((queryColumn->itsType == ColumnType::DateTime) ||
               (queryColumn->itsName != queryColumn->itsTableColumnName))
             selectClause += (string(" AS ") + queryColumn->itsName);
         }
@@ -2807,7 +2810,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
                 BCP, "buildMessageQuerySelectClause(): internal: Unable to get station id column");
 
           Column column(*queryColumn);
-          column.itsSelection = Automatic;
+          column.itsSelection = ColumnSelection::Automatic;
           table.itsSelectedColumns.push_back(column);
 
           selectClause = queryTable.itsAlias + "." + queryColumn->itsTableColumnName + " AS " +
@@ -2828,7 +2831,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
                 "buildMessageQuerySelectClause(): internal: Unable to get station icao column");
 
           Column column(*queryColumn);
-          column.itsSelection = Automatic;
+          column.itsSelection = ColumnSelection::Automatic;
           table.itsSelectedColumns.push_back(column);
 
           // NOTE: Generate select expression if icao is requested by the caller too. When looping
@@ -2886,10 +2889,10 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
             selectClause += (string(selectClause.empty() ? "" : ",") + queryTable.itsAlias + "." +
                              queryColumn->itsTableColumnName);
 
-            if (queryColumn->itsType == DateTime)
+            if (queryColumn->itsType == ColumnType::DateTime)
               selectClause += string(" AT TIME ZONE 'UTC'");
 
-            if ((queryColumn->itsType == DateTime) ||
+            if ((queryColumn->itsType == ColumnType::DateTime) ||
                 (queryColumn->itsName != queryColumn->itsTableColumnName))
               selectClause += (string(" AS ") + queryColumn->itsName);
           }
@@ -2938,7 +2941,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
             BCP, "buildMessageQuerySelectClause(): internal: Unable to get message column");
 
       Column column(*queryColumn);
-      column.itsSelection = Automatic;
+      column.itsSelection = ColumnSelection::Automatic;
       table.itsSelectedColumns.push_back(column);
 
       selectClause += (string(",") + messageTableAlias + "." + queryColumn->itsTableColumnName +
@@ -3042,12 +3045,12 @@ void EngineImpl::loadQueryResult(
         // and icao is automatically added to the column list to generate station table join to
         // order the messages by icao code
         //
-        if (column.itsSelection == Automatic)
+        if (column.itsSelection == ColumnSelection::Automatic)
           // Column was not requested by the caller, skip it
           //
           continue;
 
-        if (column.itsType == Integer)
+        if (column.itsType == ColumnType::Integer)
         {
           // Currently can't handle NULLs properly, but by setting kFloatMissing for NULL,
           // TableFeeder (used by avi plugin) produces 'missing' (by default, 'nan') column value.
@@ -3061,7 +3064,7 @@ void EngineImpl::loadQueryResult(
 
           queryValues[column.itsName].push_back(return_value);
         }
-        else if (column.itsType == Double)
+        else if (column.itsType == ColumnType::Double)
         {
           // Note: try/catch; With station query distance and bearing are available only when
           // querying stations with coordinates; for other station queries distance and bearing
@@ -3080,7 +3083,7 @@ void EngineImpl::loadQueryResult(
 
           queryValues[column.itsName].push_back(return_value);
         }
-        else if (column.itsType == String)
+        else if (column.itsType == ColumnType::String)
         {
           bool isNull;
 
@@ -3099,7 +3102,8 @@ void EngineImpl::loadQueryResult(
             queryValues[column.itsName].emplace_back(
                 boost::algorithm::trim_copy(row[column.itsName].as<string>()));
         }
-        else if ((column.itsType == TS_LonLat) || (column.itsType == TS_LatLon))
+        else if ((column.itsType == ColumnType::TS_LonLat) ||
+                 (column.itsType == ColumnType::TS_LatLon))
         {
           // 'latlon' and 'lonlat' are selected as comma separated strings. Return them as
           // TimeSeries::LonLat for formatted output with TableFeeder
@@ -3698,7 +3702,7 @@ void EngineImpl::validateParameters(const StringList& paramList,
     string selectClause;
     bool distinct = false;
 
-    if ((validity == Accepted) || (validity == AcceptedMessages))
+    if ((validity == Validity::Accepted) || (validity == Validity::AcceptedMessages))
     {
       // Must have at least 1 station or accepted message column for 'Accepted' and at least 1
       // message column for 'AcceptedMessages'
@@ -3712,7 +3716,7 @@ void EngineImpl::validateParameters(const StringList& paramList,
                                     messageColumnSelected,
                                     distinct);
 
-      if ((validity == AcceptedMessages) && (!messageColumnSelected))
+      if ((validity == Validity::AcceptedMessages) && (!messageColumnSelected))
         selectClause.clear();
     }
     else
@@ -3766,7 +3770,7 @@ void EngineImpl::validateStationIds(const Fmi::Database::PostgreSQLConnection& c
 
     QueryData queryData;
 
-    queryData.itsColumns.emplace_back(Integer, "station_id");
+    queryData.itsColumns.emplace_back(ColumnType::Integer, "station_id");
 
     executeParamQuery<QueryData, StationIdList>(
         connection, selectFromWhereClause.str(), stationIdList, debug, queryData);
@@ -3812,7 +3816,7 @@ void EngineImpl::validateIcaos(const Fmi::Database::PostgreSQLConnection& connec
 
     QueryData queryData;
 
-    queryData.itsColumns.emplace_back(String, "icao_code");
+    queryData.itsColumns.emplace_back(ColumnType::String, "icao_code");
 
     executeParamQuery<QueryData, StringList>(
         connection, selectFromWhereClause.str(), icaoList, debug, queryData);
@@ -3928,7 +3932,7 @@ void EngineImpl::validatePlaces(const Fmi::Database::PostgreSQLConnection& conne
     {
       QueryData queryData;
 
-      queryData.itsColumns.emplace_back(String, "name");
+      queryData.itsColumns.emplace_back(ColumnType::String, "name");
 
       selectFromWhereClause << "SELECT request_stations.name FROM (VALUES ($1)) "
                             << "AS request_stations (name) LEFT JOIN avidb_stations ON "
@@ -3979,7 +3983,7 @@ void EngineImpl::validateCountries(const Fmi::Database::PostgreSQLConnection& co
 
     QueryData queryData;
 
-    queryData.itsColumns.emplace_back(String, "country_code");
+    queryData.itsColumns.emplace_back(ColumnType::String, "country_code");
 
     executeParamQuery<QueryData, StringList>(
         connection, selectFromWhereClause.str(), countryList, debug, queryData);
@@ -4049,12 +4053,12 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
 
     QueryData queryData;
 
-    queryData.itsColumns.emplace_back(String, "wkt");
-    queryData.itsColumns.emplace_back(String, "geomtype");
-    queryData.itsColumns.emplace_back(Integer, "isvalid");
-    queryData.itsColumns.emplace_back(Integer, "index");
-    queryData.itsColumns.emplace_back(Double, "lat");
-    queryData.itsColumns.emplace_back(Double, "lon");
+    queryData.itsColumns.emplace_back(ColumnType::String, "wkt");
+    queryData.itsColumns.emplace_back(ColumnType::String, "geomtype");
+    queryData.itsColumns.emplace_back(ColumnType::Integer, "isvalid");
+    queryData.itsColumns.emplace_back(ColumnType::Integer, "index");
+    queryData.itsColumns.emplace_back(ColumnType::Double, "lat");
+    queryData.itsColumns.emplace_back(ColumnType::Double, "lon");
 
     executeParamQuery<QueryData, StringList>(
         connection, selectFromWhereClause.str(), locationOptions.itsWKTs.itsWKTs, debug, queryData);
@@ -4140,7 +4144,7 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
 
     if (validateQuery)
     {
-      validateParameters(paramList, Accepted, queryOptions.itsMessageColumnSelected);
+      validateParameters(paramList, Validity::Accepted, queryOptions.itsMessageColumnSelected);
 
       if (!locationOptions.itsStationIds.empty())
         validateStationIds(connection, locationOptions.itsStationIds, queryOptions.itsDebug);
@@ -4249,7 +4253,7 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
         for (auto it = stationQueryData.itsColumns.begin();
              (it != stationQueryData.itsColumns.end());)
         {
-          if (it->itsSelection == Automatic)
+          if (it->itsSelection == ColumnSelection::Automatic)
             it = stationQueryData.itsColumns.erase(it);
           else
             it++;
@@ -4355,11 +4359,11 @@ const Column* EngineImpl::getMessageTableTimeColumn(const string& timeColumn) co
   try
   {
     Columns columns;
-    bool duplicate;
+    bool duplicate = false;
 
     auto queryColumn = getQueryColumn(messageQueryColumns, columns, timeColumn, duplicate);
 
-    if ((!queryColumn) || (queryColumn->itsType != DateTime))
+    if ((!queryColumn) || (queryColumn->itsType != ColumnType::DateTime))
       throw Fmi::Exception(
           BCP, string("Column '") + timeColumn + "' is not a datetime column in message table");
 
@@ -4405,7 +4409,8 @@ StationQueryData EngineImpl::queryMessages(const Fmi::Database::PostgreSQLConnec
     {
       validateTimes(queryOptions);
 
-      validateParameters(queryOptions.itsParameters, AcceptedMessages, messageColumnSelected);
+      validateParameters(
+          queryOptions.itsParameters, Validity::AcceptedMessages, messageColumnSelected);
 
       if (!queryOptions.itsMessageTypes.empty())
         validateMessageTypes(connection, queryOptions.itsMessageTypes, queryOptions.itsDebug);
@@ -4529,13 +4534,13 @@ StationQueryData EngineImpl::queryMessages(const Fmi::Database::PostgreSQLConnec
           // to it by itself when needed).
           //
           list<TimeRangeType> timeRangeTypes;
-          timeRangeTypes.push_back(ValidTimeRange);
-          timeRangeTypes.push_back(ValidTimeRangeLatest);
-          timeRangeTypes.push_back(CreationValidTimeRange);
-          timeRangeTypes.push_back(CreationValidTimeRangeLatest);
-          timeRangeTypes.push_back(MessageValidTimeRange);
-          timeRangeTypes.push_back(MessageValidTimeRangeLatest);
-          timeRangeTypes.push_back(MessageTimeRange);
+          timeRangeTypes.push_back(TimeRangeType::ValidTimeRange);
+          timeRangeTypes.push_back(TimeRangeType::ValidTimeRangeLatest);
+          timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRange);
+          timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRangeLatest);
+          timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRange);
+          timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRangeLatest);
+          timeRangeTypes.push_back(TimeRangeType::MessageTimeRange);
 
           string noMessageValidityTypesIn = buildMessageTypeInClause(
               queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), timeRangeTypes);
@@ -4820,7 +4825,7 @@ StationQueryData EngineImpl::queryStationsAndMessages(QueryOptions& queryOptions
 {
   try
   {
-    if (queryOptions.itsValidity == Avi::Rejected)
+    if (queryOptions.itsValidity == Validity::Rejected)
       throw Fmi::Exception(
           BCP,
           "queryStationsAndMessages() can't be used to query rejected messages; use "
@@ -4850,7 +4855,7 @@ StationQueryData EngineImpl::queryStationsAndMessages(QueryOptions& queryOptions
       StationQueryData& messageData;
     } ScopeData;
 
-    MessageScope stationOrAll = NoScope;
+    MessageScope stationOrAll = MessageScope::NoScope;
 
     if (!queryOptions.itsLocationOptions.itsWKTs.itsWKTs.empty())
     {
@@ -4859,16 +4864,17 @@ StationQueryData EngineImpl::queryStationsAndMessages(QueryOptions& queryOptions
       validateWKTs(connection, queryOptions.itsLocationOptions, queryOptions.itsDebug);
 
       if (queryOptions.itsLocationOptions.itsWKTs.isRoute)
-        stationOrAll = StationScope;
+        stationOrAll = MessageScope::StationScope;
     }
 
     // Validate all requested message types (without taking scope into account)
 
     validateMessageTypes(connection, queryMessageTypes, queryOptions.itsDebug);
 
-    list<ScopeData> scopeDatas = {{stationOrAll, stationScopeStations, stationScopeMessages},
-                                  {FIRScope, firScopeStations, firScopeMessages},
-                                  {GlobalScope, globalScopeStations, globalScopeMessages}};
+    list<ScopeData> scopeDatas = {
+        {stationOrAll, stationScopeStations, stationScopeMessages},
+        {MessageScope::FIRScope, firScopeStations, firScopeMessages},
+        {MessageScope::GlobalScope, globalScopeStations, globalScopeMessages}};
 
     bool validateQuery = true;
 
@@ -4886,7 +4892,7 @@ StationQueryData EngineImpl::queryStationsAndMessages(QueryOptions& queryOptions
         scope.stationData = queryStations(connection, queryOptions, validateQuery);
         validateQuery = false;
 
-        if ((scope.scope == GlobalScope) || !scope.stationData.itsStationIds.empty())
+        if ((scope.scope == MessageScope::GlobalScope) || !scope.stationData.itsStationIds.empty())
         {
           // Query messages if any message column were requested
 
@@ -4931,7 +4937,7 @@ StationQueryData EngineImpl::queryStationsAndMessages(QueryOptions& queryOptions
         }
       }
 
-      if (scope.scope == NoScope)
+      if (scope.scope == MessageScope::NoScope)
         break;
     }
 
@@ -4965,7 +4971,7 @@ QueryData EngineImpl::queryRejectedMessages(const QueryOptions& queryOptions) co
 
     bool messageColumnSelected;
 
-    validateParameters(queryOptions.itsParameters, Rejected, messageColumnSelected);
+    validateParameters(queryOptions.itsParameters, Validity::Rejected, messageColumnSelected);
 
     if (!queryOptions.itsMessageTypes.empty())
       validateMessageTypes(connection, queryOptions.itsMessageTypes, queryOptions.itsDebug);

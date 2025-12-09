@@ -7,6 +7,7 @@
 #include <list>
 #include <map>
 #include <pqxx/result>
+#include <utility>
 
 #define stationIdQueryColumn "stationid"
 #define messageQueryColumn "message"
@@ -45,11 +46,11 @@ struct LonLat
   double itsLat;
 };
 
-typedef long StationIdType;
-typedef std::list<StationIdType> StationIdList;
-typedef std::list<std::string> StringList;
-typedef std::list<BBox> BBoxList;
-typedef std::list<LonLat> LonLatList;
+using StationIdType = long;
+using StationIdList = std::list<StationIdType>;
+using StringList = std::list<std::string>;
+using BBoxList = std::list<BBox>;
+using LonLatList = std::list<LonLat>;
 
 struct WKTs
 {
@@ -57,7 +58,7 @@ struct WKTs
   bool isRoute;
 };
 
-typedef struct
+using LocationOptions = struct
 {
   StationIdList itsStationIds;
   StringList itsIcaos;
@@ -75,7 +76,7 @@ typedef struct
   StringList itsIncludeCountryFilters;
   StringList itsIncludeIcaoFilters;
   StringList itsExcludeIcaoFilters;
-} LocationOptions;
+};
 
 // Type for passing time related options
 
@@ -83,9 +84,9 @@ struct TimeOptions
 {
   TimeOptions(bool theQueryValidRangeMessages = true,
               std::string theMessageTableTimeRangeColumn = messageTimeQueryColumn)
+      : itsQueryValidRangeMessages(theQueryValidRangeMessages),
+        itsMessageTableTimeRangeColumn(std::move(theMessageTableTimeRangeColumn))
   {
-    itsQueryValidRangeMessages = theQueryValidRangeMessages;
-    itsMessageTableTimeRangeColumn = theMessageTableTimeRangeColumn;
   }
 
   std::string itsObservationTime;     // Observation time (defaults to current time)
@@ -94,8 +95,8 @@ struct TimeOptions
   std::string itsEndTime;             // Time range end time
   std::string itsTimeFormat;          // Fmi::TimeFormatter type; iso, timestamp, sql, xml or epoch
   std::string itsTimeZone;            // tz for localtime output
-  bool itsQueryValidRangeMessages;  // Whether to query valid accepted messages or accepted messages
-                                    // created within time range
+  bool itsQueryValidRangeMessages = true;  // Whether to query valid accepted messages or accepted
+                                           // messages created within time range
   // BRAINSTORM-3301
   //
   // If false, do not check/filter if messages were created after the given messagetime and
@@ -115,12 +116,12 @@ struct TimeOptions
 
 // Type for passing query options
 
-typedef enum
+enum class Validity
 {
   Accepted,
   Rejected,
   AcceptedMessages
-} Validity;
+};
 
 struct QueryOptions
 {
@@ -146,7 +147,7 @@ struct QueryOptions
 
 // Types for building query
 
-typedef enum
+enum class ColumnType
 {
   Integer,
   Double,
@@ -155,16 +156,17 @@ typedef enum
   TS_LatLon,
   DateTime,
   None
-} ColumnType;
-typedef enum
+};
+enum class ColumnSelection
 {
   Requested,
   Automatic,
   AutomaticRequested,
   AutomaticOnly
-} ColumnSelection;
-typedef std::string (*ColumnExpression)(const std::string &tableColumnName,
-                                        const std::string &queryColumnName);
+};
+
+using ColumnExpression = std::string (*)(const std::string &tableColumnName,
+                                         const std::string &queryColumnName);
 
 struct Column
 {
@@ -177,9 +179,7 @@ struct Column
         itsName(theQueryColumnName.empty() ? theTableColumnName : theQueryColumnName),
         itsTableColumnName(theTableColumnName),
         itsExpression(theExpression),
-        itsCoordinateExpression(theCoordinateExpression),
-        itsNumber(-1),
-        itsSelection(Requested)
+        itsCoordinateExpression(theCoordinateExpression)
   {
   }
   Column() = delete;
@@ -204,12 +204,12 @@ struct Column
   std::string itsTableColumnName;
   ColumnExpression itsExpression;
   ColumnExpression itsCoordinateExpression;
-  int itsNumber;
-  ColumnSelection itsSelection;
+  int itsNumber = -1;
+  ColumnSelection itsSelection = ColumnSelection::Requested;
 };
 
-typedef std::list<Column> Columns;
-typedef Column *ColumnTable;
+using Columns = std::list<Column>;
+using ColumnTable = Column *;
 
 struct QueryTable
 {
@@ -221,12 +221,6 @@ struct QueryTable
 
 struct Table
 {
-  Table()
-  {
-    subQuery = false;
-    leftOuter = false;
-  }
-
   std::string itsAlias;
   Columns itsSelectedColumns;
   std::string itsJoin;
@@ -236,7 +230,7 @@ struct Table
   // Is only/always set for latest_messages; avidb_messages.message_id IN (SELECT message_id FROM
   // latest_messages)
   //
-  bool subQuery;
+  bool subQuery = false;
 
   // If set, generating avidb_rejected_messages LEFT OUTER join for the table
   // (avidb_rejected_messages table's foreign key columns for route and message type are nullable).
@@ -246,24 +240,23 @@ struct Table
   // Is set for avidb_messages_types table if no message type restriction; avidb_rejected_messages
   // LEFT OUTER JOIN avidb_messages_types ON (type_id)
   //
-  bool leftOuter;
+  bool leftOuter = false;
 };
 
-typedef std::map<std::string, Table> TableMap;
+using TableMap = std::map<std::string, Table>;
 
 // Types for returning query results
 
-typedef std::vector<TimeSeries::Value> ValueVector;
-typedef std::map<std::string, ValueVector> QueryValues;
+using ValueVector = std::vector<TimeSeries::Value>;
+using QueryValues = std::map<std::string, ValueVector>;
 
 struct QueryData
 {
-  QueryData() : itsCheckDuplicateMessages(false) {}
   // The data has no station id; return the common value map having colum name as the map key
   //
-  inline QueryValues &getValues(const pqxx::result::const_iterator &,
-                                const pqxx::result::const_iterator &,
-                                bool &duplicate)
+  QueryValues &getValues(const pqxx::result::const_iterator &,
+                         const pqxx::result::const_iterator &,
+                         bool &duplicate)
   {
     duplicate = false;
     return itsValues;
@@ -271,10 +264,11 @@ struct QueryData
 
   Columns itsColumns;
   QueryValues itsValues;
-  bool itsCheckDuplicateMessages;  // Always false; no check for duplicates for rejected messages
+  bool itsCheckDuplicateMessages =
+      false;  // Always false; no check for duplicates for rejected messages
 };
 
-typedef std::map<StationIdType, QueryValues> StationQueryValues;
+using StationQueryValues = std::map<StationIdType, QueryValues>;
 
 struct StationQueryData
 {
@@ -318,8 +312,8 @@ struct StationQueryData
                                    // returned
 };
 
-typedef std::pair<std::string, BBox> FIRAreaAndBBox;
-typedef std::map<int, FIRAreaAndBBox> FIRQueryData;
+using FIRAreaAndBBox = std::pair<std::string, BBox>;
+using FIRQueryData = std::map<int, FIRAreaAndBBox>;
 
 /**
  * @brief Base class for AVI engine

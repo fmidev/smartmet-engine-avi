@@ -355,16 +355,16 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       // Message scope
 
-      typedef struct
+      using KnownMessageScope = struct
       {
         const char *scopeName;
         MessageScope messageScope;
-      } KnownMessageScope;
+      };
 
-      KnownMessageScope messageScopes[] = {{"station", StationScope},
-                                           {"fir", FIRScope},
-                                           {"global", GlobalScope},
-                                           {nullptr, NoScope}};
+      KnownMessageScope messageScopes[] = {{"station", MessageScope::StationScope},
+                                           {"fir", MessageScope::FIRScope},
+                                           {"global", MessageScope::GlobalScope},
+                                           {nullptr, MessageScope::NoScope}};
 
       KnownMessageScope *s = messageScopes;
       auto scope = get_optional_config_param<std::string>(typeSetting, "scope", "station");
@@ -387,18 +387,19 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       // Query time range types (which time columns are used for time restriction).
 
-      typedef struct
+      using KnownTimeRangeType = struct
       {
         const char *timeRangeName;
         TimeRangeType timeRangeType;
         bool latestMessagesOnly;
-      } KnownTimeRangeType;
+      };
 
-      KnownTimeRangeType timeRangeTypes[] = {{"validtime", ValidTimeRange, true},
-                                             {"messagevalidtime", MessageValidTimeRange, true},
-                                             {"messagetime", MessageTimeRange, true},
-                                             {"creationtime", CreationValidTimeRange, true},
-                                             {nullptr, NullTimeRange, false}};
+      KnownTimeRangeType timeRangeTypes[] = {
+          {"validtime", TimeRangeType::ValidTimeRange, true},
+          {"messagevalidtime", TimeRangeType::MessageValidTimeRange, true},
+          {"messagetime", TimeRangeType::MessageTimeRange, true},
+          {"creationtime", TimeRangeType::CreationValidTimeRange, true},
+          {nullptr, TimeRangeType::NullTimeRange, false}};
 
       KnownTimeRangeType *r = timeRangeTypes;
       std::string timeRangeType =
@@ -421,7 +422,8 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       // Validity period length for 'MessageValidTimeRange' and 'MessageTimeRange'
 
-      if ((r->timeRangeType == MessageValidTimeRange) || (r->timeRangeType == MessageTimeRange))
+      if ((r->timeRangeType == TimeRangeType::MessageValidTimeRange) ||
+          (r->timeRangeType == TimeRangeType::MessageTimeRange))
       {
         auto validityHours = get_mandatory_config_param<unsigned int>(typeSetting, "validityhours");
 
@@ -471,7 +473,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       messageType.setLatestMessageOnly(latestMessageOnly);
 
       messageType.setTimeRangeType(messageType.getLatestMessageOnly()
-                                       ? (TimeRangeType)(r->timeRangeType + 1)
+                                       ? TimeRangeType(static_cast<int>(r->timeRangeType) + 1)
                                        : r->timeRangeType);
 
       // messir_heading LIKE pattern(s) used for additional grouping (e.g. for GAFOR) when querying
@@ -582,7 +584,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           throw exception;
         }
 
-        if (messageType.getTimeRangeType() != MessageValidTimeRangeLatest)
+        if (messageType.getTimeRangeType() != TimeRangeType::MessageValidTimeRangeLatest)
         {
           Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
           exception.addDetail(
