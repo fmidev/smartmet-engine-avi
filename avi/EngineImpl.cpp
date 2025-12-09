@@ -1715,7 +1715,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
     */
 
     ostringstream withClause;
-    string unionOrEmpty = "";
+    string unionOrEmpty;
     const string latestMessageIdQueryExpr =
         "DISTINCT first_value(me.message_id) OVER (PARTITION BY me.station_id,";
     const string latestMessageIdOrderByExpr = " ORDER BY me.message_time DESC,me.created DESC) ";
@@ -2131,7 +2131,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
 
         string messageTypeIn = buildMessageTypeInClause(
             queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
-        string emptyOrOr = "";
+        string emptyOrOr;
 
         if (!messageTypeIn.empty())
         {
