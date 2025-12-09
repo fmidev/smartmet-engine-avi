@@ -254,8 +254,8 @@ struct QueryData
 {
   // The data has no station id; return the common value map having colum name as the map key
   //
-  QueryValues &getValues(const pqxx::result::const_iterator &,
-                         const pqxx::result::const_iterator &,
+  QueryValues &getValues(const pqxx::result::const_iterator & /* dummy */,
+                         const pqxx::result::const_iterator & /* dummy */,
                          bool &duplicate)
   {
     duplicate = false;
