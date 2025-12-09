@@ -2703,7 +2703,6 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
           //
           // Note: Column expression is generated and added to the select clause only when querying
           // with coordinates (queryStationsWithCoordinates())
-          ;
         }
         else
         {
