@@ -2495,7 +2495,8 @@ void sortColumnList(Columns& columns)
  */
 // ----------------------------------------------------------------------
 
-EngineImpl::EngineImpl(const std::string& theConfigFileName) : itsConfigFileName(theConfigFileName)
+EngineImpl::EngineImpl(std::string theConfigFileName)
+    : itsConfigFileName(std::move(theConfigFileName))
 {
 }
 

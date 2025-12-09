@@ -14,7 +14,7 @@ namespace Avi
 class EngineImpl : public Engine
 {
  public:
-  EngineImpl(const std::string &theConfigFileName);
+  EngineImpl(std::string theConfigFileName);
   EngineImpl() = delete;
 
   StationQueryData queryStations(QueryOptions &queryOptions) const override;
