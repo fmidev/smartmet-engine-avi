@@ -124,42 +124,24 @@ typedef enum
 
 struct QueryOptions
 {
-  QueryOptions()
-      : itsMessageFormat("TAC"),
-        itsMessageTypes(),
-        itsParameters(),
-        itsLocationOptions(),
-        itsTimeOptions(),
-        itsValidity(Accepted),
-        itsMessageColumnSelected(false),
-        itsMaxMessageStations(-1),
-        itsMaxMessageRows(-1),
-        itsDistinctMessages(true),
-        itsFilterMETARs(true),
-        itsExcludeSPECIs(false),
-        itsDebug(false)
-  {
-  }
+  QueryOptions() : itsMessageFormat("TAC") {}
 
   std::string itsMessageFormat;  // TAC, IWXXM
   StringList itsMessageTypes;
   StringList itsParameters;
   LocationOptions itsLocationOptions;
   mutable TimeOptions itsTimeOptions;
-  Validity itsValidity;  // Whether to select accepted or rejected messages
+  Validity itsValidity{};  // Whether to select accepted or rejected messages
 
-  bool itsMessageColumnSelected;  // Whether any avidb_messages column is requested or not
-
-  int itsMaxMessageStations;  // if 0, unlimited; if < 0, engine rules
-  int itsMaxMessageRows;      // if 0, unlimited; if < 0, engine rules
-
-  bool itsDistinctMessages;  // Whether to skip duplicate messages or not
-
-  bool itsFilterMETARs;   // Whether to filter (finnish) METARs (LIKE 'METAR%', if enabled by
-                          // engine's configuration) or not
-  bool itsExcludeSPECIs;  // Whether to exclude (finnish) SPECIs (if enabled with request parameter)
-
-  bool itsDebug;  // Whether to write generated sql queries to stderr or not
+  bool itsMessageColumnSelected = false;  // Whether any avidb_messages column is requested or not
+  int itsMaxMessageStations = 0;          // if 0, unlimited; if < 0, engine rules
+  int itsMaxMessageRows = 0;              // if 0, unlimited; if < 0, engine rules
+  bool itsDistinctMessages = true;        // Whether to skip duplicate messages or not
+  bool itsFilterMETARs = true;  // Whether to filter (finnish) METARs (LIKE 'METAR%', if enabled by
+                                // engine's configuration) or not
+  bool itsExcludeSPECIs = false;
+  // Whether to exclude (finnish) SPECIs (if enabled with request parameter)
+  bool itsDebug = false;  // Whether to write generated sql queries to stderr or not
 };
 
 // Types for building query
