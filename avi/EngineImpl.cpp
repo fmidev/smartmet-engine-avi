@@ -769,8 +769,7 @@ string buildMessageTypeValidityWithClause(const StringList messageTypeList,
         {
           auto const& knownTypes = knownType.getMessageTypes();
 
-          for (list<string>::const_iterator it = knownTypes.begin(); (it != knownTypes.end());
-               it++, n++)
+          for (auto it = knownTypes.begin(); (it != knownTypes.end()); it++, n++)
             withClause << ((n == 0) ? "('" : "),('") << *it << "',INTERVAL '"
                        << knownType.getValidityHours() << " hours'";
         }
@@ -905,8 +904,7 @@ string buildMessageTypeInClause(const StringList& messageTypeList,
         {
           auto const& knownTypes = knownType.getMessageTypes();
 
-          for (list<string>::const_iterator it = knownTypes.begin(); (it != knownTypes.end());
-               it++, n++)
+          for (auto it = knownTypes.begin(); (it != knownTypes.end()); it++, n++)
             whereClause << ((n == 0) ? messageTypeIn : "','") << *it;
         }
     }
@@ -1078,8 +1076,7 @@ string buildMessageTypeGroupByExpr(const StringList& messageTypeList,
           {
             size_t nn = 0;
 
-            for (list<string>::const_iterator it = knownTypes.begin(); (it != knownTypes.end());
-                 it++, n++, nn++)
+            for (auto it = knownTypes.begin(); (it != knownTypes.end()); it++, n++, nn++)
               groupBy << ((nn == 0) ? whenMessageTypeIn : "','") << *it;
 
             groupBy << "') THEN '" << knownTypes.front() << "'";
@@ -1104,7 +1101,7 @@ string buildMessageTypeGroupByExpr(const StringList& messageTypeList,
 
               if ((knownTypes.size() > 1) && (knownType == messageType))
               {
-                list<string>::const_iterator it = knownTypes.begin();
+                auto it = knownTypes.begin();
 
                 for (; (it != knownTypes.end()); it++)
                   if (find(messageTypeList.begin(), messageTypeList.end(), *it) ==
@@ -1115,9 +1112,7 @@ string buildMessageTypeGroupByExpr(const StringList& messageTypeList,
                 {
                   size_t nn = 0;
 
-                  for (list<string>::const_iterator it = knownTypes.begin();
-                       (it != knownTypes.end());
-                       it++, n++, nn++)
+                  for (auto it = knownTypes.begin(); (it != knownTypes.end()); it++, n++, nn++)
                     groupBy << ((nn == 0) ? whenMessageTypeIn : "','") << *it;
 
                   groupBy << "') THEN '" << knownTypes.front() << "'";
@@ -1195,9 +1190,7 @@ string buildMessirHeadingGroupByExpr(const StringList& messageTypeList,
 
             groupBy << whenMessageTypeIs << knownTypes.front() << "' THEN CASE";
 
-            for (list<string>::const_iterator it = messirPatterns.begin();
-                 (it != messirPatterns.end());
-                 it++, nn++)
+            for (auto it = messirPatterns.begin(); (it != messirPatterns.end()); it++, nn++)
               groupBy << whenMessirHeadingLike << *it << "' THEN " << nn;
 
             groupBy << " ELSE 0 END";
@@ -1223,9 +1216,7 @@ string buildMessirHeadingGroupByExpr(const StringList& messageTypeList,
 
                 groupBy << whenMessageTypeIs << messageType << "' THEN CASE";
 
-                for (list<string>::const_iterator it = messirPatterns.begin();
-                     (it != messirPatterns.end());
-                     it++, nn++)
+                for (auto it = messirPatterns.begin(); (it != messirPatterns.end()); it++, nn++)
                   groupBy << whenMessirHeadingLike << *it << "' THEN " << nn;
 
                 groupBy << " ELSE 0 END";
@@ -4076,9 +4067,9 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
 
     if (!isValid)
     {
-      string wkt = value_or<std::string>(queryData.itsValues["wkt"].front(), "?");
+      auto wkt = value_or<std::string>(queryData.itsValues["wkt"].front(), "?");
 
-      const string geomType = value_or<std::string>(queryData.itsValues["geomtype"].front(), "?");
+      const auto geomType = value_or<std::string>(queryData.itsValues["geomtype"].front(), "?");
 
       if ((geomType == "ST_Point") || (geomType == "ST_Polygon") || (geomType == "ST_LineString"))
         throw Fmi::Exception(BCP, "Invalid wkt " + wkt);
@@ -4089,7 +4080,7 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
 
     // Convert POINTs to latlons to support 'max # of nearest station' search
 
-    StringList::iterator itwkt = locationOptions.itsWKTs.itsWKTs.begin();
+    auto itwkt = locationOptions.itsWKTs.itsWKTs.begin();
     string geomType;
 
     for (int wktIndex = 0, dataIndex = 0; (wktCnt > 0); wktCnt--, wktIndex++, dataIndex++)
@@ -4255,7 +4246,7 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
       {
         sortColumnList(stationQueryData.itsColumns);
 
-        for (Columns::iterator it = stationQueryData.itsColumns.begin();
+        for (auto it = stationQueryData.itsColumns.begin();
              (it != stationQueryData.itsColumns.end());)
         {
           if (it->itsSelection == Automatic)
@@ -4311,8 +4302,8 @@ void EngineImpl::validateMessageTypes(const Fmi::Database::PostgreSQLConnection&
 
     // Checking against configuration (not the database)
 
-    MessageTypes::const_iterator it_begin = itsConfig->getMessageTypes().begin();
-    MessageTypes::const_iterator it_end = itsConfig->getMessageTypes().end();
+    auto it_begin = itsConfig->getMessageTypes().begin();
+    auto it_end = itsConfig->getMessageTypes().end();
 
     for (auto const& msgType : messageTypeList)
       if (find(it_begin, it_end, msgType) == it_end)
