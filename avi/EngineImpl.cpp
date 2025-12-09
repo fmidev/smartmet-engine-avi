@@ -4101,8 +4101,8 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
       if ((index < 0) || (itwkt == locationOptions.itsWKTs.itsWKTs.end()))
         throw Fmi::Exception(BCP, "validateWKTs: internal: wkt index is invalid");
 
-      double lat = value_or<double>(queryData.itsValues["lat"][dataIndex], 0);
-      double lon = value_or<double>(queryData.itsValues["lon"][dataIndex], 0);
+      auto lat = value_or<double>(queryData.itsValues["lat"][dataIndex], 0);
+      auto lon = value_or<double>(queryData.itsValues["lon"][dataIndex], 0);
 
       locationOptions.itsLonLats.push_back(LonLat(lon, lat));
 

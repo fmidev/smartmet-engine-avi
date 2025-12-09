@@ -423,8 +423,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       if ((r->timeRangeType == MessageValidTimeRange) || (r->timeRangeType == MessageTimeRange))
       {
-        unsigned int validityHours =
-            get_mandatory_config_param<unsigned int>(typeSetting, "validityhours");
+        auto validityHours = get_mandatory_config_param<unsigned int>(typeSetting, "validityhours");
 
         if (validityHours == 0)
         {
