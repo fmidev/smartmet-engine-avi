@@ -8,6 +8,7 @@
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <spine/Convenience.h>
+#include <memory>
 #include <stdexcept>
 
 using namespace std;
@@ -2512,7 +2513,7 @@ void EngineImpl::init()
 {
   try
   {
-    itsConfig.reset(new Config(itsConfigFileName));
+    itsConfig = std::make_shared<Config>(itsConfigFileName);
 
     itsConnectionPool = std::make_unique<Fmi::Database::PostgreSQLConnectionPool>(
         itsConfig->getStartConnections(),
