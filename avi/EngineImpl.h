@@ -30,8 +30,8 @@ class EngineImpl : public Engine
   const FIRQueryData &queryFIRAreas() const override;
 
  protected:
-  virtual void init();
-  void shutdown();
+  void init() override;
+  void shutdown() override;
 
  private:
   void validateTimes(const QueryOptions &queryOptions) const;

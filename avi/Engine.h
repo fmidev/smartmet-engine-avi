@@ -352,7 +352,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
  public:
   Engine() = default;
 
-  virtual ~Engine() = default;
+  ~Engine() override = default;
 
   virtual StationQueryData queryStations(QueryOptions &queryOptions) const { unavailable(BCP); }
 
@@ -380,9 +380,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   virtual const FIRQueryData &queryFIRAreas() const { unavailable(BCP); }
 
  protected:
-  virtual void init() {}
+  void init() override {}
 
-  virtual void shutdown() {}
+  void shutdown() override {}
 
  private:
   [[noreturn]] inline void unavailable(const char *file, int line, const char *function) const
