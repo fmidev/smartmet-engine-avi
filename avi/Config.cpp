@@ -858,7 +858,8 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         const libconfig::Setting &endMinuteSetting = theConfig.lookup(endBlockName);
         bool startMinuteOk = (startMinuteSetting.getType() == libconfig::Setting::Type::TypeInt);
         bool endMinuteOk = (endMinuteSetting.getType() == libconfig::Setting::Type::TypeInt);
-        int startMinute = 0, endMinute = 0;
+        int startMinute = 0;
+        int endMinute = 0;
 
         if (startMinuteOk && endMinuteOk)
         {

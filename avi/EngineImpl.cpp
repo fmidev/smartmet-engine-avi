@@ -1958,7 +1958,8 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
     if (messageTypeIn.empty())
       return "";
 
-    ostringstream withClause, filterClause;
+    ostringstream withClause;
+    ostringstream filterClause;
     string whereOrAnd = " WHERE ";
 
     withClause << "," << messageTimeRangeLatestMessagesTableName << " AS ("
@@ -4421,8 +4422,8 @@ StationQueryData EngineImpl::queryMessages(const Fmi::Database::PostgreSQLConnec
 
     // Build select column expressions
 
-    bool routeQuery = queryOptions.itsLocationOptions.itsWKTs.isRoute,
-         distinct = queryOptions.itsDistinctMessages;
+    bool routeQuery = queryOptions.itsLocationOptions.itsWKTs.isRoute;
+    bool distinct = queryOptions.itsDistinctMessages;
     string selectClause;
 
     TableMap tableMap = buildMessageQuerySelectClause(messageQueryTables,
@@ -4839,8 +4840,12 @@ StationQueryData EngineImpl::queryStationsAndMessages(QueryOptions& queryOptions
     StringList queryMessageTypes(queryOptions.itsMessageTypes.begin(),
                                  queryOptions.itsMessageTypes.end());
 
-    StationQueryData stationScopeStations, firScopeStations, globalScopeStations;
-    StationQueryData stationScopeMessages, firScopeMessages, globalScopeMessages;
+    StationQueryData stationScopeStations;
+    StationQueryData firScopeStations;
+    StationQueryData globalScopeStations;
+    StationQueryData stationScopeMessages;
+    StationQueryData firScopeMessages;
+    StationQueryData globalScopeMessages;
     StationQueryData* data = nullptr;
 
     struct ScopeData
