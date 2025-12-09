@@ -376,7 +376,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       if (!(s->scopeName))
       {
         Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
-        exception.addDetail("Use one of the following values : \"station\", \"fir\" or \"global\"");
+        exception.addDetail(R"(Use one of the following values : "station", "fir" or "global")");
         exception.addParameter("Configuration file", theConfigFileName);
         exception.addParameter("Attribute", blockName + ".scope");
         exception.addParameter("Invalid value", scope);
@@ -412,7 +412,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       {
         Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
         exception.addDetail(
-            "Use one of the following values : \"validtime\", \"messagetime\" or \"creationtime\"");
+            R"(Use one of the following values : "validtime", "messagetime" or "creationtime")");
         exception.addParameter("Configuration file", theConfigFileName);
         exception.addParameter("Attribute", blockName + ".timerangetype");
         exception.addParameter("Invalid value", timeRangeType);
