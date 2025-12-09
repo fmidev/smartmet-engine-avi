@@ -350,9 +350,8 @@ typedef std::map<int, FIRAreaAndBBox> FIRQueryData;
 class Engine : public SmartMet::Spine::SmartMetEngine
 {
  public:
+  ~Engine() override;
   Engine() = default;
-
-  ~Engine() override = default;
 
   virtual StationQueryData queryStations(QueryOptions &queryOptions) const { unavailable(BCP); }
 
