@@ -3094,9 +3094,9 @@ void EngineImpl::loadQueryResult(
           }
 
           if (isNull)
-            queryValues[column.itsName].push_back(TimeSeries::None());
+            queryValues[column.itsName].emplace_back(TimeSeries::None());
           else
-            queryValues[column.itsName].push_back(
+            queryValues[column.itsName].emplace_back(
                 boost::algorithm::trim_copy(row[column.itsName].as<string>()));
         }
         else if ((column.itsType == TS_LonLat) || (column.itsType == TS_LatLon))
@@ -3133,7 +3133,7 @@ void EngineImpl::loadQueryResult(
             throw Fmi::Exception(
                 BCP, string("Query returned invalid ") + column.itsName + " value '" + llStr + "'");
 
-          queryValues[column.itsName].push_back(lonlat);
+          queryValues[column.itsName].emplace_back(lonlat);
         }
         else
         {
@@ -3142,7 +3142,7 @@ void EngineImpl::loadQueryResult(
                   ? Fmi::DateTime()
                   : Fmi::DateTime::from_string(row[column.itsName].as<string>()),
               tzUTC);
-          queryValues[column.itsName].push_back(utcTime);
+          queryValues[column.itsName].emplace_back(utcTime);
         }
       }
     }
@@ -3680,7 +3680,7 @@ void EngineImpl::validateParameters(const StringList& paramList,
 
         if (queryColumn)
         {
-          columns.push_back(Column(*queryColumn));
+          columns.emplace_back(*queryColumn);
           paramKnown = true;
 
           break;
@@ -3766,7 +3766,7 @@ void EngineImpl::validateStationIds(const Fmi::Database::PostgreSQLConnection& c
 
     QueryData queryData;
 
-    queryData.itsColumns.push_back(Column(Integer, "station_id"));
+    queryData.itsColumns.emplace_back(Integer, "station_id");
 
     executeParamQuery<QueryData, StationIdList>(
         connection, selectFromWhereClause.str(), stationIdList, debug, queryData);
@@ -3812,7 +3812,7 @@ void EngineImpl::validateIcaos(const Fmi::Database::PostgreSQLConnection& connec
 
     QueryData queryData;
 
-    queryData.itsColumns.push_back(Column(String, "icao_code"));
+    queryData.itsColumns.emplace_back(String, "icao_code");
 
     executeParamQuery<QueryData, StringList>(
         connection, selectFromWhereClause.str(), icaoList, debug, queryData);
@@ -3928,7 +3928,7 @@ void EngineImpl::validatePlaces(const Fmi::Database::PostgreSQLConnection& conne
     {
       QueryData queryData;
 
-      queryData.itsColumns.push_back(Column(String, "name"));
+      queryData.itsColumns.emplace_back(String, "name");
 
       selectFromWhereClause << "SELECT request_stations.name FROM (VALUES ($1)) "
                             << "AS request_stations (name) LEFT JOIN avidb_stations ON "
@@ -3979,7 +3979,7 @@ void EngineImpl::validateCountries(const Fmi::Database::PostgreSQLConnection& co
 
     QueryData queryData;
 
-    queryData.itsColumns.push_back(Column(String, "country_code"));
+    queryData.itsColumns.emplace_back(String, "country_code");
 
     executeParamQuery<QueryData, StringList>(
         connection, selectFromWhereClause.str(), countryList, debug, queryData);
@@ -4049,12 +4049,12 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
 
     QueryData queryData;
 
-    queryData.itsColumns.push_back(Column(String, "wkt"));
-    queryData.itsColumns.push_back(Column(String, "geomtype"));
-    queryData.itsColumns.push_back(Column(Integer, "isvalid"));
-    queryData.itsColumns.push_back(Column(Integer, "index"));
-    queryData.itsColumns.push_back(Column(Double, "lat"));
-    queryData.itsColumns.push_back(Column(Double, "lon"));
+    queryData.itsColumns.emplace_back(String, "wkt");
+    queryData.itsColumns.emplace_back(String, "geomtype");
+    queryData.itsColumns.emplace_back(Integer, "isvalid");
+    queryData.itsColumns.emplace_back(Integer, "index");
+    queryData.itsColumns.emplace_back(Double, "lat");
+    queryData.itsColumns.emplace_back(Double, "lon");
 
     executeParamQuery<QueryData, StringList>(
         connection, selectFromWhereClause.str(), locationOptions.itsWKTs.itsWKTs, debug, queryData);
@@ -4104,7 +4104,7 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
       auto lat = value_or<double>(queryData.itsValues["lat"][dataIndex], 0);
       auto lon = value_or<double>(queryData.itsValues["lon"][dataIndex], 0);
 
-      locationOptions.itsLonLats.push_back(LonLat(lon, lat));
+      locationOptions.itsLonLats.emplace_back(lon, lat);
 
       itwkt = locationOptions.itsWKTs.itsWKTs.erase(itwkt);
     }
