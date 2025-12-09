@@ -3533,7 +3533,7 @@ Fmi::DateTime parseTime(const string& timeName, const string& timeStr)
 
     const char* timestamptz = "timestamptz";
     const char* TIMESTAMPTZ = "TIMESTAMPTZ";
-    const char *c = timeStr.c_str(), *c2;
+    const char* c = timeStr.c_str();
 
     while (*c == ' ')
     {
@@ -3554,9 +3554,13 @@ Fmi::DateTime parseTime(const string& timeName, const string& timeStr)
         c++;
       } while (*c == ' ');
 
-      if ((*c == '\'') && ((c2 = strchr(c + 1, '\'')) > (c + 1)))
+      const char* c2 = nullptr;
+      if (*c == '\'')
+        c2 = strchr(c + 1, '\'');
+
+      if ((c2 != nullptr) && (c2 > (c + 1)))
       {
-        auto c3 = c2;
+        const auto* c3 = c2;
 
         do
         {

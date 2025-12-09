@@ -452,14 +452,18 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           throw exception;
         }
       }
-      else if ((latestMessageOnly =
-                    get_optional_config_param<bool>(typeSetting, "latestmessage", false)))
+      else
       {
-        Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
-        exception.addDetail("The attribute value cannot be set for the selected time range type.");
-        exception.addParameter("Configuration file", theConfigFileName);
-        exception.addParameter("Attribute", blockName + ".latestmessage");
-        throw exception;
+        latestMessageOnly = get_optional_config_param<bool>(typeSetting, "latestmessage", false);
+        if (latestMessageOnly)
+        {
+          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+          exception.addDetail(
+              "The attribute value cannot be set for the selected time range type.");
+          exception.addParameter("Configuration file", theConfigFileName);
+          exception.addParameter("Attribute", blockName + ".latestmessage");
+          throw exception;
+        }
       }
 
       messageType.setLatestMessageOnly(latestMessageOnly);
