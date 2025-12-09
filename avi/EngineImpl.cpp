@@ -3009,7 +3009,7 @@ void EngineImpl::loadQueryResult(
   try
   {
     if (debug)
-      cerr << "Rows: " << result.size() << std::endl;
+      cerr << "Rows: " << result.size() << '\n';
 
     if ((maxRows > 0) && ((int)result.size() > maxRows))
       throw Fmi::Exception(
@@ -3174,7 +3174,7 @@ void EngineImpl::executeQuery(const Fmi::Database::PostgreSQLConnection& connect
   try
   {
     if (debug)
-      cerr << "Query: " << query << std::endl;
+      cerr << "Query: " << query << '\n';
 
     auto result = connection.executeNonTransaction(query);
 
@@ -3204,7 +3204,7 @@ void EngineImpl::executeParamQuery(const Fmi::Database::PostgreSQLConnection& co
   try
   {
     if (debug)
-      cerr << "Query: " << query << std::endl;
+      cerr << "Query: " << query << '\n';
 
     auto result = connection.exec_params(query, queryArg);
 
@@ -3228,7 +3228,7 @@ void EngineImpl::executeParamQuery(const Fmi::Database::PostgreSQLConnection& co
   try
   {
     if (debug)
-      cerr << "Query: " << query << std::endl;
+      cerr << "Query: " << query << '\n';
 
     auto result = connection.exec_params_p(query, queryArgs);
 
@@ -5119,7 +5119,7 @@ extern "C" void* engine_class_creator(const char* theConfigFileName, void* /* us
         {
           std::cout << log_time_str() << ' ' << ANSI_FG_RED << name
                     << ": configuration file not specified or its name is empty string: "
-                    << "engine disabled." << ANSI_FG_DEFAULT << std::endl;
+                    << "engine disabled." << ANSI_FG_DEFAULT << '\n';
           return true;
         }
 
@@ -5127,7 +5127,7 @@ extern "C" void* engine_class_creator(const char* theConfigFileName, void* /* us
         const bool result = cfg.get_optional_config_param<bool>("disabled", false);
         if (result)
           std::cout << log_time_str() << ' ' << ANSI_FG_RED << name << ": engine disabled"
-                    << ANSI_FG_DEFAULT << std::endl;
+                    << ANSI_FG_DEFAULT << '\n';
         return result;
       }();
 
