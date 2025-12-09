@@ -363,7 +363,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   void shutdown() override {}
 
  private:
-  [[noreturn]] void unavailable(const char *file, int line, const char *function) const
+  [[noreturn]] static void unavailable(const char *file, int line, const char *function)
   {
     throw Fmi::Exception(file, line, function, "AVI engine not available");
   }

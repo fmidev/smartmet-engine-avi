@@ -2534,7 +2534,7 @@ const Column* EngineImpl::getQueryColumn(const ColumnTable& tableColumns,
                                          Columns& columns,
                                          const string& theQueryColumnName,
                                          bool& duplicate,
-                                         int columnNumber) const
+                                         int columnNumber)
 {
   try
   {
@@ -2580,7 +2580,7 @@ const Column* EngineImpl::getQueryColumn(const ColumnTable& tableColumns,
  */
 // ----------------------------------------------------------------------
 
-string EngineImpl::buildStationQueryCoordinateExpressions(const Columns& columns) const
+string EngineImpl::buildStationQueryCoordinateExpressions(const Columns& columns)
 {
   try
   {
@@ -2613,7 +2613,7 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
                                                   bool selectStationListOnly,
                                                   bool autoSelectDistance,
                                                   string& selectClause,
-                                                  bool& firIdQuery) const
+                                                  bool& firIdQuery)
 {
   try
   {
@@ -2747,7 +2747,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
                                                    bool routeQuery,
                                                    string& selectClause,
                                                    bool& messageColumnSelected,
-                                                   bool& distinct) const
+                                                   bool& distinct)
 {
   try
   {
@@ -3579,7 +3579,7 @@ Fmi::DateTime parseTime(const string& timeName, const string& timeStr)
 
 }  // namespace
 
-void EngineImpl::validateTimes(const QueryOptions& queryOptions) const
+void EngineImpl::validateTimes(const QueryOptions& queryOptions)
 {
   try
   {
@@ -3633,7 +3633,7 @@ void EngineImpl::validateTimes(const QueryOptions& queryOptions) const
 
 void EngineImpl::validateParameters(const StringList& paramList,
                                     Validity validity,
-                                    bool& messageColumnSelected) const
+                                    bool& messageColumnSelected)
 {
   try
   {
@@ -3836,7 +3836,7 @@ void EngineImpl::validateIcaos(const Fmi::Database::PostgreSQLConnection& connec
  */
 // ----------------------------------------------------------------------
 
-void EngineImpl::validateIcaoFilters(const LocationOptions& locationOptions) const
+void EngineImpl::validateIcaoFilters(const LocationOptions& locationOptions)
 {
   try
   {
@@ -4350,7 +4350,7 @@ void EngineImpl::validateMessageTypes(const Fmi::Database::PostgreSQLConnection&
  */
 // ----------------------------------------------------------------------
 
-const Column* EngineImpl::getMessageTableTimeColumn(const string& timeColumn) const
+const Column* EngineImpl::getMessageTableTimeColumn(const string& timeColumn)
 {
   try
   {
