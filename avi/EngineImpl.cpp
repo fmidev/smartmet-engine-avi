@@ -5034,7 +5034,7 @@ const FIRQueryData& EngineImpl::queryFIRAreas() const
 {
   try
   {
-    auto ptr = itsFIRAreasPtr.load(std::memory_order_relaxed);
+    auto* ptr = itsFIRAreasPtr.load(std::memory_order_relaxed);
 
     if (ptr)
       return *ptr;
