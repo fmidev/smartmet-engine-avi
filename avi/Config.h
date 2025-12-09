@@ -120,6 +120,7 @@ typedef std::list<MessageType> MessageTypes;
 class Config : public SmartMet::Spine::ConfigBase
 {
  public:
+  ~Config() override;
   Config(const std::string &theFileName);
   Config() = delete;
   Config(const Config &) = delete;

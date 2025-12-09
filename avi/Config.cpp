@@ -13,6 +13,9 @@ namespace Engine
 {
 namespace Avi
 {
+
+Config::~Config() = default;
+
 // ----------------------------------------------------------------------
 /*!
  * \brief The only permitted constructor requires a configfile
