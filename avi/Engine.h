@@ -88,12 +88,12 @@ struct TimeOptions
     itsMessageTableTimeRangeColumn = theMessageTableTimeRangeColumn;
   }
 
-  std::string itsObservationTime;   // Observation time (defaults to current time)
-  std::string itsMessageCreatedTime;// Message creation time (defaults to observation time)
-  std::string itsStartTime;         // Time range start time
-  std::string itsEndTime;           // Time range end time
-  std::string itsTimeFormat;        // Fmi::TimeFormatter type; iso, timestamp, sql, xml or epoch
-  std::string itsTimeZone;          // tz for localtime output
+  std::string itsObservationTime;     // Observation time (defaults to current time)
+  std::string itsMessageCreatedTime;  // Message creation time (defaults to observation time)
+  std::string itsStartTime;           // Time range start time
+  std::string itsEndTime;             // Time range end time
+  std::string itsTimeFormat;          // Fmi::TimeFormatter type; iso, timestamp, sql, xml or epoch
+  std::string itsTimeZone;            // tz for localtime output
   bool itsQueryValidRangeMessages;  // Whether to query valid accepted messages or accepted messages
                                     // created within time range
   // BRAINSTORM-3301
@@ -141,7 +141,7 @@ struct QueryOptions
   {
   }
 
-  std::string itsMessageFormat; // TAC, IWXXM
+  std::string itsMessageFormat;  // TAC, IWXXM
   StringList itsMessageTypes;
   StringList itsParameters;
   LocationOptions itsLocationOptions;
@@ -347,7 +347,7 @@ typedef std::map<int, FIRAreaAndBBox> FIRQueryData;
  * symbols during linking in case when actual AVI engine is not loaded.
  *
  */
-class Engine  : public SmartMet::Spine::SmartMetEngine
+class Engine : public SmartMet::Spine::SmartMetEngine
 {
  public:
   Engine() = default;
@@ -357,13 +357,25 @@ class Engine  : public SmartMet::Spine::SmartMetEngine
   virtual StationQueryData queryStations(QueryOptions &queryOptions) const { unavailable(BCP); }
 
   virtual StationQueryData queryMessages(const StationIdList &stationIdList,
-                                         const QueryOptions &queryOptions) const { unavailable(BCP); }
+                                         const QueryOptions &queryOptions) const
+  {
+    unavailable(BCP);
+  }
   virtual StationQueryData &joinStationAndMessageData(const StationQueryData &stationData,
-                                                      StationQueryData &messageData) const { unavailable(BCP); }
+                                                      StationQueryData &messageData) const
+  {
+    unavailable(BCP);
+  }
 
-  virtual StationQueryData queryStationsAndMessages(QueryOptions &queryOptions) const { unavailable(BCP); }
+  virtual StationQueryData queryStationsAndMessages(QueryOptions &queryOptions) const
+  {
+    unavailable(BCP);
+  }
 
-  virtual QueryData queryRejectedMessages(const QueryOptions &queryOptions) const { unavailable(BCP); }
+  virtual QueryData queryRejectedMessages(const QueryOptions &queryOptions) const
+  {
+    unavailable(BCP);
+  }
 
   virtual const FIRQueryData &queryFIRAreas() const { unavailable(BCP); }
 
@@ -373,7 +385,7 @@ class Engine  : public SmartMet::Spine::SmartMetEngine
   virtual void shutdown() {}
 
  private:
-  [[noreturn]] inline void unavailable(const char* file ,int line, const char* function) const
+  [[noreturn]] inline void unavailable(const char *file, int line, const char *function) const
   {
     throw Fmi::Exception(file, line, function, "AVI engine not available");
   }

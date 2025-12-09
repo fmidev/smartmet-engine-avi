@@ -2,10 +2,10 @@
 
 #include "Config.h"
 #include <boost/algorithm/string.hpp>
-#include <macgyver/StringConversion.h>
 #include <macgyver/Exception.h>
-#include <stdexcept>
+#include <macgyver/StringConversion.h>
 #include <set>
+#include <stdexcept>
 
 namespace SmartMet
 {
@@ -199,8 +199,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
                    itsFilterFIMETARxxxExcludeIcaos.end(),
                    icao) != itsFilterFIMETARxxxExcludeIcaos.end())
           {
-            Fmi::Exception exception(
-                BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", "message.filter_FI_METARxxx.excludeicaos");
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -310,8 +309,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           if (find(knownMessageTypes.begin(), knownMessageTypes.end(), name) !=
               knownMessageTypes.end())
           {
-            Fmi::Exception exception(
-                BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", blockName + ".names");
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -375,8 +373,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       if (!(s->scopeName))
       {
         Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
-        exception.addDetail(
-            "Use one of the following values : \"station\", \"fir\" or \"global\"");
+        exception.addDetail("Use one of the following values : \"station\", \"fir\" or \"global\"");
         exception.addParameter("Configuration file", theConfigFileName);
         exception.addParameter("Attribute", blockName + ".scope");
         exception.addParameter("Invalid value", scope);
@@ -546,8 +543,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (find(patterns.begin(), patterns.end(), pattern) != patterns.end())
           {
-            Fmi::Exception exception(
-                BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", attrBlockName);
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -636,8 +632,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (restrictionHours.find(hour) != restrictionHours.end())
           {
-            Fmi::Exception exception(
-                BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", attrBlockName);
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -726,8 +721,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (find(patterns.begin(), patterns.end(), pattern) != patterns.end())
           {
-            Fmi::Exception exception(
-                BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", attrBlockName);
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -801,8 +795,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (find(codes.begin(), codes.end(), code) != codes.end())
           {
-            Fmi::Exception exception(
-                BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", codeAttrBlockName);
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -814,14 +807,12 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         }
       }
 
-      if (
-          (!messageType.getQueryRestrictionHours().empty()) &&
+      if ((!messageType.getQueryRestrictionHours().empty()) &&
           messageType.getQueryRestrictionIcaoPatterns().empty() &&
-          messageType.getQueryRestrictionCountryCodes().empty()
-         )
+          messageType.getQueryRestrictionCountryCodes().empty())
       {
-        Fmi::Exception exception(
-            BCP, "Query restriction icao pattern(s) and country code(s) missing!");
+        Fmi::Exception exception(BCP,
+                                 "Query restriction icao pattern(s) and country code(s) missing!");
         exception.addParameter("Configuration file", theConfigFileName);
         exception.addParameter("Attribute", blockName);
         throw exception;

@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Engine.h"
 #include "Config.h"
+#include "Engine.h"
 #include <macgyver/PostgreSQLConnection.h>
-
 
 namespace SmartMet
 {
@@ -72,7 +71,7 @@ class EngineImpl : public Engine
                                         bool selectStationListOnly,
                                         bool autoSelectDistance,
                                         std::string &selectClause,
-                                        bool& firIdQuery) const;
+                                        bool &firIdQuery) const;
   TableMap buildMessageQuerySelectClause(QueryTable *queryTables,
                                          const StationIdList &stationIdList,
                                          const StringList &messageTypeList,
@@ -167,8 +166,8 @@ class EngineImpl : public Engine
   std::shared_ptr<Config> itsConfig;
   std::unique_ptr<Fmi::Database::PostgreSQLConnectionPool> itsConnectionPool;
 
-  mutable std::mutex                  itsFIRMutex;
-  mutable FIRQueryData                itsFIRAreas;
+  mutable std::mutex itsFIRMutex;
+  mutable FIRQueryData itsFIRAreas;
   mutable std::atomic<FIRQueryData *> itsFIRAreasPtr = nullptr;
 };  // class EngineImpl
 

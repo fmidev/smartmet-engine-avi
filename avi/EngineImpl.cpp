@@ -22,7 +22,6 @@ namespace
 {
 Fmi::TimeZonePtr& tzUTC = Fmi::TimeZonePtr::utc;
 
-
 Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConfig)
 {
   Fmi::Database::PostgreSQLConnectionOptions opt;
@@ -228,9 +227,8 @@ Column rejectedMessageQueryColumns[] = {
     {Integer, "reject_reason", "messagerejectedreason"},
     {None, "", ""}};
 
-QueryTable firQueryTables[] = {
-    {firTableName, firTableAlias, firQueryColumns, firTableJoin},
-    {"", "", nullptr, ""}};
+QueryTable firQueryTables[] = {{firTableName, firTableAlias, firQueryColumns, firTableJoin},
+                               {"", "", nullptr, ""}};
 
 QueryTable messageQueryTables[] = {
     {messageTableName, messageTableAlias, messageQueryColumns, ""},
@@ -379,13 +377,13 @@ void buildStationQueryWhereClause(const Fmi::Database::PostgreSQLConnection& con
 
     whereClause << "))";
 
-    if (! filterStringList.empty())
+    if (!filterStringList.empty())
     {
       n = 0;
 
       whereClause << " AND " << filterColumnExpression << " NOT ILIKE ALL (ARRAY[";
 
-      for (auto const &str : filterStringList)
+      for (auto const& str : filterStringList)
       {
         whereClause << (n ? "," : "") << connection.quote(str + ((str.size() < 4) ? "%" : ""));
         n++;
@@ -532,7 +530,7 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
 
     fromWhereOrderByClause << "))";
 
-    if (! locationOptions.itsWKTs.isRoute)
+    if (!locationOptions.itsWKTs.isRoute)
     {
       // BRAINSTORM-3288
       //
@@ -544,15 +542,14 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
       //
       // For edr SIGMET collection icao code filter (e.g. "EFIN") must be applied
       //
-      if (! locationOptions.itsIncludeCountryFilters.empty())
+      if (!locationOptions.itsIncludeCountryFilters.empty())
       {
         n = 0;
 
-        fromWhereOrderByClause << " AND "
-                               << stationTableAlias << "." << stationCountryCodeTableColumn
-                               << " ILIKE ALL (ARRAY[";
+        fromWhereOrderByClause << " AND " << stationTableAlias << "."
+                               << stationCountryCodeTableColumn << " ILIKE ALL (ARRAY[";
 
-        for (auto const &str : locationOptions.itsIncludeCountryFilters)
+        for (auto const& str : locationOptions.itsIncludeCountryFilters)
         {
           fromWhereOrderByClause << (n ? "," : "") << connection.quote(str);
           n++;
@@ -561,15 +558,14 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
         fromWhereOrderByClause << "])";
       }
 
-      if (! locationOptions.itsIncludeIcaoFilters.empty())
+      if (!locationOptions.itsIncludeIcaoFilters.empty())
       {
         n = 0;
 
-        fromWhereOrderByClause << " AND "
-                               << stationTableAlias << "." << stationIcaoTableColumn
+        fromWhereOrderByClause << " AND " << stationTableAlias << "." << stationIcaoTableColumn
                                << " ILIKE ALL (ARRAY[";
 
-        for (auto const &str : locationOptions.itsIncludeIcaoFilters)
+        for (auto const& str : locationOptions.itsIncludeIcaoFilters)
         {
           fromWhereOrderByClause << (n ? "," : "")
                                  << connection.quote(str + ((str.size() < 4) ? "%" : ""));
@@ -579,15 +575,14 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
         fromWhereOrderByClause << "])";
       }
 
-      if (! locationOptions.itsExcludeIcaoFilters.empty())
+      if (!locationOptions.itsExcludeIcaoFilters.empty())
       {
         n = 0;
 
-        fromWhereOrderByClause << " AND "
-                               << stationTableAlias << "." << stationIcaoTableColumn
+        fromWhereOrderByClause << " AND " << stationTableAlias << "." << stationIcaoTableColumn
                                << " NOT ILIKE ALL (ARRAY[";
 
-        for (auto const &str : locationOptions.itsExcludeIcaoFilters)
+        for (auto const& str : locationOptions.itsExcludeIcaoFilters)
         {
           fromWhereOrderByClause << (n ? "," : "")
                                  << connection.quote(str + ((str.size() < 4) ? "%" : ""));
@@ -622,8 +617,8 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
 void buildStationQueryWhereClause(const BBoxList& bboxList,
                                   double maxDistance,
                                   ostringstream& whereClause,
-                                  const string &whereOrEmpty = "WHERE ",
-                                  const string &geomTableAlias = "")
+                                  const string& whereOrEmpty = "WHERE ",
+                                  const string& geomTableAlias = "")
 {
   try
   {
@@ -969,7 +964,7 @@ string buildMessageTypeInClause(const StringList& messageTypeList,
 string buildRecordSetWithClause(bool bboxQuery,
                                 bool routeQuery,
                                 const StationIdList& stationIdList,
-                                const string &messageFormat,
+                                const string& messageFormat,
                                 const StringList& messageTypeList,
                                 const MessageTypes& knownMessageTypes,
                                 unsigned int startTimeOffsetHours,
@@ -1019,9 +1014,8 @@ string buildRecordSetWithClause(bool bboxQuery,
       withClause << "," << messageTypeTableName << " " << messageTypeTableAlias;
 
     withClause << whereStationIdIn << ((!bboxQuery) && (!stationIdList.empty()) ? " AND " : "")
-               << (messageFormat == "TAC"
-                     ? messageFormatTableJoinTAC
-                     : messageFormatTableJoinIWXXM);
+               << (messageFormat == "TAC" ? messageFormatTableJoinTAC
+                                          : messageFormatTableJoinIWXXM);
 
     if (!messageTypeList.empty())
     {
@@ -1273,8 +1267,8 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
     //
     // No (effective) message creation time check or query time restriction for edr -queries
     //
-    bool disableQueryRestriction = (! messageCreatedTime.empty());
-    auto const &createdTime = (messageCreatedTime.empty() ? observationTime : messageCreatedTime);
+    bool disableQueryRestriction = (!messageCreatedTime.empty());
+    auto const& createdTime = (messageCreatedTime.empty() ? observationTime : messageCreatedTime);
     std::string noMatch("99");
 
     bStationJoin = false;
@@ -1316,8 +1310,8 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                         << "(UPPER(" << stationTableAlias << "." << stationCountryCodeTableColumn
                         << ") != '" << code << "')";
 
-            auto const &queryRestrictionHours = (
-                disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
+            auto const& queryRestrictionHours =
+                (disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
 
             whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
                       << ".message_time) != DATE_TRUNC('hour'," << observationTime << ")) OR "
@@ -1385,8 +1379,8 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                             << "(UPPER(" << stationTableAlias << "."
                             << stationCountryCodeTableColumn << ") != '" << code << "')";
 
-                auto const &queryRestrictionHours = (
-                    disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
+                auto const& queryRestrictionHours =
+                    (disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
 
                 whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
                           << ".message_time) != DATE_TRUNC('hour'," << observationTime << ")) OR "
@@ -1400,8 +1394,8 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                           << ".valid_to IS NULL AND " << observationTime
                           << " >= " << messageTableAlias << ".message_time AND " << observationTime
                           << " < (" << messageTableAlias << ".message_time + "
-                          << messageValidityTableAlias << ".validityhours))) AND "
-                          << createdTime << " >= " << messageTableAlias << ".created";
+                          << messageValidityTableAlias << ".validityhours))) AND " << createdTime
+                          << " >= " << messageTableAlias << ".created";
 
                 bStationJoin = true;
               }
@@ -1412,8 +1406,8 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
                           << messageTableAlias << ".valid_to IS NULL AND " << observationTime
                           << " >= " << messageTableAlias << ".message_time AND " << observationTime
                           << " < (" << messageTableAlias << ".message_time + "
-                          << messageValidityTableAlias << ".validityhours))) AND "
-                          << createdTime << " >= " << messageTableAlias << ".created";
+                          << messageValidityTableAlias << ".validityhours))) AND " << createdTime
+                          << " >= " << messageTableAlias << ".created";
 
               break;
             }
@@ -1443,7 +1437,7 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
                                                const MessageTypes& knownMessageTypes,
                                                const string& startTime,
                                                const string& endTime,
-                                               bool  disableQueryRestriction,
+                                               bool disableQueryRestriction,
                                                bool& bStationJoin)
 {
   try
@@ -1493,13 +1487,13 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
             //
             // No (effective) query time restriction for edr -queries
             //
-            auto const &queryRestrictionHours = (
-                disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
+            auto const& queryRestrictionHours =
+                (disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
 
             whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
                       << ".message_time) != DATE_TRUNC('hour'," << endTime << ")) OR "
-                      << "(EXTRACT(HOUR FROM " << endTime << ") NOT IN ("
-                      << queryRestrictionHours << ")) OR "
+                      << "(EXTRACT(HOUR FROM " << endTime << ") NOT IN (" << queryRestrictionHours
+                      << ")) OR "
                       << "(EXTRACT(MINUTE FROM " << messageTableAlias << ".message_time) < "
                       << knownType.getQueryRestrictionStartMinute() << ") OR "
                       << "(EXTRACT(MINUTE FROM " << endTime
@@ -1563,8 +1557,8 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
                 //
                 // No (effective) query time restriction for edr -queries
                 //
-                auto const &queryRestrictionHours = (
-                    disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
+                auto const& queryRestrictionHours =
+                    (disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
 
                 whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
                           << ".message_time) != DATE_TRUNC('hour'," << endTime << ")) OR "
@@ -1742,7 +1736,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
         "DISTINCT first_value(me.message_id) OVER (PARTITION BY me.station_id,";
     const string latestMessageIdOrderByExpr = " ORDER BY me.message_time DESC,me.created DESC) ";
 
-    auto const &createdTime = (messageCreatedTime.empty() ? observationTime : messageCreatedTime);
+    auto const& createdTime = (messageCreatedTime.empty() ? observationTime : messageCreatedTime);
 
     withClause << latestMessagesTable.itsName << " AS (";
 
@@ -1864,8 +1858,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                  << messirHeadingGroupByExpr << latestMessageIdOrderByExpr << "AS message_id"
                  << " FROM record_set " << messageTableAlias << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << createdTime << " >= " << messageTableAlias << ".created AND "
-                 << observationTime << " < " << messageTableAlias << ".valid_to";
+                 << createdTime << " >= " << messageTableAlias << ".created AND " << observationTime
+                 << " < " << messageTableAlias << ".valid_to";
 
       unionOrEmpty = " UNION ALL ";
     }
@@ -1908,8 +1902,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       withClause << unionOrEmpty << "SELECT message_id FROM record_set " << messageTableAlias
                  << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << createdTime << " >= " << messageTableAlias << ".created AND "
-                 << observationTime << " < " << messageTableAlias << ".valid_to";
+                 << createdTime << " >= " << messageTableAlias << ".created AND " << observationTime
+                 << " < " << messageTableAlias << ".valid_to";
 
     withClause << ")";
 
@@ -2176,7 +2170,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
           //
           // No (effective) query time restriction for edr -queries
           //
-          bool disableQueryRestriction = (! queryOptions.itsTimeOptions.itsMessageTimeChecks);
+          bool disableQueryRestriction = (!queryOptions.itsTimeOptions.itsMessageTimeChecks);
 
           bool bStationJoin;
           string stationAndTimeRangeCondition =
@@ -2327,7 +2321,9 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
 
       buildStationQueryWhereClause(queryOptions.itsLocationOptions.itsBBoxes,
                                    queryOptions.itsLocationOptions.itsMaxDistance,
-                                   whereStationClause, "", stationTableAlias);
+                                   whereStationClause,
+                                   "",
+                                   stationTableAlias);
 
       fromWhereOrderByClause << " AND (" << whereStationClause.str() << ")";
     }
@@ -2498,7 +2494,9 @@ void sortColumnList(Columns& columns)
  */
 // ----------------------------------------------------------------------
 
-EngineImpl::EngineImpl(const std::string& theConfigFileName) : itsConfigFileName(theConfigFileName) {}
+EngineImpl::EngineImpl(const std::string& theConfigFileName) : itsConfigFileName(theConfigFileName)
+{
+}
 
 // ----------------------------------------------------------------------
 /*!
@@ -2545,10 +2543,10 @@ void EngineImpl::shutdown()
 // ----------------------------------------------------------------------
 
 const Column* EngineImpl::getQueryColumn(const ColumnTable tableColumns,
-                                     Columns& columns,
-                                     const string& theQueryColumnName,
-                                     bool& duplicate,
-                                     int columnNumber) const
+                                         Columns& columns,
+                                         const string& theQueryColumnName,
+                                         bool& duplicate,
+                                         int columnNumber) const
 {
   try
   {
@@ -2624,10 +2622,10 @@ string EngineImpl::buildStationQueryCoordinateExpressions(const Columns& columns
 // ----------------------------------------------------------------------
 
 Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
-                                              bool selectStationListOnly,
-                                              bool autoSelectDistance,
-                                              string& selectClause,
-                                              bool& firIdQuery) const
+                                                  bool selectStationListOnly,
+                                                  bool autoSelectDistance,
+                                                  string& selectClause,
+                                                  bool& firIdQuery) const
 {
   try
   {
@@ -2723,16 +2721,15 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
         columns.push_back(*queryColumn);
         columns.back().itsNumber = columnNumber;
       }
-      else if ((!queryColumn) && (! duplicate) && (!selectStationListOnly))
+      else if ((!queryColumn) && (!duplicate) && (!selectStationListOnly))
       {
-        queryColumn =
-            getQueryColumn(firQueryColumns, columns, param, duplicate, columnNumber);
+        queryColumn = getQueryColumn(firQueryColumns, columns, param, duplicate, columnNumber);
 
         if (queryColumn)
         {
           firIdQuery = true;
-          selectClause += (string(",") + firTableAlias + "." + firIdTableColumn +
-                           " AS " + queryColumn->itsName);
+          selectClause += (string(",") + firTableAlias + "." + firIdTableColumn + " AS " +
+                           queryColumn->itsName);
 
           columns.push_back(*queryColumn);
           columns.back().itsNumber = columnNumber;
@@ -2757,13 +2754,13 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
 // ----------------------------------------------------------------------
 
 TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
-                                               const StationIdList& stationIdList,
-                                               const StringList& messageTypeList,
-                                               const StringList& paramList,
-                                               bool routeQuery,
-                                               string& selectClause,
-                                               bool& messageColumnSelected,
-                                               bool& distinct) const
+                                                   const StationIdList& stationIdList,
+                                                   const StringList& messageTypeList,
+                                                   const StringList& paramList,
+                                                   bool routeQuery,
+                                                   string& selectClause,
+                                                   bool& messageColumnSelected,
+                                                   bool& distinct) const
 {
   try
   {
@@ -3012,7 +3009,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
 
 template <typename T>
 void EngineImpl::loadQueryResult(
-    const pqxx::result &result, bool debug, T &queryData, bool distinctRows, int maxRows) const
+    const pqxx::result& result, bool debug, T& queryData, bool distinctRows, int maxRows) const
 {
   try
   {
@@ -3174,11 +3171,11 @@ void EngineImpl::loadQueryResult(
 
 template <typename T>
 void EngineImpl::executeQuery(const Fmi::Database::PostgreSQLConnection& connection,
-                          const string& query,
-                          bool debug,
-                          T& queryData,
-                          bool distinctRows,
-                          int maxRows) const
+                              const string& query,
+                              bool debug,
+                              T& queryData,
+                              bool distinctRows,
+                              int maxRows) const
 {
   try
   {
@@ -3203,12 +3200,12 @@ void EngineImpl::executeQuery(const Fmi::Database::PostgreSQLConnection& connect
 
 template <typename T>
 void EngineImpl::executeParamQuery(const Fmi::Database::PostgreSQLConnection& connection,
-                               const string& query,
-                               const string& queryArg,
-                               bool debug,
-                               T& queryData,
-                               bool distinctRows,
-                               int maxRows) const
+                                   const string& query,
+                                   const string& queryArg,
+                                   bool debug,
+                                   T& queryData,
+                                   bool distinctRows,
+                                   int maxRows) const
 {
   try
   {
@@ -3227,12 +3224,12 @@ void EngineImpl::executeParamQuery(const Fmi::Database::PostgreSQLConnection& co
 
 template <typename T, typename T2>
 void EngineImpl::executeParamQuery(const Fmi::Database::PostgreSQLConnection& connection,
-                               const string& query,
-                               const T2& queryArgs,
-                               bool debug,
-                               T& queryData,
-                               bool distinctRows,
-                               int maxRows) const
+                                   const string& query,
+                                   const T2& queryArgs,
+                                   bool debug,
+                                   T& queryData,
+                                   bool distinctRows,
+                                   int maxRows) const
 {
   try
   {
@@ -3256,11 +3253,11 @@ void EngineImpl::executeParamQuery(const Fmi::Database::PostgreSQLConnection& co
 // ----------------------------------------------------------------------
 
 void EngineImpl::queryStationsWithCoordinates(const Fmi::Database::PostgreSQLConnection& connection,
-                                          const LocationOptions& locationOptions,
-                                          const StringList& messageTypes,
-                                          const string& selectClause,
-                                          bool debug,
-                                          StationQueryData& stationQueryData) const
+                                              const LocationOptions& locationOptions,
+                                              const StringList& messageTypes,
+                                              const string& selectClause,
+                                              bool debug,
+                                              StationQueryData& stationQueryData) const
 {
   try
   {
@@ -3311,10 +3308,10 @@ void EngineImpl::queryStationsWithCoordinates(const Fmi::Database::PostgreSQLCon
 // ----------------------------------------------------------------------
 
 void EngineImpl::queryStationsWithIds(const Fmi::Database::PostgreSQLConnection& connection,
-                                  const StationIdList& stationIdList,
-                                  const string& selectClause,
-                                  bool debug,
-                                  StationQueryData& stationQueryData) const
+                                      const StationIdList& stationIdList,
+                                      const string& selectClause,
+                                      bool debug,
+                                      StationQueryData& stationQueryData) const
 {
   try
   {
@@ -3342,11 +3339,11 @@ void EngineImpl::queryStationsWithIds(const Fmi::Database::PostgreSQLConnection&
 // ----------------------------------------------------------------------
 
 void EngineImpl::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnection& connection,
-                                    const StringList& icaoList,
-                                    const string& selectClause,
-                                    bool firIdQuery,
-                                    bool debug,
-                                    StationQueryData& stationQueryData) const
+                                        const StringList& icaoList,
+                                        const string& selectClause,
+                                        bool firIdQuery,
+                                        bool debug,
+                                        StationQueryData& stationQueryData) const
 {
   try
   {
@@ -3356,8 +3353,7 @@ void EngineImpl::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnectio
 
     string fromClause(string(" FROM avidb_stations ") + stationTableAlias);
 
-    buildStationQueryWhereClause(
-        connection, "UPPER(icao_code)", icaoList, "", {}, whereClause);
+    buildStationQueryWhereClause(connection, "UPPER(icao_code)", icaoList, "", {}, whereClause);
 
     if (firIdQuery)
     {
@@ -3365,10 +3361,8 @@ void EngineImpl::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnectio
       whereClause << " AND " << firTableJoin;
     }
 
-    executeQuery<StationQueryData>(connection,
-                                   selectClause + fromClause + " " + whereClause.str(),
-                                   debug,
-                                   stationQueryData);
+    executeQuery<StationQueryData>(
+        connection, selectClause + fromClause + " " + whereClause.str(), debug, stationQueryData);
   }
   catch (...)
   {
@@ -3383,12 +3377,12 @@ void EngineImpl::queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnectio
 // ----------------------------------------------------------------------
 
 void EngineImpl::queryStationsWithCountries(const Fmi::Database::PostgreSQLConnection& connection,
-                                        const StringList& countryList,
-                                        const StringList& excludeIcaoFilters,
-                                        const string& selectClause,
-                                        bool firIdQuery,
-                                        bool debug,
-                                        StationQueryData& stationQueryData) const
+                                            const StringList& countryList,
+                                            const StringList& excludeIcaoFilters,
+                                            const string& selectClause,
+                                            bool firIdQuery,
+                                            bool debug,
+                                            StationQueryData& stationQueryData) const
 {
   try
   {
@@ -3398,9 +3392,12 @@ void EngineImpl::queryStationsWithCountries(const Fmi::Database::PostgreSQLConne
 
     string fromClause(string(" FROM avidb_stations ") + stationTableAlias);
 
-    buildStationQueryWhereClause(
-        connection, "UPPER(country_code)", countryList, "icao_code", excludeIcaoFilters,
-        whereClause);
+    buildStationQueryWhereClause(connection,
+                                 "UPPER(country_code)",
+                                 countryList,
+                                 "icao_code",
+                                 excludeIcaoFilters,
+                                 whereClause);
 
     if (firIdQuery)
     {
@@ -3408,10 +3405,8 @@ void EngineImpl::queryStationsWithCountries(const Fmi::Database::PostgreSQLConne
       whereClause << " AND " << firTableJoin;
     }
 
-    executeQuery<StationQueryData>(connection,
-                                   selectClause + fromClause + " " + whereClause.str(),
-                                   debug,
-                                   stationQueryData);
+    executeQuery<StationQueryData>(
+        connection, selectClause + fromClause + " " + whereClause.str(), debug, stationQueryData);
   }
   catch (...)
   {
@@ -3426,10 +3421,10 @@ void EngineImpl::queryStationsWithCountries(const Fmi::Database::PostgreSQLConne
 // ----------------------------------------------------------------------
 
 void EngineImpl::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection& connection,
-                                     const StringList& placeNameList,
-                                     const string& selectClause,
-                                     bool debug,
-                                     StationQueryData& stationQueryData) const
+                                         const StringList& placeNameList,
+                                         const string& selectClause,
+                                         bool debug,
+                                         StationQueryData& stationQueryData) const
 {
   try
   {
@@ -3458,11 +3453,11 @@ void EngineImpl::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnecti
 // ----------------------------------------------------------------------
 
 void EngineImpl::queryStationsWithWKTs(const Fmi::Database::PostgreSQLConnection& connection,
-                                   const LocationOptions& locationOptions,
-                                   const StringList& messageTypes,
-                                   const string& selectClause,
-                                   bool debug,
-                                   StationQueryData& stationQueryData) const
+                                       const LocationOptions& locationOptions,
+                                       const StringList& messageTypes,
+                                       const string& selectClause,
+                                       bool debug,
+                                       StationQueryData& stationQueryData) const
 {
   try
   {
@@ -3470,9 +3465,11 @@ void EngineImpl::queryStationsWithWKTs(const Fmi::Database::PostgreSQLConnection
 
     ostringstream fromWhereOrderByClause;
 
-    buildStationQueryFromWhereOrderByClause(
-        connection, locationOptions, messageTypes, itsConfig->getMessageTypes(),
-        fromWhereOrderByClause);
+    buildStationQueryFromWhereOrderByClause(connection,
+                                            locationOptions,
+                                            messageTypes,
+                                            itsConfig->getMessageTypes(),
+                                            fromWhereOrderByClause);
 
     // Note: no stations (fromWhereOrderByClause is empty) to restrict messages for route query
     // for global scoped message types (message time and type restriction is generated later)
@@ -3494,10 +3491,10 @@ void EngineImpl::queryStationsWithWKTs(const Fmi::Database::PostgreSQLConnection
 // ----------------------------------------------------------------------
 
 void EngineImpl::queryStationsWithBBoxes(const Fmi::Database::PostgreSQLConnection& connection,
-                                     const LocationOptions& locationOptions,
-                                     const string& selectClause,
-                                     bool debug,
-                                     StationQueryData& stationQueryData) const
+                                         const LocationOptions& locationOptions,
+                                         const string& selectClause,
+                                         bool debug,
+                                         StationQueryData& stationQueryData) const
 {
   try
   {
@@ -3525,34 +3522,46 @@ void EngineImpl::queryStationsWithBBoxes(const Fmi::Database::PostgreSQLConnecti
  */
 // ----------------------------------------------------------------------
 
-namespace {
+namespace
+{
 
-Fmi::DateTime parseTime(const string &timeName, const string &timeStr)
+Fmi::DateTime parseTime(const string& timeName, const string& timeStr)
 {
   try
   {
     // Expecting "timestamptz '<datetime>'"
 
-    const char *timestamptz = "timestamptz";
-    const char *TIMESTAMPTZ = "TIMESTAMPTZ";
+    const char* timestamptz = "timestamptz";
+    const char* TIMESTAMPTZ = "TIMESTAMPTZ";
     const char *c = timeStr.c_str(), *c2;
 
-    while (*c == ' ') { c++; }
+    while (*c == ' ')
+    {
+      c++;
+    }
 
     while (*c && *timestamptz && ((*c == *timestamptz) || (*c == *TIMESTAMPTZ)))
     {
-      c++; timestamptz++; TIMESTAMPTZ++;
+      c++;
+      timestamptz++;
+      TIMESTAMPTZ++;
     }
 
     if ((!(*timestamptz)) && (*c == ' '))
     {
-      do { c++; } while (*c == ' ');
+      do
+      {
+        c++;
+      } while (*c == ' ');
 
-      if ((*c == '\'') && ((c2 = strchr(c + 1,'\'')) > (c + 1)))
+      if ((*c == '\'') && ((c2 = strchr(c + 1, '\'')) > (c + 1)))
       {
         auto c3 = c2;
 
-        do { c3++; } while (*c3 == ' ');
+        do
+        {
+          c3++;
+        } while (*c3 == ' ');
 
         if (!(*c3))
         {
@@ -3575,7 +3584,7 @@ Fmi::DateTime parseTime(const string &timeName, const string &timeStr)
   }
 }
 
-}
+}  // namespace
 
 void EngineImpl::validateTimes(const QueryOptions& queryOptions) const
 {
@@ -3583,7 +3592,7 @@ void EngineImpl::validateTimes(const QueryOptions& queryOptions) const
   {
     // Time range or observation time is required, having "timestamptz '<datetime>'" value(s)
 
-    auto const &timeOptions = queryOptions.itsTimeOptions;
+    auto const& timeOptions = queryOptions.itsTimeOptions;
 
     if (timeOptions.itsStartTime.empty() != timeOptions.itsEndTime.empty())
       throw Fmi::Exception(BCP, "'starttime' and 'endtime' options must be given simultaneously");
@@ -3630,8 +3639,8 @@ void EngineImpl::validateTimes(const QueryOptions& queryOptions) const
 // ----------------------------------------------------------------------
 
 void EngineImpl::validateParameters(const StringList& paramList,
-                                Validity validity,
-                                bool& messageColumnSelected) const
+                                    Validity validity,
+                                    bool& messageColumnSelected) const
 {
   try
   {
@@ -3742,8 +3751,8 @@ void EngineImpl::validateParameters(const StringList& paramList,
 // ----------------------------------------------------------------------
 
 void EngineImpl::validateStationIds(const Fmi::Database::PostgreSQLConnection& connection,
-                                const StationIdList& stationIdList,
-                                bool debug) const
+                                    const StationIdList& stationIdList,
+                                    bool debug) const
 {
   try
   {
@@ -3788,8 +3797,8 @@ void EngineImpl::validateStationIds(const Fmi::Database::PostgreSQLConnection& c
 // ----------------------------------------------------------------------
 
 void EngineImpl::validateIcaos(const Fmi::Database::PostgreSQLConnection& connection,
-                           const StringList& icaoList,
-                           bool debug) const
+                               const StringList& icaoList,
+                               bool debug) const
 {
   try
   {
@@ -3803,10 +3812,9 @@ void EngineImpl::validateIcaos(const Fmi::Database::PostgreSQLConnection& connec
     for (size_t n = 1; (n <= icaoList.size()); n++)
       selectFromWhereClause << ((n == 1) ? "($" : "),($") << n;
 
-    selectFromWhereClause
-        << ")) AS request_icaos (icao_code) LEFT JOIN avidb_stations ON "
-           "UPPER(request_icaos.icao_code) = UPPER(avidb_stations.icao_code) "
-        << "WHERE avidb_stations.icao_code IS NULL LIMIT 1";
+    selectFromWhereClause << ")) AS request_icaos (icao_code) LEFT JOIN avidb_stations ON "
+                             "UPPER(request_icaos.icao_code) = UPPER(avidb_stations.icao_code) "
+                          << "WHERE avidb_stations.icao_code IS NULL LIMIT 1";
 
     QueryData queryData;
 
@@ -3834,12 +3842,12 @@ void EngineImpl::validateIcaos(const Fmi::Database::PostgreSQLConnection& connec
  */
 // ----------------------------------------------------------------------
 
-void EngineImpl::validateIcaoFilters(const LocationOptions &locationOptions) const
+void EngineImpl::validateIcaoFilters(const LocationOptions& locationOptions) const
 {
   try
   {
-    auto const &includeIcaoFilters = locationOptions.itsIncludeIcaoFilters;
-    auto const &excludeIcaoFilters = locationOptions.itsExcludeIcaoFilters;
+    auto const& includeIcaoFilters = locationOptions.itsIncludeIcaoFilters;
+    auto const& excludeIcaoFilters = locationOptions.itsExcludeIcaoFilters;
 
     if (includeIcaoFilters.empty() && excludeIcaoFilters.empty())
       return;
@@ -3857,15 +3865,15 @@ void EngineImpl::validateIcaoFilters(const LocationOptions &locationOptions) con
       */
     }
 
-    for (auto const &filter : includeIcaoFilters)
-      if (filter.empty() || (filter.size() > 4) || strpbrk(filter.c_str(),"%_"))
-        throw Fmi::Exception(
-          BCP, "1-4 letter icao code filter expected, no wildcards: " + filter).disableLogging();
+    for (auto const& filter : includeIcaoFilters)
+      if (filter.empty() || (filter.size() > 4) || strpbrk(filter.c_str(), "%_"))
+        throw Fmi::Exception(BCP, "1-4 letter icao code filter expected, no wildcards: " + filter)
+            .disableLogging();
 
-    for (auto const &filter : excludeIcaoFilters)
-      if (filter.empty() || (filter.size() > 4) || strpbrk(filter.c_str(),"%_"))
-        throw Fmi::Exception(
-          BCP, "1-4 letter icao code filter expected, no wildcards: " + filter).disableLogging();
+    for (auto const& filter : excludeIcaoFilters)
+      if (filter.empty() || (filter.size() > 4) || strpbrk(filter.c_str(), "%_"))
+        throw Fmi::Exception(BCP, "1-4 letter icao code filter expected, no wildcards: " + filter)
+            .disableLogging();
   }
   catch (...)
   {
@@ -3880,8 +3888,8 @@ void EngineImpl::validateIcaoFilters(const LocationOptions &locationOptions) con
 // ----------------------------------------------------------------------
 
 void EngineImpl::validatePlaces(const Fmi::Database::PostgreSQLConnection& connection,
-                            StringList& placeNameList,
-                            bool debug) const
+                                StringList& placeNameList,
+                                bool debug) const
 {
   try
   {
@@ -3922,20 +3930,19 @@ void EngineImpl::validatePlaces(const Fmi::Database::PostgreSQLConnection& conne
     StringList places(placeNameList);
     placeNameList.clear();
 
-    for (auto const &place : places)
+    for (auto const& place : places)
     {
       QueryData queryData;
 
       queryData.itsColumns.push_back(Column(String, "name"));
 
-      selectFromWhereClause
-          << "SELECT request_stations.name FROM (VALUES ($1)) "
-          << "AS request_stations (name) LEFT JOIN avidb_stations ON "
-             "UPPER(request_stations.name) = UPPER(BTRIM(avidb_stations.name)) "
-          << "WHERE avidb_stations.name IS NULL";
+      selectFromWhereClause << "SELECT request_stations.name FROM (VALUES ($1)) "
+                            << "AS request_stations (name) LEFT JOIN avidb_stations ON "
+                               "UPPER(request_stations.name) = UPPER(BTRIM(avidb_stations.name)) "
+                            << "WHERE avidb_stations.name IS NULL";
 
       executeParamQuery<QueryData>(
-        connection, selectFromWhereClause.str(), place, debug, queryData);
+          connection, selectFromWhereClause.str(), place, debug, queryData);
 
       if (queryData.itsValues.empty())
         placeNameList.push_back(place);
@@ -3956,8 +3963,8 @@ void EngineImpl::validatePlaces(const Fmi::Database::PostgreSQLConnection& conne
 // ----------------------------------------------------------------------
 
 void EngineImpl::validateCountries(const Fmi::Database::PostgreSQLConnection& connection,
-                               const StringList& countryList,
-                               bool debug) const
+                                   const StringList& countryList,
+                                   bool debug) const
 {
   try
   {
@@ -4004,8 +4011,8 @@ void EngineImpl::validateCountries(const Fmi::Database::PostgreSQLConnection& co
 // ----------------------------------------------------------------------
 
 void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connection,
-                          LocationOptions& locationOptions,
-                          bool debug) const
+                              LocationOptions& locationOptions,
+                              bool debug) const
 {
   try
   {
@@ -4044,8 +4051,7 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
     bool checkIfRoute =
         (locationOptions.itsLonLats.empty() && locationOptions.itsStationIds.empty() &&
          locationOptions.itsIcaos.empty() && locationOptions.itsCountries.empty() &&
-         locationOptions.itsPlaces.empty() && locationOptions.itsBBoxes.empty() &&
-         (wktCnt == 1));
+         locationOptions.itsPlaces.empty() && locationOptions.itsBBoxes.empty() && (wktCnt == 1));
 
     QueryData queryData;
 
@@ -4057,8 +4063,7 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
     queryData.itsColumns.push_back(Column(Double, "lon"));
 
     executeParamQuery<QueryData, StringList>(
-        connection, selectFromWhereClause.str(), locationOptions.itsWKTs.itsWKTs,
-        debug, queryData);
+        connection, selectFromWhereClause.str(), locationOptions.itsWKTs.itsWKTs, debug, queryData);
 
     if (queryData.itsValues["wkt"].size() != wktCnt)
       throw Fmi::Exception(
@@ -4070,7 +4075,7 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
     {
       string wkt = value_or<std::string>(queryData.itsValues["wkt"].front(), "?");
 
-      const string geomType = value_or<std::string>(queryData.itsValues["geomtype"].front(), "?"); 
+      const string geomType = value_or<std::string>(queryData.itsValues["geomtype"].front(), "?");
 
       if ((geomType == "ST_Point") || (geomType == "ST_Polygon") || (geomType == "ST_LineString"))
         throw Fmi::Exception(BCP, "Invalid wkt " + wkt);
@@ -4102,7 +4107,6 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
       if ((index < 0) || (itwkt == locationOptions.itsWKTs.itsWKTs.end()))
         throw Fmi::Exception(BCP, "validateWKTs: internal: wkt index is invalid");
 
-
       double lat = value_or<double>(queryData.itsValues["lat"][dataIndex], 0);
       double lon = value_or<double>(queryData.itsValues["lon"][dataIndex], 0);
 
@@ -4130,8 +4134,8 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
 // private
 //
 StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnection& connection,
-                                       QueryOptions& queryOptions,
-                                       bool validateQuery) const
+                                           QueryOptions& queryOptions,
+                                           bool validateQuery) const
 {
   try
   {
@@ -4150,10 +4154,8 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
       if (!locationOptions.itsIcaos.empty())
         validateIcaos(connection, locationOptions.itsIcaos, queryOptions.itsDebug);
 
-      if (
-          (!locationOptions.itsIncludeIcaoFilters.empty()) ||
-          (!locationOptions.itsExcludeIcaoFilters.empty())
-         )
+      if ((!locationOptions.itsIncludeIcaoFilters.empty()) ||
+          (!locationOptions.itsExcludeIcaoFilters.empty()))
         validateIcaoFilters(locationOptions);
 
       if (!locationOptions.itsPlaces.empty())
@@ -4296,8 +4298,8 @@ StationQueryData EngineImpl::queryStations(QueryOptions& queryOptions) const
 // ----------------------------------------------------------------------
 
 void EngineImpl::validateMessageTypes(const Fmi::Database::PostgreSQLConnection& connection,
-                                  const StringList& messageTypeList,
-                                  bool debug) const
+                                      const StringList& messageTypeList,
+                                      bool debug) const
 {
   try
   {
@@ -4384,9 +4386,9 @@ const Column* EngineImpl::getMessageTableTimeColumn(const string& timeColumn) co
 // private
 //
 StationQueryData EngineImpl::queryMessages(const Fmi::Database::PostgreSQLConnection& connection,
-                                       const StationIdList& stationIdList,
-                                       const QueryOptions& queryOptions,
-                                       bool validateQuery) const
+                                           const StationIdList& stationIdList,
+                                           const QueryOptions& queryOptions,
+                                           bool validateQuery) const
 {
   try
   {
@@ -4661,9 +4663,8 @@ StationQueryData EngineImpl::queryMessages(const Fmi::Database::PostgreSQLConnec
 
       auto& table = tableMap[messageFormatTableName];
       table.itsAlias = messageFormatTableAlias;
-      table.itsJoin = queryOptions.itsMessageFormat == "TAC"
-                        ? messageFormatTableJoinTAC
-                        : messageFormatTableJoinIWXXM;
+      table.itsJoin = queryOptions.itsMessageFormat == "TAC" ? messageFormatTableJoinTAC
+                                                             : messageFormatTableJoinIWXXM;
     }
 
     // For time range query ensure tablemap contains message_types table for joining into main
@@ -4717,7 +4718,7 @@ StationQueryData EngineImpl::queryMessages(const Fmi::Database::PostgreSQLConnec
 // public api stub
 //
 StationQueryData EngineImpl::queryMessages(const StationIdList& stationIdList,
-                                       const QueryOptions& queryOptions) const
+                                           const QueryOptions& queryOptions) const
 {
   try
   {
@@ -4739,7 +4740,7 @@ StationQueryData EngineImpl::queryMessages(const StationIdList& stationIdList,
 // ----------------------------------------------------------------------
 
 StationQueryData& EngineImpl::joinStationAndMessageData(const StationQueryData& stationData,
-                                                    StationQueryData& messageData) const
+                                                        StationQueryData& messageData) const
 {
   try
   {
@@ -5034,7 +5035,7 @@ QueryData EngineImpl::queryRejectedMessages(const QueryOptions& queryOptions) co
  */
 // ----------------------------------------------------------------------
 
-const FIRQueryData &EngineImpl::queryFIRAreas() const
+const FIRQueryData& EngineImpl::queryFIRAreas() const
 {
   try
   {
@@ -5047,7 +5048,7 @@ const FIRQueryData &EngineImpl::queryFIRAreas() const
 
     loadFIRAreas();
 
-    if (! itsFIRAreas.empty())
+    if (!itsFIRAreas.empty())
       itsFIRAreasPtr.store(&itsFIRAreas, std::memory_order_relaxed);
 
     return itsFIRAreas;
@@ -5069,12 +5070,13 @@ void EngineImpl::loadFIRAreas() const
   try
   {
     auto connectionPtr = itsConnectionPool->get();
-    auto &connection = *connectionPtr.get();
+    auto& connection = *connectionPtr.get();
 
-    string query("SELECT gid, ST_AsGeoJSON(ST_ForcePolygonCCW(areageom)) AS geom,"
-                 "ST_XMin(areageom) AS xmin,ST_YMin(areageom) AS ymin,"
-                 "ST_XMax(areageom) AS xmax,ST_YMax(areageom) AS ymax"
-                 " FROM icao_fir_yhdiste ORDER BY 1");
+    string query(
+        "SELECT gid, ST_AsGeoJSON(ST_ForcePolygonCCW(areageom)) AS geom,"
+        "ST_XMin(areageom) AS xmin,ST_YMin(areageom) AS ymin,"
+        "ST_XMax(areageom) AS xmax,ST_YMax(areageom) AS ymax"
+        " FROM icao_fir_yhdiste ORDER BY 1");
 
     auto result = connection.executeNonTransaction(query);
 
@@ -5105,40 +5107,40 @@ void EngineImpl::loadFIRAreas() const
 
 extern "C" void* engine_class_creator(const char* theConfigFileName, void* /* user_data */)
 {
-  //return new SmartMet::Engine::Avi::EngineImpl(theConfigFileName);
+  // return new SmartMet::Engine::Avi::EngineImpl(theConfigFileName);
   {
-  try
-  {
-    using SmartMet::Spine::log_time_str;
-    const bool disabled = [&theConfigFileName]()
+    try
     {
-      const char *name = "SmartMet::Engine::Avi::Engine::create";
-      if (theConfigFileName == nullptr || *theConfigFileName == 0)
+      using SmartMet::Spine::log_time_str;
+      const bool disabled = [&theConfigFileName]()
       {
-        std::cout << log_time_str() << ' ' << ANSI_FG_RED << name
-                  << ": configuration file not specified or its name is empty string: "
-                  << "engine disabled." << ANSI_FG_DEFAULT << std::endl;
-        return true;
-      }
+        const char* name = "SmartMet::Engine::Avi::Engine::create";
+        if (theConfigFileName == nullptr || *theConfigFileName == 0)
+        {
+          std::cout << log_time_str() << ' ' << ANSI_FG_RED << name
+                    << ": configuration file not specified or its name is empty string: "
+                    << "engine disabled." << ANSI_FG_DEFAULT << std::endl;
+          return true;
+        }
 
-      SmartMet::Spine::ConfigBase cfg(theConfigFileName);
-      const bool result = cfg.get_optional_config_param<bool>("disabled", false);
-      if (result)
-        std::cout << log_time_str() << ' ' << ANSI_FG_RED << name << ": engine disabled"
-                  << ANSI_FG_DEFAULT << std::endl;
-      return result;
-    }();
+        SmartMet::Spine::ConfigBase cfg(theConfigFileName);
+        const bool result = cfg.get_optional_config_param<bool>("disabled", false);
+        if (result)
+          std::cout << log_time_str() << ' ' << ANSI_FG_RED << name << ": engine disabled"
+                    << ANSI_FG_DEFAULT << std::endl;
+        return result;
+      }();
 
-    if (disabled)
-      return new SmartMet::Engine::Avi::Engine();
+      if (disabled)
+        return new SmartMet::Engine::Avi::Engine();
 
-    return new SmartMet::Engine::Avi::EngineImpl(theConfigFileName);
+      return new SmartMet::Engine::Avi::EngineImpl(theConfigFileName);
+    }
+    catch (...)
+    {
+      throw Fmi::Exception::Trace(BCP, "Operation failed!");
+    }
   }
-  catch (...)
-  {
-    throw Fmi::Exception::Trace(BCP, "Operation failed!");
-  }
-}
 }
 
 extern "C" const char* engine_name()
