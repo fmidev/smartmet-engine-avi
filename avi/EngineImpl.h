@@ -60,7 +60,7 @@ class EngineImpl : public Engine
 
   const Column *getMessageTableTimeColumn(const std::string &timeColumn) const;
 
-  const Column *getQueryColumn(const ColumnTable tableColumns,
+  const Column *getQueryColumn(const ColumnTable &tableColumns,
                                Columns &columnList,
                                const std::string &theQueryColumnName,
                                bool &duplicate,

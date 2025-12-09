@@ -741,7 +741,7 @@ string buildRequestStationsWithClause(const StationIdList& stationIdList, bool r
  */
 // ----------------------------------------------------------------------
 
-string buildMessageTypeValidityWithClause(const StringList messageTypeList,
+string buildMessageTypeValidityWithClause(const StringList& messageTypeList,
                                           const MessageTypes& knownMessageTypes)
 {
   try
@@ -809,7 +809,7 @@ string buildMessageTypeValidityWithClause(const StringList messageTypeList,
 
 void scopeMessageTypes(const StringList& messageTypeList,
                        const MessageTypes& knownMessageTypes,
-                       const list<MessageScope> messageScopes,
+                       const list<MessageScope>& messageScopes,
                        StringList& scopeMessageTypeList)
 {
   try
@@ -4911,7 +4911,7 @@ StationQueryData EngineImpl::queryStationsAndMessages(QueryOptions& queryOptions
               data = &scope.messageData;
 
             if (data != &scope.messageData)
-              for (auto station : scope.messageData.itsValues)
+              for (const auto& station : scope.messageData.itsValues)
               {
                 auto its = data->itsValues.insert(make_pair(station.first, QueryValues()));
 
