@@ -2464,7 +2464,7 @@ void sortColumnList(Columns& columns)
 {
   try
   {
-    columns.sort(columns.front().columnNumberSort);
+    columns.sort(Column::columnNumberSort);
   }
   catch (...)
   {
