@@ -3090,8 +3090,6 @@ void EngineImpl::loadQueryResult(
         }
         else if (column.itsType == String)
         {
-          string strValue;
-
           bool isNull;
 
           try
