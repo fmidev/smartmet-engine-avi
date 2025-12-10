@@ -53,7 +53,6 @@ BOOST_AUTO_TEST_CASE(messagetype_getTimeRangeType_default)
   MessageType obj;
   BOOST_CHECK(typeid(obj.getTimeRangeType()) == typeid(timeRangeTypeVariable));
   BOOST_CHECK_EQUAL(obj.getTimeRangeType(), TimeRangeType::NullTimeRange);
-  BOOST_CHECK_EQUAL(obj.getTimeRangeType(), 0);
   BOOST_CHECK(not obj.hasValidityHours());
 }
 

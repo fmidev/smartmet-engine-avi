@@ -1714,7 +1714,7 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageParameters.front());
-  queryOptions.itsValidity = Avi::Accepted;
+  queryOptions.itsValidity = Avi::Validity::Accepted;
   // Throws since query times are now checked with Fmi::TimeParser::parse()
   BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Fmi::Exception);
   /*
@@ -1731,7 +1731,7 @@ BOOST_AUTO_TEST_CASE(
   BOOST_CHECK(engine);
   QueryOptions queryOptions;
   queryOptions.itsParameters.push_back(allMessageParameters.front());
-  queryOptions.itsValidity = Avi::Rejected;
+  queryOptions.itsValidity = Avi::Validity::Rejected;
   BOOST_CHECK_THROW(engine->queryStationsAndMessages(queryOptions), Fmi::Exception);
 }
 
