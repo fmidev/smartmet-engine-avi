@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Engine.h"
 #include "Config.h"
+#include "Engine.h"
 #include <macgyver/PostgreSQLConnection.h>
-
 
 namespace SmartMet
 {
@@ -15,7 +14,7 @@ namespace Avi
 class EngineImpl : public Engine
 {
  public:
-  EngineImpl(const std::string &theConfigFileName);
+  EngineImpl(std::string theConfigFileName);
   EngineImpl() = delete;
 
   StationQueryData queryStations(QueryOptions &queryOptions) const override;
@@ -31,21 +30,21 @@ class EngineImpl : public Engine
   const FIRQueryData &queryFIRAreas() const override;
 
  protected:
-  virtual void init();
-  void shutdown();
+  void init() override;
+  void shutdown() override;
 
  private:
-  void validateTimes(const QueryOptions &queryOptions) const;
-  void validateParameters(const StringList &paramList,
-                          Validity validity,
-                          bool &messageColumnSelected) const;
+  static void validateTimes(const QueryOptions &queryOptions);
+  static void validateParameters(const StringList &paramList,
+                                 Validity validity,
+                                 bool &messageColumnSelected);
   void validateStationIds(const Fmi::Database::PostgreSQLConnection &connection,
                           const StationIdList &stationIdList,
                           bool debug) const;
   void validateIcaos(const Fmi::Database::PostgreSQLConnection &connection,
                      const StringList &icaoList,
                      bool debug) const;
-  void validateIcaoFilters(const LocationOptions &locationOptions) const;
+  static void validateIcaoFilters(const LocationOptions &locationOptions);
   void validatePlaces(const Fmi::Database::PostgreSQLConnection &connection,
                       StringList &placeNameList,
                       bool debug) const;
@@ -59,28 +58,28 @@ class EngineImpl : public Engine
                             const StringList &messageTypeList,
                             bool debug) const;
 
-  const Column *getMessageTableTimeColumn(const std::string &timeColumn) const;
+  static const Column *getMessageTableTimeColumn(const std::string &timeColumn);
 
-  const Column *getQueryColumn(const ColumnTable tableColumns,
-                               Columns &columnList,
-                               const std::string &theQueryColumnName,
-                               bool &duplicate,
-                               int columnNumber = -1) const;
+  static const Column *getQueryColumn(const ColumnTable &tableColumns,
+                                      Columns &columnList,
+                                      const std::string &theQueryColumnName,
+                                      bool &duplicate,
+                                      int columnNumber = -1);
 
-  std::string buildStationQueryCoordinateExpressions(const Columns &columns) const;
-  Columns buildStationQuerySelectClause(const StringList &paramList,
-                                        bool selectStationListOnly,
-                                        bool autoSelectDistance,
-                                        std::string &selectClause,
-                                        bool& firIdQuery) const;
-  TableMap buildMessageQuerySelectClause(QueryTable *queryTables,
-                                         const StationIdList &stationIdList,
-                                         const StringList &messageTypeList,
-                                         const StringList &paramList,
-                                         bool routeQuery,
-                                         std::string &selectClause,
-                                         bool &messageColumnSelected,
-                                         bool &distinct) const;
+  static std::string buildStationQueryCoordinateExpressions(const Columns &columns);
+  static Columns buildStationQuerySelectClause(const StringList &paramList,
+                                               bool selectStationListOnly,
+                                               bool autoSelectDistance,
+                                               std::string &selectClause,
+                                               bool &firIdQuery);
+  static TableMap buildMessageQuerySelectClause(QueryTable *queryTables,
+                                                const StationIdList &stationIdList,
+                                                const StringList &messageTypeList,
+                                                const StringList &paramList,
+                                                bool routeQuery,
+                                                std::string &selectClause,
+                                                bool &messageColumnSelected,
+                                                bool &distinct);
 
   template <typename T>
   void loadQueryResult(const pqxx::result &result,
@@ -167,8 +166,8 @@ class EngineImpl : public Engine
   std::shared_ptr<Config> itsConfig;
   std::unique_ptr<Fmi::Database::PostgreSQLConnectionPool> itsConnectionPool;
 
-  mutable std::mutex                  itsFIRMutex;
-  mutable FIRQueryData                itsFIRAreas;
+  mutable std::mutex itsFIRMutex;
+  mutable FIRQueryData itsFIRAreas;
   mutable std::atomic<FIRQueryData *> itsFIRAreasPtr = nullptr;
 };  // class EngineImpl
 
