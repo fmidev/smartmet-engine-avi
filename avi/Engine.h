@@ -33,17 +33,17 @@ struct BBox
   double getXMax() const { return itsWest; }
   double getYMax() const { return itsNorth; }
 
-  double itsWest;
-  double itsEast;
-  double itsSouth;
-  double itsNorth;
+  double itsWest = 0;
+  double itsEast = 0;
+  double itsSouth = 0;
+  double itsNorth = 0;
 };
 
 struct LonLat
 {
   LonLat(double theLon, double theLat) : itsLon(theLon), itsLat(theLat) {}
-  double itsLon;
-  double itsLat;
+  double itsLon = 0;
+  double itsLat = 0;
 };
 
 using StationIdType = long;
@@ -55,7 +55,7 @@ using LonLatList = std::list<LonLat>;
 struct WKTs
 {
   StringList itsWKTs;
-  bool isRoute;
+  bool isRoute = false;
 };
 
 struct LocationOptions
@@ -67,8 +67,8 @@ struct LocationOptions
   WKTs itsWKTs;
   StringList itsPlaces;
   StringList itsCountries;
-  double itsMaxDistance;
-  unsigned int itsNumberOfNearestStations;
+  double itsMaxDistance = 0;
+  unsigned int itsNumberOfNearestStations = 0;
   // BRAINSTORM-3288, BRAINSTORM-3300
   //
   // Country and icao code filters to include/exclude stations
