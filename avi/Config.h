@@ -12,7 +12,7 @@ namespace Engine
 {
 namespace Avi
 {
-enum class TimeRangeType
+typedef enum
 {
   NullTimeRange = 0,
   ValidTimeRange,
@@ -24,19 +24,28 @@ enum class TimeRangeType
   MessageTimeRangeLatest,
   CreationValidTimeRange,
   CreationValidTimeRangeLatest
-};
+} TimeRangeType;
 
-enum class MessageScope
+typedef enum
 {
   NoScope = 0,
   StationScope,
   FIRScope,
   GlobalScope
-};
+} MessageScope;
 
 class MessageType
 {
  public:
+  MessageType()
+  {
+    itsScope = StationScope;
+    itsTimeRangeType = NullTimeRange;
+    itsValidityHours = 0;
+    itsLatestMessageOnly = false;
+    itsQueryRestrictionStartMinute = itsQueryRestrictionEndMinute = 0;
+  }
+
   bool operator==(const std::string &theMessageType) const
   {
     return (std::find(itsTypes.begin(), itsTypes.end(), theMessageType) != itsTypes.end());
@@ -54,7 +63,10 @@ class MessageType
   {
     itsMessirPatterns.push_back(theMessirPattern);
   }
-  void setQueryRestrictionHours(const std::string &hours) { itsQueryRestrictionHours = hours; }
+  void setQueryRestrictionHours(const std::string &hours)
+  {
+    itsQueryRestrictionHours = hours;
+  }
   void addQueryRestrictionIcaoPattern(const std::string &theIcaoPattern)
   {
     itsQueryRestrictionIcaoPatterns.push_back(theIcaoPattern);
@@ -63,18 +75,23 @@ class MessageType
   {
     itsQueryRestrictionCountryCodes.push_back(theCountryCode);
   }
-  void setQueryRestrictionStartMinute(int minute) { itsQueryRestrictionStartMinute = minute; }
-  void setQueryRestrictionEndMinute(int minute) { itsQueryRestrictionEndMinute = minute; }
+  void setQueryRestrictionStartMinute(int minute)
+  {
+    itsQueryRestrictionStartMinute = minute;
+  }
+  void setQueryRestrictionEndMinute(int minute)
+  {
+    itsQueryRestrictionEndMinute = minute;
+  }
 
   const std::list<std::string> &getMessageTypes() const { return itsTypes; }
   MessageScope getScope() const { return itsScope; }
   TimeRangeType getTimeRangeType() const { return itsTimeRangeType; }
   bool hasValidityHours() const
   {
-    return ((itsTimeRangeType == TimeRangeType::MessageValidTimeRange) ||
-            (itsTimeRangeType == TimeRangeType::MessageValidTimeRangeLatest) ||
-            (itsTimeRangeType == TimeRangeType::MessageTimeRange) ||
-            (itsTimeRangeType == TimeRangeType::MessageTimeRangeLatest));
+    return ((itsTimeRangeType == MessageValidTimeRange) ||
+            (itsTimeRangeType == MessageValidTimeRangeLatest) ||
+            (itsTimeRangeType == MessageTimeRange) || (itsTimeRangeType == MessageTimeRangeLatest));
   }
   unsigned int getValidityHours() const { return itsValidityHours; }
   bool getLatestMessageOnly() const { return itsLatestMessageOnly; }
@@ -93,26 +110,25 @@ class MessageType
 
  private:
   std::list<std::string> itsTypes;
-  MessageScope itsScope = MessageScope::StationScope;
-  TimeRangeType itsTimeRangeType = TimeRangeType::NullTimeRange;
-  unsigned int itsValidityHours = 0;
-  bool itsLatestMessageOnly = false;
+  MessageScope itsScope;
+  TimeRangeType itsTimeRangeType;
+  unsigned int itsValidityHours;
+  bool itsLatestMessageOnly;
   std::list<std::string> itsMessirPatterns;  // Querying latest messages grouped additionally by
                                              // messir_heading (e.g. GAFOR; FBFI41..., FBFI42...,
                                              // FBFI43...)
-  std::string itsQueryRestrictionHours;      // TAF query restriction hours (e.g. 2,5,8,...)
+  std::string itsQueryRestrictionHours;	     // TAF query restriction hours (e.g. 2,5,8,...)
   std::list<std::string> itsQueryRestrictionIcaoPatterns;  // ... icao patterns
   std::list<std::string> itsQueryRestrictionCountryCodes;  // ... country codes
-  int itsQueryRestrictionStartMinute = 0;                  // ... starting minute (e.g. 20)
-  int itsQueryRestrictionEndMinute = 0;                    // ... ending minute (e.g. 40)
+  int itsQueryRestrictionStartMinute;                      // ... starting minute (e.g. 20)
+  int itsQueryRestrictionEndMinute;                        // ... ending minute (e.g. 40)
 };
 
-using MessageTypes = std::list<MessageType>;
+typedef std::list<MessageType> MessageTypes;
 
 class Config : public SmartMet::Spine::ConfigBase
 {
  public:
-  ~Config() override;
   Config(const std::string &theFileName);
   Config() = delete;
   Config(const Config &) = delete;

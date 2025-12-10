@@ -2,10 +2,10 @@
 
 #include "Config.h"
 #include <boost/algorithm/string.hpp>
-#include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
-#include <set>
+#include <macgyver/Exception.h>
 #include <stdexcept>
+#include <set>
 
 namespace SmartMet
 {
@@ -13,9 +13,6 @@ namespace Engine
 {
 namespace Avi
 {
-
-Config::~Config() = default;
-
 // ----------------------------------------------------------------------
 /*!
  * \brief The only permitted constructor requires a configfile
@@ -202,7 +199,8 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
                    itsFilterFIMETARxxxExcludeIcaos.end(),
                    icao) != itsFilterFIMETARxxxExcludeIcaos.end())
           {
-            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(
+                BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", "message.filter_FI_METARxxx.excludeicaos");
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -236,7 +234,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       exception.addParameter("Attribute", "message.types");
       throw exception;
     }
-    if (messageTypes.getLength() == 0)
+    else if (messageTypes.getLength() == 0)
     {
       Fmi::Exception exception(BCP, "Empty configuration attribute value!");
       exception.addDetail("The attribute value is empty.");
@@ -277,7 +275,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", blockName + ".names");
           throw exception;
         }
-        if (namesSetting.getLength() == 0)
+        else if (namesSetting.getLength() == 0)
         {
           Fmi::Exception exception(BCP, "Empty configuration attribute value!");
           exception.addDetail("The attribute value is empty.");
@@ -312,7 +310,8 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           if (find(knownMessageTypes.begin(), knownMessageTypes.end(), name) !=
               knownMessageTypes.end())
           {
-            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(
+                BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", blockName + ".names");
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -355,16 +354,16 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       // Message scope
 
-      using KnownMessageScope = struct
+      typedef struct
       {
         const char *scopeName;
         MessageScope messageScope;
-      };
+      } KnownMessageScope;
 
-      KnownMessageScope messageScopes[] = {{"station", MessageScope::StationScope},
-                                           {"fir", MessageScope::FIRScope},
-                                           {"global", MessageScope::GlobalScope},
-                                           {nullptr, MessageScope::NoScope}};
+      KnownMessageScope messageScopes[] = {{"station", StationScope},
+                                           {"fir", FIRScope},
+                                           {"global", GlobalScope},
+                                           {nullptr, NoScope}};
 
       KnownMessageScope *s = messageScopes;
       auto scope = get_optional_config_param<std::string>(typeSetting, "scope", "station");
@@ -376,7 +375,8 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       if (!(s->scopeName))
       {
         Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
-        exception.addDetail(R"(Use one of the following values : "station", "fir" or "global")");
+        exception.addDetail(
+            "Use one of the following values : \"station\", \"fir\" or \"global\"");
         exception.addParameter("Configuration file", theConfigFileName);
         exception.addParameter("Attribute", blockName + ".scope");
         exception.addParameter("Invalid value", scope);
@@ -387,19 +387,18 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       // Query time range types (which time columns are used for time restriction).
 
-      using KnownTimeRangeType = struct
+      typedef struct
       {
         const char *timeRangeName;
         TimeRangeType timeRangeType;
         bool latestMessagesOnly;
-      };
+      } KnownTimeRangeType;
 
-      KnownTimeRangeType timeRangeTypes[] = {
-          {"validtime", TimeRangeType::ValidTimeRange, true},
-          {"messagevalidtime", TimeRangeType::MessageValidTimeRange, true},
-          {"messagetime", TimeRangeType::MessageTimeRange, true},
-          {"creationtime", TimeRangeType::CreationValidTimeRange, true},
-          {nullptr, TimeRangeType::NullTimeRange, false}};
+      KnownTimeRangeType timeRangeTypes[] = {{"validtime", ValidTimeRange, true},
+                                             {"messagevalidtime", MessageValidTimeRange, true},
+                                             {"messagetime", MessageTimeRange, true},
+                                             {"creationtime", CreationValidTimeRange, true},
+                                             {nullptr, NullTimeRange, false}};
 
       KnownTimeRangeType *r = timeRangeTypes;
       std::string timeRangeType =
@@ -413,7 +412,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       {
         Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
         exception.addDetail(
-            R"(Use one of the following values : "validtime", "messagetime" or "creationtime")");
+            "Use one of the following values : \"validtime\", \"messagetime\" or \"creationtime\"");
         exception.addParameter("Configuration file", theConfigFileName);
         exception.addParameter("Attribute", blockName + ".timerangetype");
         exception.addParameter("Invalid value", timeRangeType);
@@ -422,10 +421,10 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       // Validity period length for 'MessageValidTimeRange' and 'MessageTimeRange'
 
-      if ((r->timeRangeType == TimeRangeType::MessageValidTimeRange) ||
-          (r->timeRangeType == TimeRangeType::MessageTimeRange))
+      if ((r->timeRangeType == MessageValidTimeRange) || (r->timeRangeType == MessageTimeRange))
       {
-        auto validityHours = get_mandatory_config_param<unsigned int>(typeSetting, "validityhours");
+        unsigned int validityHours =
+            get_mandatory_config_param<unsigned int>(typeSetting, "validityhours");
 
         if (validityHours == 0)
         {
@@ -456,24 +455,20 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           throw exception;
         }
       }
-      else
+      else if ((latestMessageOnly =
+                    get_optional_config_param<bool>(typeSetting, "latestmessage", false)))
       {
-        latestMessageOnly = get_optional_config_param<bool>(typeSetting, "latestmessage", false);
-        if (latestMessageOnly)
-        {
-          Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
-          exception.addDetail(
-              "The attribute value cannot be set for the selected time range type.");
-          exception.addParameter("Configuration file", theConfigFileName);
-          exception.addParameter("Attribute", blockName + ".latestmessage");
-          throw exception;
-        }
+        Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+        exception.addDetail("The attribute value cannot be set for the selected time range type.");
+        exception.addParameter("Configuration file", theConfigFileName);
+        exception.addParameter("Attribute", blockName + ".latestmessage");
+        throw exception;
       }
 
       messageType.setLatestMessageOnly(latestMessageOnly);
 
       messageType.setTimeRangeType(messageType.getLatestMessageOnly()
-                                       ? TimeRangeType(static_cast<int>(r->timeRangeType) + 1)
+                                       ? (TimeRangeType)(r->timeRangeType + 1)
                                        : r->timeRangeType);
 
       // messir_heading LIKE pattern(s) used for additional grouping (e.g. for GAFOR) when querying
@@ -512,7 +507,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", attrBlockName);
           throw exception;
         }
-        if (patternsSetting.getLength() == 0)
+        else if (patternsSetting.getLength() == 0)
         {
           Fmi::Exception exception(BCP, "Empty configuration attribute value!");
           exception.addDetail("The attribute value is empty.");
@@ -551,7 +546,8 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (find(patterns.begin(), patterns.end(), pattern) != patterns.end())
           {
-            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(
+                BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", attrBlockName);
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -584,7 +580,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           throw exception;
         }
 
-        if (messageType.getTimeRangeType() != TimeRangeType::MessageValidTimeRangeLatest)
+        if (messageType.getTimeRangeType() != MessageValidTimeRangeLatest)
         {
           Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
           exception.addDetail(
@@ -604,7 +600,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", attrBlockName);
           throw exception;
         }
-        if (hoursSetting.getLength() == 0)
+        else if (hoursSetting.getLength() == 0)
         {
           Fmi::Exception exception(BCP, "Empty configuration attribute value!");
           exception.addDetail("The attribute value is empty.");
@@ -640,7 +636,8 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (restrictionHours.find(hour) != restrictionHours.end())
           {
-            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(
+                BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", attrBlockName);
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -678,7 +675,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", attrBlockName);
           throw exception;
         }
-        if (!hasPatterns)
+        else if (!hasPatterns)
         {
           Fmi::Exception exception(BCP, "Missing configuration attribute value!");
           exception.addDetail(
@@ -729,7 +726,8 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (find(patterns.begin(), patterns.end(), pattern) != patterns.end())
           {
-            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(
+                BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", attrBlockName);
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -752,7 +750,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", codeAttrBlockName);
           throw exception;
         }
-        if (!hasCodes)
+        else if (!hasCodes)
         {
           Fmi::Exception exception(BCP, "Missing configuration attribute value!");
           exception.addDetail(
@@ -803,7 +801,8 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
           if (find(codes.begin(), codes.end(), code) != codes.end())
           {
-            Fmi::Exception exception(BCP, "Configuration attribute value contains duplicates!");
+            Fmi::Exception exception(
+                BCP, "Configuration attribute value contains duplicates!");
             exception.addParameter("Configuration file", theConfigFileName);
             exception.addParameter("Attribute", codeAttrBlockName);
             exception.addParameter("Duplicate index", Fmi::to_string(j));
@@ -815,12 +814,14 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         }
       }
 
-      if ((!messageType.getQueryRestrictionHours().empty()) &&
+      if (
+          (!messageType.getQueryRestrictionHours().empty()) &&
           messageType.getQueryRestrictionIcaoPatterns().empty() &&
-          messageType.getQueryRestrictionCountryCodes().empty())
+          messageType.getQueryRestrictionCountryCodes().empty()
+         )
       {
-        Fmi::Exception exception(BCP,
-                                 "Query restriction icao pattern(s) and country code(s) missing!");
+        Fmi::Exception exception(
+            BCP, "Query restriction icao pattern(s) and country code(s) missing!");
         exception.addParameter("Configuration file", theConfigFileName);
         exception.addParameter("Attribute", blockName);
         throw exception;
@@ -844,7 +845,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           exception.addParameter("Attribute", hasStart ? startBlockName : endBlockName);
           throw exception;
         }
-        if ((!hasStart) || (!hasEnd))
+        else if ((!hasStart) || (!hasEnd))
         {
           Fmi::Exception exception(BCP, "Missing configuration attribute value!");
           exception.addDetail(
@@ -858,8 +859,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
         const libconfig::Setting &endMinuteSetting = theConfig.lookup(endBlockName);
         bool startMinuteOk = (startMinuteSetting.getType() == libconfig::Setting::Type::TypeInt);
         bool endMinuteOk = (endMinuteSetting.getType() == libconfig::Setting::Type::TypeInt);
-        int startMinute = 0;
-        int endMinute = 0;
+        int startMinute = 0, endMinute = 0;
 
         if (startMinuteOk && endMinuteOk)
         {
