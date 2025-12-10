@@ -137,8 +137,8 @@ struct QueryOptions
   Validity itsValidity{};  // Whether to select accepted or rejected messages
 
   bool itsMessageColumnSelected = false;  // Whether any avidb_messages column is requested or not
-  int itsMaxMessageStations = 0;          // if 0, unlimited; if < 0, engine rules
-  int itsMaxMessageRows = 0;              // if 0, unlimited; if < 0, engine rules
+  int itsMaxMessageStations = -1;         // if 0, unlimited; if < 0, engine rules
+  int itsMaxMessageRows = -1;             // if 0, unlimited; if < 0, engine rules
   bool itsDistinctMessages = true;        // Whether to skip duplicate messages or not
   bool itsFilterMETARs = true;  // Whether to filter (finnish) METARs (LIKE 'METAR%', if enabled by
                                 // engine's configuration) or not
