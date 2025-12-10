@@ -4,7 +4,7 @@
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
 Version: 25.12.10
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-avi
@@ -100,6 +100,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Wed Dec 10 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> 25.12.10-2.fmi
+- Default initialize POD types
+
 * Wed Dec 10 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> 25.12.10-1.fmi
 - New release version
 
