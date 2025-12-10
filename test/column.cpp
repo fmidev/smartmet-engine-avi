@@ -17,7 +17,7 @@ const bool boolVariable = true;
 const ColumnType columnTypeNone = ColumnType::None;
 const ColumnType columnTypeInteger = ColumnType::Integer;
 const std::string tableColumnNameEmpty;
-const std::string tableColumnNameNotEmpty(std::string("columnname"));
+const std::string tableColumnNameNotEmpty = "columnname";
 
 BOOST_AUTO_TEST_CASE(column_constructor)
 {
