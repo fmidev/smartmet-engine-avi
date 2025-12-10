@@ -16,6 +16,50 @@ namespace Avi
 
 Config::~Config() = default;
 
+std::ostream &operator<<(std::ostream &os, TimeRangeType t)
+{
+  switch (t)
+  {
+    case TimeRangeType::NullTimeRange:
+      return os << "NullTimeRange";
+    case TimeRangeType::ValidTimeRange:
+      return os << "ValidTimeRange";
+    case TimeRangeType::ValidTimeRangeLatest:
+      return os << "ValidTimeRangeLatest";
+    case TimeRangeType::MessageValidTimeRange:
+      return os << "MessageValidTimeRange";
+    case TimeRangeType::MessageValidTimeRangeLatest:
+      return os << "MessageValidTimeRangeLatest";
+    case TimeRangeType::MessageTimeRange:
+      return os << "MessageTimeRange";
+    case TimeRangeType::MessageTimeRangeLatest:
+      return os << "MessageTimeRangeLatest";
+    case TimeRangeType::CreationValidTimeRange:
+      return os << "CreationValidTimeRange";
+    case TimeRangeType::CreationValidTimeRangeLatest:
+      return os << "CreationValidTimeRangeLatest";
+    default:
+      return os << "???";
+  }
+}
+
+std::ostream &operator<<(std::ostream &os, MessageScope s)
+{
+  switch (s)
+  {
+    case MessageScope::NoScope:
+      return os << "NoScope";
+    case MessageScope::StationScope:
+      return os << "StationScope";
+    case MessageScope::FIRScope:
+      return os << "FIRScope";
+    case MessageScope::GlobalScope:
+      return os << "GlobalScope";
+    default:
+      return os << "???";
+  }
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief The only permitted constructor requires a configfile

@@ -26,6 +26,8 @@ enum class TimeRangeType
   CreationValidTimeRangeLatest
 };
 
+std::ostream &operator<<(std::ostream &os, TimeRangeType t);
+
 enum class MessageScope
 {
   NoScope = 0,
@@ -33,6 +35,8 @@ enum class MessageScope
   FIRScope,
   GlobalScope
 };
+
+std::ostream &operator<<(std::ostream &os, MessageScope s);
 
 class MessageType
 {

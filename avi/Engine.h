@@ -58,7 +58,7 @@ struct WKTs
   bool isRoute;
 };
 
-using LocationOptions = struct
+struct LocationOptions
 {
   StationIdList itsStationIds;
   StringList itsIcaos;
@@ -123,6 +123,8 @@ enum class Validity
   AcceptedMessages
 };
 
+std::ostream &operator<<(std::ostream &os, Validity v);
+
 struct QueryOptions
 {
   QueryOptions() : itsMessageFormat("TAC") {}
@@ -157,6 +159,9 @@ enum class ColumnType
   DateTime,
   None
 };
+
+std::ostream &operator<<(std::ostream &os, ColumnType t);
+
 enum class ColumnSelection
 {
   Requested,
@@ -164,6 +169,8 @@ enum class ColumnSelection
   AutomaticRequested,
   AutomaticOnly
 };
+
+std::ostream &operator<<(std::ostream &os, ColumnSelection s);
 
 using ColumnExpression = std::string (*)(const std::string &tableColumnName,
                                          const std::string &queryColumnName);
