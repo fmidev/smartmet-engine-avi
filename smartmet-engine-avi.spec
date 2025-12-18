@@ -3,8 +3,8 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 25.12.10
-Release: 2%{?dist}.fmi
+Version: 25.12.18
+Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-avi
@@ -26,16 +26,16 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 25.11.19
+BuildRequires: smartmet-library-spine-devel >= 25.12.12
 BuildRequires: smartmet-library-macgyver-devel >= 25.12.2
 BuildRequires: smartmet-library-timeseries-devel >= 25.12.9
 Requires: smartmet-library-macgyver >= 25.12.2
-Requires: smartmet-library-spine >= 25.11.19
+Requires: smartmet-library-spine >= 25.12.12
 Requires: smartmet-library-timeseries >= 25.12.9
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
 #TestRequires: smartmet-utils-devel
-#TestRequires: smartmet-library-spine-devel >= 25.11.19
+#TestRequires: smartmet-library-spine-devel >= 25.12.12
 #TestRequires: smartmet-library-timeseries-devel >= 25.12.9
 #TestRequires: zlib-devel
 #TestRequires: bzip2-devel
@@ -100,6 +100,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Thu Dec 18 2025 Pertti Kinnia <pertti.kinnia@fmi.fi> 25.12.18-1.fmi
+- Changes to SIGMET query logic (BRAINSTORM-3325)
+
 * Wed Dec 10 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> 25.12.10-2.fmi
 - Default initialize POD types
 

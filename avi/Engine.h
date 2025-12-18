@@ -91,6 +91,7 @@ struct TimeOptions
 
   std::string itsObservationTime;     // Observation time (defaults to current time)
   std::string itsMessageCreatedTime;  // Message creation time (defaults to observation time)
+  std::string itsCurrentTime;         // For testing; used as current time if set
   std::string itsStartTime;           // Time range start time
   std::string itsEndTime;             // Time range end time
   std::string itsTimeFormat;          // Fmi::TimeFormatter type; iso, timestamp, sql, xml or epoch
@@ -102,7 +103,15 @@ struct TimeOptions
   // If false, do not check/filter if messages were created after the given messagetime and
   // do not apply message query time restrictions (used for TAFs)
   //
+  // itsUseCurrentTime is set by edr when fetching latest messages; itsObservationTime is set
+  // whether the user provided the time or not (in which case the current time was used) and
+  // SIGMETs are fetched differently depending on if the time is given by the user or not
+  //
+  // edr also sets itsClosedRange to query SIGMETs using closed time range
+  //
   bool itsMessageTimeChecks = true;
+  bool itsUseCurrentTime = false;
+  bool itsClosedTimeRange = false;
 
   const std::string &getMessageTableTimeRangeColumn() const
   {

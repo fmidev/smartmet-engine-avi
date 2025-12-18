@@ -1618,6 +1618,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                                      const MessageTypes& knownMessageTypes,
                                      const string& observationTime,
                                      const string& messageCreatedTime,
+                                     bool useCurrentTime,
                                      bool filterFIMETARxxx,
                                      bool excludeFISPECI,
                                      bool distinct,
@@ -1719,7 +1720,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
         "DISTINCT first_value(me.message_id) OVER (PARTITION BY me.station_id,";
     const string latestMessageIdOrderByExpr = " ORDER BY me.message_time DESC,me.created DESC) ";
 
-    auto const& createdTime = (messageCreatedTime.empty() ? observationTime : messageCreatedTime);
+    bool edrQuery = (! messageCreatedTime.empty());
+    auto const& createdTime = (edrQuery ? messageCreatedTime : observationTime);
 
     withClause << latestMessagesTable.itsName << " AS (";
 
@@ -1884,11 +1886,23 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
         messageTypes, knownMessageTypes, TimeRangeType::CreationValidTimeRange);
 
     if (!messageTypeIn.empty())
+    {
       withClause << unionOrEmpty << "SELECT message_id FROM record_set " << messageTableAlias
                  << ",avidb_message_types mt"
-                 << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND "
-                 << createdTime << " >= " << messageTableAlias << ".created AND " << observationTime
-                 << " < " << messageTableAlias << ".valid_to";
+                 << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND ";
+
+      if (edrQuery)
+      {
+        if (useCurrentTime)
+          withClause << "current_timestamp BETWEEN " << messageTableAlias
+                     << ".valid_from AND " << messageTableAlias << ".valid_to";
+        else
+          withClause << messageTableAlias << ".message_time = " << observationTime;
+      }
+      else
+        withClause << createdTime << " >= " << messageTableAlias << ".created AND " << observationTime
+                   << " < " << messageTableAlias << ".valid_to";
+    }
 
     withClause << ")";
 
@@ -2240,11 +2254,13 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         string messageTypeIn = buildMessageTypeInClause(
             queryOptions.itsMessageTypes, knownMessageTypes, list<TimeRangeType>());
 
+        auto ltORle = (queryOptions.itsTimeOptions.itsClosedTimeRange ? " <= " : " < ");
+
         fromWhereOrderByClause << " AND " << messageTypeIn << " AND " << messageTableAlias << "."
                                << timeRangeColumn->getTableColumnName()
                                << " >= " << queryOptions.itsTimeOptions.itsStartTime << " AND "
                                << messageTableAlias << "." << timeRangeColumn->getTableColumnName()
-                               << " < " << queryOptions.itsTimeOptions.itsEndTime;
+                               << ltORle << queryOptions.itsTimeOptions.itsEndTime;
 
         bool filterMETARs = (queryOptions.itsFilterMETARs && config.getFilterFIMETARxxx() &&
                              (messageTypeIn.find("'METAR") != string::npos));
@@ -4587,6 +4603,7 @@ StationQueryData EngineImpl::queryMessages(const Fmi::Database::PostgreSQLConnec
                                                  itsConfig->getMessageTypes(),
                                                  queryOptions.itsTimeOptions.itsObservationTime,
                                                  queryOptions.itsTimeOptions.itsMessageCreatedTime,
+                                                 queryOptions.itsTimeOptions.itsUseCurrentTime,
                                                  filterMETARs,
                                                  excludeSPECIs,
                                                  queryOptions.itsDistinctMessages,
