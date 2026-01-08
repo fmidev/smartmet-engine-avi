@@ -21,6 +21,16 @@ namespace Avi
 {
 namespace
 {
+// BRAINSTORM-3327 (fix to BRAINSTORM-3136)
+//
+// Queries with (small) bboxes seemed occasionally to be slow (they were quite heavy anyway)
+// if record_set's stations are not filtered at all; filter the stations using preselected
+// station id list unless the number of stations exceeds the max limit
+//
+// There are 30k+ stations in avidb_stations table
+//
+const uint MaxBBoxQueryInClauseStationIds = 10000;
+
 Fmi::TimeZonePtr& tzUTC = Fmi::TimeZonePtr::utc;
 
 Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConfig)
@@ -991,6 +1001,14 @@ string buildRecordSetWithClause(bool bboxQuery,
 
     ostringstream withClause;
     string whereStationIdIn;
+
+    // BRAINSTORM-3327 (fix to BRAINSTORM-3136)
+    //
+    // Queries with (small) bboxes seemed occasionally to be slow (they were quite heavy anyway)
+    // if record_set's stations are not filtered at all; filter the stations using preselected
+    // station id list unless the number of stations exceeds the max limit
+    //
+    bboxQuery &= (stationIdList.size() > MaxBBoxQueryInClauseStationIds);
 
     if ((!bboxQuery) && (!stationIdList.empty()))
       if (!routeQuery)
@@ -2311,7 +2329,16 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
       // Message restriction made by join to latest_messages.message_id
     }
 
-    if (!queryOptions.itsLocationOptions.itsBBoxes.empty())
+    // BRAINSTORM-3327 (fix to BRAINSTORM-3136)
+    //
+    // Queries with (small) bboxes seemed occasionally to be slow (they were quite heavy anyway)
+    // if record_set's stations are not filtered at all; filter the stations using preselected
+    // station id list unless the number of stations exceeds the max limit
+    //
+    if (
+        (!queryOptions.itsLocationOptions.itsBBoxes.empty()) &&
+        (stationIdList.size() > MaxBBoxQueryInClauseStationIds)
+       )
     {
       // BRAINSTORM-3136; when using bbox(es), message query now filters stations with
       // bbox(es)/maxdistance, not with preselected station id list

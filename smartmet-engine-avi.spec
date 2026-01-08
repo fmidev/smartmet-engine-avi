@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 25.12.18
+Version: 26.1.8
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -26,17 +26,17 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 25.12.12
-BuildRequires: smartmet-library-macgyver-devel >= 25.12.2
-BuildRequires: smartmet-library-timeseries-devel >= 25.12.9
-Requires: smartmet-library-macgyver >= 25.12.2
-Requires: smartmet-library-spine >= 25.12.12
-Requires: smartmet-library-timeseries >= 25.12.9
+BuildRequires: smartmet-library-spine-devel >= 26.1.8
+BuildRequires: smartmet-library-macgyver-devel >= 26.1.8
+BuildRequires: smartmet-library-timeseries-devel >= 25.12.29
+Requires: smartmet-library-macgyver >= 26.1.8
+Requires: smartmet-library-spine >= 26.1.8
+Requires: smartmet-library-timeseries >= 25.12.29
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
 #TestRequires: smartmet-utils-devel
-#TestRequires: smartmet-library-spine-devel >= 25.12.12
-#TestRequires: smartmet-library-timeseries-devel >= 25.12.9
+#TestRequires: smartmet-library-spine-devel >= 26.1.8
+#TestRequires: smartmet-library-timeseries-devel >= 25.12.29
 #TestRequires: zlib-devel
 #TestRequires: bzip2-devel
 
@@ -100,6 +100,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Thu Jan  8 2026 Pertti Kinnia <pertti.kinnia@fmi.fi> 26.1.8-1.fmi
+- Queries with (small) bboxes seemed occasionally to be slow (they were quite heavy anyway) if record_set's stations are not filtered at all; filter the stations using preselected station id list unless the number of stations exceeds the max limit (10000, currently not configurable, there are 30k+ stations in avidb_stations table). BRAINSTORM-3327
+
 * Thu Dec 18 2025 Pertti Kinnia <pertti.kinnia@fmi.fi> 25.12.18-1.fmi
 - Changes to SIGMET query logic (BRAINSTORM-3325)
 
