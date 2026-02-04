@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 26.1.8
+Version: 26.2.4
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -100,6 +100,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Wed Feb  4 2026 Andris Pavēnis <andris.pavenis@fmi.fi> 26.2.4-1.fmi
+- Update to proj-9.7, gdal-3.12, fmt-12
+
 * Thu Jan  8 2026 Pertti Kinnia <pertti.kinnia@fmi.fi> 26.1.8-1.fmi
 - Queries with (small) bboxes seemed occasionally to be slow (they were quite heavy anyway) if record_set's stations are not filtered at all; filter the stations using preselected station id list unless the number of stations exceeds the max limit (10000, currently not configurable, there are 30k+ stations in avidb_stations table). BRAINSTORM-3327
 
