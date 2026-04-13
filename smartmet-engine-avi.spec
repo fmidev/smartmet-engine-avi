@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 26.2.4
+Version: 26.4.13
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -26,17 +26,17 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 26.2.4
-BuildRequires: smartmet-library-macgyver-devel >= 26.2.4
-BuildRequires: smartmet-library-timeseries-devel >= 26.2.4
-Requires: smartmet-library-macgyver >= 26.2.4
-Requires: smartmet-library-spine >= 26.2.4
-Requires: smartmet-library-timeseries >= 26.2.4
+BuildRequires: smartmet-library-spine-devel >= 26.4.13
+BuildRequires: smartmet-library-macgyver-devel >= 26.4.13
+BuildRequires: smartmet-library-timeseries-devel >= 26.4.13
+Requires: smartmet-library-macgyver >= 26.4.13
+Requires: smartmet-library-spine >= 26.4.13
+Requires: smartmet-library-timeseries >= 26.4.13
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
 #TestRequires: smartmet-utils-devel
-#TestRequires: smartmet-library-spine-devel >= 26.2.4
-#TestRequires: smartmet-library-timeseries-devel >= 26.2.4
+#TestRequires: smartmet-library-spine-devel >= 26.4.13
+#TestRequires: smartmet-library-timeseries-devel >= 26.4.13
 #TestRequires: zlib-devel
 #TestRequires: bzip2-devel
 
@@ -100,6 +100,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Mon Apr 13 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.4.13-1.fmi
+- Repackaged due to API changes
+
 * Wed Feb  4 2026 Andris Pavēnis <andris.pavenis@fmi.fi> 26.2.4-1.fmi
 - Update to proj-9.7, gdal-3.12, fmt-12
 
