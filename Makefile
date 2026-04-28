@@ -14,6 +14,7 @@ LIBS += $(PREFIX_LDFLAGS) \
 	$(REQUIRED_LIBS) \
 	-lsmartmet-spine \
 	-lsmartmet-timeseries \
+	-lsmartmet-macgyver \
 	-lbz2 -lz
 
 # What to install
