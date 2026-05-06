@@ -132,7 +132,20 @@ enum class Validity
   AcceptedMessages
 };
 
-std::ostream &operator<<(std::ostream &os, Validity v);
+inline std::ostream &operator<<(std::ostream &os, Validity v)
+{
+  switch (v)
+  {
+    case Validity::Accepted:
+      return os << "Accepted";
+    case Validity::Rejected:
+      return os << "Rejected";
+    case Validity::AcceptedMessages:
+      return os << "AcceptedMessages";
+    default:
+      return os << "???";
+  }
+}
 
 struct QueryOptions
 {
@@ -169,7 +182,28 @@ enum class ColumnType
   None
 };
 
-std::ostream &operator<<(std::ostream &os, ColumnType t);
+inline std::ostream &operator<<(std::ostream &os, ColumnType t)
+{
+  switch (t)
+  {
+    case ColumnType::Integer:
+      return os << "Integer";
+    case ColumnType::Double:
+      return os << "Double";
+    case ColumnType::String:
+      return os << "String";
+    case ColumnType::TS_LonLat:
+      return os << "TS_LonLat";
+    case ColumnType::TS_LatLon:
+      return os << "TS_LatLon";
+    case ColumnType::DateTime:
+      return os << "DateTime";
+    case ColumnType::None:
+      return os << "None";
+    default:
+      return os << "???";
+  }
+}
 
 enum class ColumnSelection
 {
@@ -179,7 +213,22 @@ enum class ColumnSelection
   AutomaticOnly
 };
 
-std::ostream &operator<<(std::ostream &os, ColumnSelection s);
+inline std::ostream &operator<<(std::ostream &os, ColumnSelection s)
+{
+  switch (s)
+  {
+    case ColumnSelection::Requested:
+      return os << "Requested";
+    case ColumnSelection::Automatic:
+      return os << "Automatic";
+    case ColumnSelection::AutomaticRequested:
+      return os << "AutomaticRequested";
+    case ColumnSelection::AutomaticOnly:
+      return os << "AutomaticOnly";
+    default:
+      return os << "???";
+  }
+}
 
 using ColumnExpression = std::string (*)(const std::string &tableColumnName,
                                          const std::string &queryColumnName);
@@ -342,7 +391,7 @@ using FIRQueryData = std::map<int, FIRAreaAndBBox>;
 class Engine : public SmartMet::Spine::SmartMetEngine
 {
  public:
-  ~Engine() override;
+  ~Engine() override = default;
   Engine() = default;
 
   virtual StationQueryData queryStations(QueryOptions & /* queryOptions */) const
