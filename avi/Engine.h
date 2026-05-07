@@ -28,9 +28,9 @@ struct BBox
   {
   }
 
-  double getXMin() const { return itsEast; }
+  double getXMin() const { return itsWest; }
   double getYMin() const { return itsSouth; }
-  double getXMax() const { return itsWest; }
+  double getXMax() const { return itsEast; }
   double getYMax() const { return itsNorth; }
 
   double itsWest = 0;
