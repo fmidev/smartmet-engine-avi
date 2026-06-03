@@ -3073,6 +3073,10 @@ void EngineImpl::loadQueryResult(
 
       prevRow = row;
 
+      // Dereference the iterator to a row before indexing by column: libpqxx 8 no longer lets a
+      // result iterator be indexed as a row.
+      const auto& dbRow = *row;
+
       for (const Column& column : queryData.itsColumns)
       {
         // For station data (stations and accepted messages) automatically selected station id is
@@ -3096,8 +3100,8 @@ void EngineImpl::loadQueryResult(
           // (in practice through, only stationid or messageid could have value 32700).
           //
           TimeSeries::Value return_value = TimeSeries::None();
-          if (!row[column.itsName].is_null())
-            return_value = row[column.itsName].as<int>();
+          if (!dbRow[column.itsName].is_null())
+            return_value = dbRow[column.itsName].as<int>();
 
           queryValues[column.itsName].push_back(return_value);
         }
@@ -3110,8 +3114,8 @@ void EngineImpl::loadQueryResult(
           TimeSeries::Value return_value = TimeSeries::None();
           try
           {
-            if (!row[column.itsName].is_null())
-              return_value = row[column.itsName].as<double>();
+            if (!dbRow[column.itsName].is_null())
+              return_value = dbRow[column.itsName].as<double>();
           }
           catch (...)
           {
@@ -3126,7 +3130,7 @@ void EngineImpl::loadQueryResult(
 
           try
           {
-            isNull = row[column.itsName].is_null();
+            isNull = dbRow[column.itsName].is_null();
           }
           catch (...)
           {
@@ -3137,7 +3141,7 @@ void EngineImpl::loadQueryResult(
             queryValues[column.itsName].emplace_back(TimeSeries::None());
           else
             queryValues[column.itsName].emplace_back(
-                boost::algorithm::trim_copy(row[column.itsName].as<string>()));
+                boost::algorithm::trim_copy(dbRow[column.itsName].as<string>()));
         }
         else if ((column.itsType == ColumnType::TS_LonLat) ||
                  (column.itsType == ColumnType::TS_LatLon))
@@ -3146,7 +3150,7 @@ void EngineImpl::loadQueryResult(
           // TimeSeries::LonLat for formatted output with TableFeeder
           //
           TimeSeries::LonLat lonlat(0, 0);
-          string llStr(boost::algorithm::trim_copy(row[column.itsName].as<string>()));
+          string llStr(boost::algorithm::trim_copy(dbRow[column.itsName].as<string>()));
           vector<string> flds;
           boost::algorithm::split(flds, llStr, boost::is_any_of(","));
           bool lonlatValid = false;
@@ -3179,9 +3183,9 @@ void EngineImpl::loadQueryResult(
         else
         {
           Fmi::LocalDateTime utcTime(
-              row[column.itsName].is_null()
+              dbRow[column.itsName].is_null()
                   ? Fmi::DateTime()
-                  : Fmi::DateTime::from_string(row[column.itsName].as<string>()),
+                  : Fmi::DateTime::from_string(dbRow[column.itsName].as<string>()),
               tzUTC);
           queryValues[column.itsName].emplace_back(utcTime);
         }
@@ -5125,12 +5129,15 @@ void EngineImpl::loadFIRAreas() const
 
     for (pqxx::result::const_iterator row = result.begin(); (row != result.end()); row++)
     {
-      auto gid = row["gid"].as<int>();
-      auto geom = row["geom"].as<string>();
-      auto xmin = row["xmin"].as<double>();
-      auto ymin = row["ymin"].as<double>();
-      auto xmax = row["xmax"].as<double>();
-      auto ymax = row["ymax"].as<double>();
+      // Dereference the iterator to a row before indexing by column: libpqxx 8 no longer lets a
+      // result iterator be indexed as a row.
+      const auto& dbRow = *row;
+      auto gid = dbRow["gid"].as<int>();
+      auto geom = dbRow["geom"].as<string>();
+      auto xmin = dbRow["xmin"].as<double>();
+      auto ymin = dbRow["ymin"].as<double>();
+      auto xmax = dbRow["xmax"].as<double>();
+      auto ymax = dbRow["ymax"].as<double>();
 
       BBox bbox(xmin, xmax, ymin, ymax);
 

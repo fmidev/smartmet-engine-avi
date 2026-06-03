@@ -350,7 +350,9 @@ struct StationQueryData
     // the map key) for the station.
     // Maintain list of station id's in the order of appearance
     //
-    long stationId = row[stationIdQueryColumn].as<long>();
+    // Dereference the iterator to a row before indexing by column: libpqxx 8 no longer lets a
+    // result iterator be indexed as a row.
+    long stationId = (*row)[stationIdQueryColumn].as<long>();
 
     std::pair<StationQueryValues::iterator, bool> stationQueryValues =
         itsValues.insert(std::make_pair(stationId, QueryValues()));
@@ -362,8 +364,8 @@ struct StationQueryData
     {
       // Check for duplicate messages for the station; skip others but the 1'st
       //
-      duplicate = ((row != prevRow) && (row[messageQueryColumn].as<std::string>() ==
-                                        prevRow[messageQueryColumn].as<std::string>()));
+      duplicate = ((row != prevRow) && ((*row)[messageQueryColumn].as<std::string>() ==
+                                        (*prevRow)[messageQueryColumn].as<std::string>()));
     }
 
     return stationQueryValues.first->second;
