@@ -30,6 +30,24 @@ message:
 	recordsetstarttimeoffsethours = 30;	# include messages upto message_time n hours backwards from observation time / time range start time
 	recordsetendtimeoffsethours = 12;	# include messages upto message_time n hours forwards from observation time / time range end time
 
+	# In-memory message cache (DuckDB mirror of recent avidb_* rows).
+	#
+	# When enabled, "latest valid messages at current time" requests whose needed message_time
+	# window is inside the cached span are answered from the in-process mirror instead of the
+	# PostgreSQL backend, offloading load bursts. All other requests (time ranges, historical
+	# times, rejected messages, spatial station selection, uncached message types, geometry-
+	# derived columns) transparently fall back to PostgreSQL, so the cache is a pure optimization.
+
+	cache:
+	{
+		enabled           = false;	# master switch; opt-in
+		durationhours     = 48;		# hours of avidb_messages kept in the mirror; must be > recordsetstarttimeoffsethours
+		updateintervalsec = 10;		# background refresh interval in seconds
+		safetymarginsec   = 600;	# re-read window (seconds) for late-arriving / updated rows
+		shadowcompare     = false;	# rollout aid: run both PostgreSQL and cache, log differences, return the PostgreSQL result
+		# memorylimitmb   = 0;		# optional DuckDB memory limit in MB; 0 = unlimited / default
+	};
+
 	# Filtering of finnish METARs; if enabled, by default returning finnish METARs only when they are LIKE "METAR%".
 	# Stations can be excluded from filtering by their icao code
 

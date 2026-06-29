@@ -15,6 +15,7 @@ LIBS += $(PREFIX_LDFLAGS) \
 	-lsmartmet-spine \
 	-lsmartmet-timeseries \
 	-lsmartmet-macgyver \
+	-lduckdb \
 	-lbz2 -lz
 
 # What to install
@@ -30,6 +31,7 @@ vpath %.h $(SUBNAME)
 
 INTERNAL_HDRS = \
 	avi/EngineImpl.h \
+	avi/AviCache.h \
 	avi/Config.h
 
 SRCS = $(wildcard $(SUBNAME)/*.cpp)
