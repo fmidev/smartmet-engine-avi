@@ -1,6 +1,7 @@
 // ======================================================================
 
 #include "EngineImpl.h"
+#include "PqxxResult.h"
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <macgyver/AnsiEscapeCodes.h>
@@ -8,7 +9,10 @@
 #include <macgyver/StringConversion.h>
 #include <macgyver/TimeParser.h>
 #include <spine/Convenience.h>
+#include <algorithm>
 #include <memory>
+#include <set>
+#include <sstream>
 #include <stdexcept>
 
 using namespace std;
@@ -32,6 +36,71 @@ namespace
 const uint MaxBBoxQueryInClauseStationIds = 10000;
 
 Fmi::TimeZonePtr& tzUTC = Fmi::TimeZonePtr::utc;
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Shadow comparison helpers (cache rollout aid)
+ *
+ * Compares the PostgreSQL and cache results of the same query and logs any
+ * difference in the station set or in the per-station message texts. Used only
+ * when message.cache.shadowcompare is enabled; the PostgreSQL result is always
+ * the one returned to the caller.
+ */
+// ----------------------------------------------------------------------
+
+std::vector<std::string> messageTexts(const StationQueryData& data, StationIdType id)
+{
+  std::vector<std::string> out;
+  auto sit = data.itsValues.find(id);
+  if (sit == data.itsValues.end())
+    return out;
+  auto cit = sit->second.find(messageQueryColumn);
+  if (cit == sit->second.end())
+    return out;
+  for (const auto& v : cit->second)
+  {
+    if (const auto* s = std::get_if<std::string>(&v))
+      out.push_back(*s);
+    else
+      out.emplace_back("<non-string>");
+  }
+  std::sort(out.begin(), out.end());
+  return out;
+}
+
+void compareShadow(const StationQueryData& pg,
+                   const StationQueryData& cache,
+                   const std::string& sql)
+{
+  std::set<StationIdType> pgIds(pg.itsStationIds.begin(), pg.itsStationIds.end());
+  std::set<StationIdType> cacheIds(cache.itsStationIds.begin(), cache.itsStationIds.end());
+
+  std::ostringstream msg;
+  bool diff = false;
+
+  if (pgIds != cacheIds)
+  {
+    diff = true;
+    msg << "station set differs (pg=" << pgIds.size() << ", cache=" << cacheIds.size() << "); ";
+  }
+
+  for (StationIdType id : pgIds)
+  {
+    if (cacheIds.find(id) == cacheIds.end())
+      continue;
+    auto a = messageTexts(pg, id);
+    auto b = messageTexts(cache, id);
+    if (a != b)
+    {
+      diff = true;
+      msg << "messages differ for station " << id << " (pg=" << a.size() << ", cache=" << b.size()
+          << "); ";
+    }
+  }
+
+  if (diff)
+    std::cout << "[avi-cache shadow] DIFFERENCE: " << msg.str() << "SQL: " << sql << '\n';
+}
 
 Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConfig)
 {
@@ -1738,7 +1807,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
         "DISTINCT first_value(me.message_id) OVER (PARTITION BY me.station_id,";
     const string latestMessageIdOrderByExpr = " ORDER BY me.message_time DESC,me.created DESC) ";
 
-    bool edrQuery = (! messageCreatedTime.empty());
+    bool edrQuery = (!messageCreatedTime.empty());
     auto const& createdTime = (edrQuery ? messageCreatedTime : observationTime);
 
     withClause << latestMessagesTable.itsName << " AS (";
@@ -1912,14 +1981,14 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       if (edrQuery)
       {
         if (useCurrentTime)
-          withClause << "current_timestamp BETWEEN " << messageTableAlias
-                     << ".valid_from AND " << messageTableAlias << ".valid_to";
+          withClause << "current_timestamp BETWEEN " << messageTableAlias << ".valid_from AND "
+                     << messageTableAlias << ".valid_to";
         else
           withClause << messageTableAlias << ".message_time = " << observationTime;
       }
       else
-        withClause << createdTime << " >= " << messageTableAlias << ".created AND " << observationTime
-                   << " < " << messageTableAlias << ".valid_to";
+        withClause << createdTime << " >= " << messageTableAlias << ".created AND "
+                   << observationTime << " < " << messageTableAlias << ".valid_to";
     }
 
     withClause << ")";
@@ -2335,10 +2404,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
     // if record_set's stations are not filtered at all; filter the stations using preselected
     // station id list unless the number of stations exceeds the max limit
     //
-    if (
-        (!queryOptions.itsLocationOptions.itsBBoxes.empty()) &&
-        (stationIdList.size() > MaxBBoxQueryInClauseStationIds)
-       )
+    if ((!queryOptions.itsLocationOptions.itsBBoxes.empty()) &&
+        (stationIdList.size() > MaxBBoxQueryInClauseStationIds))
     {
       // BRAINSTORM-3136; when using bbox(es), message query now filters stations with
       // bbox(es)/maxdistance, not with preselected station id list
@@ -2548,6 +2615,15 @@ void EngineImpl::init()
         itsConfig->getStartConnections(),
         itsConfig->getMaxConnections(),
         mk_connection_options(*itsConfig));
+
+    // Start the in-memory message cache if enabled. Its initial load runs in
+    // the cache's own background thread, so it does not delay engine startup;
+    // until it is ready, queries transparently use PostgreSQL.
+    if (itsConfig->getCacheEnabled())
+    {
+      itsCache = std::make_unique<AviCache>(*itsConfig, *itsConnectionPool);
+      itsCache->start();
+    }
   }
   catch (...)
   {
@@ -2564,6 +2640,9 @@ void EngineImpl::init()
 void EngineImpl::shutdown()
 {
   std::cout << "  -- Shutdown requested (aviengine)\n";
+
+  if (itsCache)
+    itsCache->shutdown();
 }
 
 // ----------------------------------------------------------------------
@@ -3041,7 +3120,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
 
 template <typename T>
 void EngineImpl::loadQueryResult(
-    const pqxx::result& result, bool debug, T& queryData, bool distinctRows, int maxRows) const
+    const IResult& result, bool debug, T& queryData, bool distinctRows, int maxRows) const
 {
   try
   {
@@ -3059,12 +3138,12 @@ void EngineImpl::loadQueryResult(
           queryData.itsColumns.end()));
     bool duplicate;
 
-    for (pqxx::result::const_iterator row = result.begin(), prevRow = result.begin();
-         (row != result.end());
-         row++)
+    std::size_t prevRow = 0;
+
+    for (std::size_t row = 0, nrows = result.size(); (row < nrows); row++)
     {
       QueryValues& queryValues =
-          queryData.getValues(row, checkDuplicateMessages ? prevRow : row, duplicate);
+          queryData.getValues(result, row, checkDuplicateMessages ? prevRow : row, duplicate);
 
       if (duplicate && distinctRows)
         // Station or message was already selected
@@ -3072,10 +3151,6 @@ void EngineImpl::loadQueryResult(
         continue;
 
       prevRow = row;
-
-      // Dereference the iterator to a row before indexing by column: libpqxx 8 no longer lets a
-      // result iterator be indexed as a row.
-      const auto& dbRow = *row;
 
       for (const Column& column : queryData.itsColumns)
       {
@@ -3100,8 +3175,8 @@ void EngineImpl::loadQueryResult(
           // (in practice through, only stationid or messageid could have value 32700).
           //
           TimeSeries::Value return_value = TimeSeries::None();
-          if (!dbRow[column.itsName].is_null())
-            return_value = dbRow[column.itsName].as<int>();
+          if (!result.isNull(row, column.itsName))
+            return_value = result.getInt(row, column.itsName);
 
           queryValues[column.itsName].push_back(return_value);
         }
@@ -3114,8 +3189,8 @@ void EngineImpl::loadQueryResult(
           TimeSeries::Value return_value = TimeSeries::None();
           try
           {
-            if (!dbRow[column.itsName].is_null())
-              return_value = dbRow[column.itsName].as<double>();
+            if (!result.isNull(row, column.itsName))
+              return_value = result.getDouble(row, column.itsName);
           }
           catch (...)
           {
@@ -3130,7 +3205,7 @@ void EngineImpl::loadQueryResult(
 
           try
           {
-            isNull = dbRow[column.itsName].is_null();
+            isNull = result.isNull(row, column.itsName);
           }
           catch (...)
           {
@@ -3141,7 +3216,7 @@ void EngineImpl::loadQueryResult(
             queryValues[column.itsName].emplace_back(TimeSeries::None());
           else
             queryValues[column.itsName].emplace_back(
-                boost::algorithm::trim_copy(dbRow[column.itsName].as<string>()));
+                boost::algorithm::trim_copy(result.getString(row, column.itsName)));
         }
         else if ((column.itsType == ColumnType::TS_LonLat) ||
                  (column.itsType == ColumnType::TS_LatLon))
@@ -3150,7 +3225,7 @@ void EngineImpl::loadQueryResult(
           // TimeSeries::LonLat for formatted output with TableFeeder
           //
           TimeSeries::LonLat lonlat(0, 0);
-          string llStr(boost::algorithm::trim_copy(dbRow[column.itsName].as<string>()));
+          string llStr(boost::algorithm::trim_copy(result.getString(row, column.itsName)));
           vector<string> flds;
           boost::algorithm::split(flds, llStr, boost::is_any_of(","));
           bool lonlatValid = false;
@@ -3183,9 +3258,9 @@ void EngineImpl::loadQueryResult(
         else
         {
           Fmi::LocalDateTime utcTime(
-              dbRow[column.itsName].is_null()
+              result.isNull(row, column.itsName)
                   ? Fmi::DateTime()
-                  : Fmi::DateTime::from_string(dbRow[column.itsName].as<string>()),
+                  : Fmi::DateTime::from_string(result.getString(row, column.itsName)),
               tzUTC);
           queryValues[column.itsName].emplace_back(utcTime);
         }
@@ -3217,7 +3292,7 @@ void EngineImpl::executeQuery(const Fmi::Database::PostgreSQLConnection& connect
     if (debug)
       cerr << "Query: " << query << '\n';
 
-    auto result = connection.executeNonTransaction(query);
+    PqxxResult result(connection.executeNonTransaction(query));
 
     loadQueryResult(result, debug, queryData, distinctRows, maxRows);
   }
@@ -3247,7 +3322,7 @@ void EngineImpl::executeParamQuery(const Fmi::Database::PostgreSQLConnection& co
     if (debug)
       cerr << "Query: " << query << '\n';
 
-    auto result = connection.exec_params(query, queryArg);
+    PqxxResult result(connection.exec_params(query, queryArg));
 
     loadQueryResult(result, debug, queryData, distinctRows, maxRows);
   }
@@ -3271,9 +3346,80 @@ void EngineImpl::executeParamQuery(const Fmi::Database::PostgreSQLConnection& co
     if (debug)
       cerr << "Query: " << query << '\n';
 
-    auto result = connection.exec_params_p(query, queryArgs);
+    PqxxResult result(connection.exec_params_p(query, queryArgs));
 
     loadQueryResult(result, debug, queryData, distinctRows, maxRows);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception::Trace(BCP, "Operation failed!");
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Whether the in-memory cache can answer this message query
+ *
+ * Phase 1: latest valid messages at current time only. Everything else
+ * (time ranges, historical/explicit times, rejected messages, route queries,
+ * geometry-derived station columns) falls back to PostgreSQL.
+ */
+// ----------------------------------------------------------------------
+
+bool EngineImpl::isCacheable(const QueryOptions& queryOptions) const
+{
+  // Rejected messages use a different table that is not mirrored.
+  if (queryOptions.itsValidity == Validity::Rejected)
+    return false;
+
+  // Only the "latest at current time" path: the observation time must be the
+  // literal current_timestamp so the query is anchored at now, which the mirror
+  // (now - durationhours .. now) is guaranteed to cover (durationhours >
+  // recordsetstarttimeoffsethours is enforced by Config).
+  const auto& t = queryOptions.itsTimeOptions;
+  if (!t.itsStartTime.empty() || !t.itsEndTime.empty())
+    return false;
+  if (Fmi::ascii_tolower_copy(boost::algorithm::trim_copy(t.itsObservationTime)) !=
+      "current_timestamp")
+    return false;
+
+  // Route queries are out of scope; only mirrored message formats.
+  if (queryOptions.itsLocationOptions.itsWKTs.isRoute)
+    return false;
+  if (queryOptions.itsMessageFormat != "TAC" && queryOptions.itsMessageFormat != "IWXXM")
+    return false;
+
+  // Geometry-derived station columns expand to PostGIS expressions the mirror
+  // cannot evaluate.
+  for (const auto& param : queryOptions.itsParameters)
+  {
+    if (param == "longitude" || param == "latitude" || param == stationLonLatQueryColumn ||
+        param == stationLatLonQueryColumn || param == stationDistanceQueryColumn ||
+        param == stationBearingQueryColumn)
+      return false;
+  }
+
+  return true;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Execute generated SQL against the in-memory cache (DuckDB mirror)
+ */
+// ----------------------------------------------------------------------
+
+template <typename T>
+void EngineImpl::executeQueryEmbedded(
+    const string& query, bool debug, T& queryData, bool distinctRows, int maxRows) const
+{
+  try
+  {
+    if (debug)
+      cerr << "Cache query: " << query << '\n';
+
+    auto result = itsCache->executeEmbedded(query);
+
+    loadQueryResult(*result, debug, queryData, distinctRows, maxRows);
   }
   catch (...)
   {
@@ -4742,12 +4888,57 @@ StationQueryData EngineImpl::queryMessages(const Fmi::Database::PostgreSQLConnec
                                             distinct,
                                             fromWhereOrderByClause);
 
+    const string finalSql = withClause + selectClause + fromWhereOrderByClause.str();
+
+    const bool cacheUsable = itsCache && itsCache->ready() && isCacheable(queryOptions);
+
+    // Serve from the in-memory cache when possible (and not in shadow mode).
+    if (cacheUsable && !itsConfig->getCacheShadowCompare())
+    {
+      try
+      {
+        executeQueryEmbedded<StationQueryData>(finalSql,
+                                               queryOptions.itsDebug,
+                                               stationQueryData,
+                                               queryOptions.itsDistinctMessages,
+                                               maxMessageRows);
+        return stationQueryData;
+      }
+      catch (...)
+      {
+        // Any cache failure falls back to PostgreSQL; discard partial results.
+        stationQueryData.itsValues.clear();
+        stationQueryData.itsStationIds.clear();
+        Fmi::Exception ex(BCP, "AVI cache query failed; falling back to PostgreSQL");
+        ex.printError();
+      }
+    }
+
     executeQuery<StationQueryData>(connection,
-                                   withClause + selectClause + fromWhereOrderByClause.str(),
+                                   finalSql,
                                    queryOptions.itsDebug,
                                    stationQueryData,
                                    queryOptions.itsDistinctMessages,
                                    maxMessageRows);
+
+    // Shadow comparison: run the cache too and log any difference, but return
+    // the PostgreSQL result.
+    if (cacheUsable && itsConfig->getCacheShadowCompare())
+    {
+      try
+      {
+        StationQueryData shadow;
+        shadow.itsColumns = stationQueryData.itsColumns;
+        executeQueryEmbedded<StationQueryData>(
+            finalSql, false, shadow, queryOptions.itsDistinctMessages, maxMessageRows);
+        compareShadow(stationQueryData, shadow, finalSql);
+      }
+      catch (...)
+      {
+        Fmi::Exception ex(BCP, "AVI cache shadow query failed");
+        ex.printError();
+      }
+    }
 
     return stationQueryData;
   }

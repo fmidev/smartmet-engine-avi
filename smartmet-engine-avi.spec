@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 26.6.24
+Version: 26.6.29
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -32,6 +32,8 @@ BuildRequires: smartmet-library-timeseries-devel >= 26.5.5
 Requires: smartmet-library-macgyver >= 26.6.15
 Requires: smartmet-library-spine >= 26.6.24
 Requires: smartmet-library-timeseries >= 26.5.5
+BuildRequires: duckdb-devel
+Requires: duckdb
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
 #TestRequires: smartmet-utils-devel
@@ -100,6 +102,11 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Mon Jun 29 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.6.29-1.fmi
+- Added an optional in-memory message cache (DuckDB mirror) that serves latest
+  valid messages at current time without reaching the PostgreSQL backend
+  (message.cache.* settings; disabled by default)
+
 * Wed Jun 24 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.6.24-1.fmi
 - Mass rebuild
 

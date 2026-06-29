@@ -75,6 +75,41 @@ BOOST_AUTO_TEST_CASE(config_accessors,
   BOOST_CHECK(typeid(config.getMessageTypes()) == typeid(messageTypesEmpty));
   BOOST_CHECK_EQUAL(config.getMessageTypes().size(), 10);
 }
+
+BOOST_AUTO_TEST_CASE(config_cache_defaults,
+                     *boost::unit_test::depends_on("config_constructor_with_valid_file_exist"))
+{
+  // valid.conf has no message.cache block: the cache must default to disabled.
+  const std::string filename = "cnf/valid.conf";
+  Config config(filename);
+
+  BOOST_CHECK_EQUAL(config.getCacheEnabled(), false);
+  BOOST_CHECK_EQUAL(config.getCacheDurationHours(), 48u);
+  BOOST_CHECK_EQUAL(config.getCacheUpdateIntervalSec(), 10u);
+  BOOST_CHECK_EQUAL(config.getCacheSafetyMarginSec(), 600u);
+  BOOST_CHECK_EQUAL(config.getCacheShadowCompare(), false);
+  BOOST_CHECK_EQUAL(config.getCacheMemoryLimitMb(), 0u);
+}
+
+BOOST_AUTO_TEST_CASE(config_cache_enabled_settings)
+{
+  const std::string filename = "cnf/cache_valid.conf";
+  Config config(filename);
+
+  BOOST_CHECK_EQUAL(config.getCacheEnabled(), true);
+  BOOST_CHECK_EQUAL(config.getCacheDurationHours(), 48u);
+  BOOST_CHECK_EQUAL(config.getCacheUpdateIntervalSec(), 15u);
+  BOOST_CHECK_EQUAL(config.getCacheSafetyMarginSec(), 300u);
+  BOOST_CHECK_EQUAL(config.getCacheShadowCompare(), true);
+  BOOST_CHECK_EQUAL(config.getCacheMemoryLimitMb(), 512u);
+}
+
+BOOST_AUTO_TEST_CASE(config_cache_duration_invariant)
+{
+  // durationhours (20) must be greater than recordsetstarttimeoffsethours (30): reject.
+  const std::string filename = "cnf/cache_invalid.conf";
+  BOOST_CHECK_THROW({ Config config(filename); }, Fmi::Exception);
+}
 }  // namespace Avi
 }  // namespace Engine
 }  // namespace SmartMet

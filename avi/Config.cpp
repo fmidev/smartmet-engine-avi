@@ -16,7 +16,7 @@ namespace Avi
 
 Config::~Config() = default;
 
-std::ostream &operator<<(std::ostream &os, TimeRangeType t)
+std::ostream& operator<<(std::ostream& os, TimeRangeType t)
 {
   switch (t)
   {
@@ -43,7 +43,7 @@ std::ostream &operator<<(std::ostream &os, TimeRangeType t)
   }
 }
 
-std::ostream &operator<<(std::ostream &os, MessageScope s)
+std::ostream& operator<<(std::ostream& os, MessageScope s)
 {
   switch (s)
   {
@@ -66,11 +66,11 @@ std::ostream &operator<<(std::ostream &os, MessageScope s)
  */
 // ----------------------------------------------------------------------
 
-Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileName)
+Config::Config(const std::string& theConfigFileName) : ConfigBase(theConfigFileName)
 {
   try
   {
-    const auto &theConfig = get_config();
+    const auto& theConfig = get_config();
 
     // Postgis settings
 
@@ -195,6 +195,45 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       throw exception;
     }
 
+    // In-memory message cache (DuckDB mirror). Opt-in; all settings optional.
+
+    itsCacheEnabled =
+        get_optional_config_param<bool>(theConfig.getRoot(), "message.cache.enabled", false);
+    itsCacheDurationHours = get_optional_config_param<unsigned int>(
+        theConfig.getRoot(), "message.cache.durationhours", 48);
+    itsCacheUpdateIntervalSec = get_optional_config_param<unsigned int>(
+        theConfig.getRoot(), "message.cache.updateintervalsec", 10);
+    itsCacheSafetyMarginSec = get_optional_config_param<unsigned int>(
+        theConfig.getRoot(), "message.cache.safetymarginsec", 600);
+    itsCacheShadowCompare =
+        get_optional_config_param<bool>(theConfig.getRoot(), "message.cache.shadowcompare", false);
+    itsCacheMemoryLimitMb = get_optional_config_param<unsigned int>(
+        theConfig.getRoot(), "message.cache.memorylimitmb", 0);
+
+    if (itsCacheEnabled)
+    {
+      // The cached message_time window must cover the record_set lookback so
+      // that "latest at current time" queries are fully answerable from cache.
+      if (itsCacheDurationHours <= itsRecordSetStartTimeOffsetHours)
+      {
+        Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+        exception.addDetail(
+            "message.cache.durationhours must be greater than "
+            "message.recordsetstarttimeoffsethours.");
+        exception.addParameter("Configuration file", theConfigFileName);
+        exception.addParameter("Attribute", "message.cache.durationhours");
+        throw exception;
+      }
+      if (itsCacheUpdateIntervalSec == 0)
+      {
+        Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
+        exception.addDetail("The attribute value must be greater than 0.");
+        exception.addParameter("Configuration file", theConfigFileName);
+        exception.addParameter("Attribute", "message.cache.updateintervalsec");
+        throw exception;
+      }
+    }
+
     // Filtering of finnish METARs; if true/enabled, by default returning finnish METARs only when
     // they are LIKE "METAR%".
     // Stations can be excluded from filtering by their icao code
@@ -206,7 +245,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
     {
       if (theConfig.exists("message.filter_FI_METARxxx.excludeicaos"))
       {
-        const libconfig::Setting &icaosSetting =
+        const libconfig::Setting& icaosSetting =
             theConfig.lookup("message.filter_FI_METARxxx.excludeicaos");
 
         if (!icaosSetting.isArray())
@@ -231,7 +270,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
             throw exception;
           }
 
-          icao = boost::trim_copy(boost::to_upper_copy(std::string((const char *)icaosSetting[j])));
+          icao = boost::trim_copy(boost::to_upper_copy(std::string((const char*)icaosSetting[j])));
 
           if (icao.empty())
           {
@@ -269,7 +308,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
       throw exception;
     }
 
-    const libconfig::Setting &messageTypes = theConfig.lookup("message.types");
+    const libconfig::Setting& messageTypes = theConfig.lookup("message.types");
     std::list<std::string> knownMessageTypes;
 
     if (!messageTypes.isList())
@@ -293,7 +332,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
     for (int i = 0; (i < messageTypes.getLength()); i++)
     {
-      libconfig::Setting &typeSetting = messageTypes[i];
+      libconfig::Setting& typeSetting = messageTypes[i];
       std::string blockName("message.types.[" + Fmi::to_string(i) + "]");
 
       if (!typeSetting.isGroup())
@@ -311,7 +350,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       if (theConfig.exists(blockName + ".names"))
       {
-        const libconfig::Setting &namesSetting = theConfig.lookup(blockName + ".names");
+        const libconfig::Setting& namesSetting = theConfig.lookup(blockName + ".names");
 
         if (!namesSetting.isArray())
         {
@@ -341,7 +380,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
             throw exception;
           }
 
-          name = boost::trim_copy(boost::to_upper_copy(std::string((const char *)namesSetting[j])));
+          name = boost::trim_copy(boost::to_upper_copy(std::string((const char*)namesSetting[j])));
 
           if (name.empty())
           {
@@ -401,7 +440,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       using KnownMessageScope = struct
       {
-        const char *scopeName;
+        const char* scopeName;
         MessageScope messageScope;
       };
 
@@ -410,7 +449,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
                                            {"global", MessageScope::GlobalScope},
                                            {nullptr, MessageScope::NoScope}};
 
-      KnownMessageScope *s = messageScopes;
+      KnownMessageScope* s = messageScopes;
       auto scope = get_optional_config_param<std::string>(typeSetting, "scope", "station");
 
       for (; (s->scopeName); s++)
@@ -433,7 +472,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       using KnownTimeRangeType = struct
       {
-        const char *timeRangeName;
+        const char* timeRangeName;
         TimeRangeType timeRangeType;
         bool latestMessagesOnly;
       };
@@ -445,7 +484,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           {"creationtime", TimeRangeType::CreationValidTimeRange, true},
           {nullptr, TimeRangeType::NullTimeRange, false}};
 
-      KnownTimeRangeType *r = timeRangeTypes;
+      KnownTimeRangeType* r = timeRangeTypes;
       std::string timeRangeType =
           boost::trim_copy(get_mandatory_config_param<std::string>(typeSetting, "timerangetype"));
 
@@ -546,7 +585,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           throw exception;
         }
 
-        const libconfig::Setting &patternsSetting = theConfig.lookup(attrBlockName);
+        const libconfig::Setting& patternsSetting = theConfig.lookup(attrBlockName);
 
         if (!patternsSetting.isArray())
         {
@@ -578,7 +617,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
             throw exception;
           }
 
-          pattern = (const char *)patternsSetting[j];
+          pattern = (const char*)patternsSetting[j];
           boost::trim(pattern);
 
           if (pattern.empty())
@@ -591,7 +630,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
             throw exception;
           }
 
-          auto const &patterns = messageType.getMessirPatterns();
+          auto const& patterns = messageType.getMessirPatterns();
 
           if (find(patterns.begin(), patterns.end(), pattern) != patterns.end())
           {
@@ -638,7 +677,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           throw exception;
         }
 
-        const libconfig::Setting &hoursSetting = theConfig.lookup(attrBlockName);
+        const libconfig::Setting& hoursSetting = theConfig.lookup(attrBlockName);
 
         if (!hoursSetting.isArray())
         {
@@ -732,7 +771,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           throw exception;
         }
 
-        const libconfig::Setting &patternsSetting = theConfig.lookup(attrBlockName);
+        const libconfig::Setting& patternsSetting = theConfig.lookup(attrBlockName);
 
         if (!patternsSetting.isArray())
         {
@@ -756,7 +795,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
             throw exception;
           }
 
-          pattern = Fmi::ascii_toupper_copy((const char *)patternsSetting[j]);
+          pattern = Fmi::ascii_toupper_copy((const char*)patternsSetting[j]);
           boost::trim(pattern);
 
           if (pattern.empty())
@@ -769,7 +808,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
             throw exception;
           }
 
-          auto const &patterns = messageType.getQueryRestrictionIcaoPatterns();
+          auto const& patterns = messageType.getQueryRestrictionIcaoPatterns();
 
           if (find(patterns.begin(), patterns.end(), pattern) != patterns.end())
           {
@@ -806,7 +845,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           throw exception;
         }
 
-        const libconfig::Setting &codesSetting = theConfig.lookup(codeAttrBlockName);
+        const libconfig::Setting& codesSetting = theConfig.lookup(codeAttrBlockName);
 
         if (!codesSetting.isArray())
         {
@@ -830,7 +869,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
             throw exception;
           }
 
-          code = Fmi::ascii_toupper_copy((const char *)codesSetting[j]);
+          code = Fmi::ascii_toupper_copy((const char*)codesSetting[j]);
           boost::trim(code);
 
           if (code.empty())
@@ -843,7 +882,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
             throw exception;
           }
 
-          auto const &codes = messageType.getQueryRestrictionCountryCodes();
+          auto const& codes = messageType.getQueryRestrictionCountryCodes();
 
           if (find(codes.begin(), codes.end(), code) != codes.end())
           {
@@ -898,8 +937,8 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
           throw exception;
         }
 
-        const libconfig::Setting &startMinuteSetting = theConfig.lookup(startBlockName);
-        const libconfig::Setting &endMinuteSetting = theConfig.lookup(endBlockName);
+        const libconfig::Setting& startMinuteSetting = theConfig.lookup(startBlockName);
+        const libconfig::Setting& endMinuteSetting = theConfig.lookup(endBlockName);
         bool startMinuteOk = (startMinuteSetting.getType() == libconfig::Setting::Type::TypeInt);
         bool endMinuteOk = (endMinuteSetting.getType() == libconfig::Setting::Type::TypeInt);
         int startMinute = 0;

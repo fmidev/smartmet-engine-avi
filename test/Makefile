@@ -15,6 +15,8 @@ LIBS += $(PREFIX_LDFLAGS) \
 	-lsmartmet-timeseries \
 	-lpqxx \
 	$(REQUIRED_LIBS) \
+	-lboost_thread \
+	-lboost_chrono \
 	-lbz2 -lz \
 	-lpthread \
 	-lm \

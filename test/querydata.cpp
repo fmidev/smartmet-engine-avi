@@ -2,6 +2,7 @@
 
 #include "Config.h"
 #include "EngineImpl.h"
+#include "PqxxResult.h"
 
 #include <boost/test/included/unit_test.hpp>
 #include <typeinfo>
@@ -74,21 +75,21 @@ BOOST_AUTO_TEST_CASE(querydata_member_getValues,
   QueryData queryData;
 
   // Try with an empty result
-  pqxx::result pqxxResult;
+  PqxxResult emptyResult{pqxx::result()};
 
-  // The method does not pick anything from the pqxx result.
-  // The result iterators are not even used inside the method.
+  // The method does not pick anything from the result.
+  // The row indices are not even used inside the method.
   // The return value of duplicate attribute is always false.
   bool duplicate = true;
-  QueryValues& queryValues = queryData.getValues(pqxxResult.begin(), pqxxResult.end(), duplicate);
+  QueryValues& queryValues = queryData.getValues(emptyResult, 0, 0, duplicate);
   BOOST_CHECK_EQUAL(duplicate, false);
   BOOST_CHECK_EQUAL(queryValues.size(), 0);
 
   // Try with some values in the result
-  pqxxResult = connection.executeNonTransaction(sqlStatement);
+  PqxxResult result{connection.executeNonTransaction(sqlStatement)};
 
   duplicate = true;
-  queryValues = queryData.getValues(pqxxResult.begin(), pqxxResult.end(), duplicate);
+  queryValues = queryData.getValues(result, 0, 0, duplicate);
   BOOST_CHECK_EQUAL(duplicate, false);
   BOOST_CHECK_EQUAL(queryValues.size(), 0);
 }

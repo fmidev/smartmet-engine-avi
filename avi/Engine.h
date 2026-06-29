@@ -2,8 +2,10 @@
 
 #pragma once
 
+#include "ResultAccessor.h"
 #include <spine/SmartMetEngine.h>
 #include <timeseries/TimeSeries.h>
+#include <cstddef>
 #include <list>
 #include <map>
 #include <pqxx/result>
@@ -113,7 +115,7 @@ struct TimeOptions
   bool itsUseCurrentTime = false;
   bool itsClosedTimeRange = false;
 
-  const std::string &getMessageTableTimeRangeColumn() const
+  const std::string& getMessageTableTimeRangeColumn() const
   {
     return itsMessageTableTimeRangeColumn;
   }
@@ -132,7 +134,7 @@ enum class Validity
   AcceptedMessages
 };
 
-inline std::ostream &operator<<(std::ostream &os, Validity v)
+inline std::ostream& operator<<(std::ostream& os, Validity v)
 {
   switch (v)
   {
@@ -182,7 +184,7 @@ enum class ColumnType
   None
 };
 
-inline std::ostream &operator<<(std::ostream &os, ColumnType t)
+inline std::ostream& operator<<(std::ostream& os, ColumnType t)
 {
   switch (t)
   {
@@ -213,7 +215,7 @@ enum class ColumnSelection
   AutomaticOnly
 };
 
-inline std::ostream &operator<<(std::ostream &os, ColumnSelection s)
+inline std::ostream& operator<<(std::ostream& os, ColumnSelection s)
 {
   switch (s)
   {
@@ -230,14 +232,14 @@ inline std::ostream &operator<<(std::ostream &os, ColumnSelection s)
   }
 }
 
-using ColumnExpression = std::string (*)(const std::string &tableColumnName,
-                                         const std::string &queryColumnName);
+using ColumnExpression = std::string (*)(const std::string& tableColumnName,
+                                         const std::string& queryColumnName);
 
 struct Column
 {
   Column(ColumnType theType,
-         const std::string &theTableColumnName,
-         const std::string &theQueryColumnName = "",
+         const std::string& theTableColumnName,
+         const std::string& theQueryColumnName = "",
          ColumnExpression theExpression = nullptr,
          ColumnExpression theCoordinateExpression = nullptr)
       : itsType(theType),
@@ -249,12 +251,12 @@ struct Column
   }
   Column() = delete;
 
-  bool operator==(const std::string &theQueryColumnName) const
+  bool operator==(const std::string& theQueryColumnName) const
   {
     return itsName == theQueryColumnName;
   }
-  bool operator==(const Column &theOtherColumn) const { return itsName == theOtherColumn.itsName; }
-  static bool columnNumberSort(const Column &first, const Column &second)
+  bool operator==(const Column& theOtherColumn) const { return itsName == theOtherColumn.itsName; }
+  static bool columnNumberSort(const Column& first, const Column& second)
   {
     return (first.itsNumber < second.itsNumber);
   }
@@ -262,7 +264,7 @@ struct Column
   ColumnType itsType;
   std::string itsName;
 
-  const std::string &getTableColumnName() const { return itsTableColumnName; }
+  const std::string& getTableColumnName() const { return itsTableColumnName; }
   friend class EngineImpl;
 
  private:
@@ -274,7 +276,7 @@ struct Column
 };
 
 using Columns = std::list<Column>;
-using ColumnTable = Column *;
+using ColumnTable = Column*;
 
 struct QueryTable
 {
@@ -319,9 +321,10 @@ struct QueryData
 {
   // The data has no station id; return the common value map having colum name as the map key
   //
-  QueryValues &getValues(const pqxx::result::const_iterator & /* dummy */,
-                         const pqxx::result::const_iterator & /* dummy */,
-                         bool &duplicate)
+  QueryValues& getValues(const IResult& /* dummy */,
+                         std::size_t /* row */,
+                         std::size_t /* prevRow */,
+                         bool& duplicate)
   {
     duplicate = false;
     return itsValues;
@@ -342,17 +345,16 @@ struct StationQueryData
   {
   }
 
-  QueryValues &getValues(const pqxx::result::const_iterator &row,
-                         const pqxx::result::const_iterator &prevRow,
-                         bool &duplicate)
+  QueryValues& getValues(const IResult& result,
+                         std::size_t row,
+                         std::size_t prevRow,
+                         bool& duplicate)
   {
     // Station id is the outer level map key; return the map value (inner map having column name as
     // the map key) for the station.
     // Maintain list of station id's in the order of appearance
     //
-    // Dereference the iterator to a row before indexing by column: libpqxx 8 no longer lets a
-    // result iterator be indexed as a row.
-    long stationId = (*row)[stationIdQueryColumn].as<long>();
+    long stationId = result.getLong(row, stationIdQueryColumn);
 
     std::pair<StationQueryValues::iterator, bool> stationQueryValues =
         itsValues.insert(std::make_pair(stationId, QueryValues()));
@@ -364,8 +366,8 @@ struct StationQueryData
     {
       // Check for duplicate messages for the station; skip others but the 1'st
       //
-      duplicate = ((row != prevRow) && ((*row)[messageQueryColumn].as<std::string>() ==
-                                        (*prevRow)[messageQueryColumn].as<std::string>()));
+      duplicate = ((row != prevRow) && (result.getString(row, messageQueryColumn) ==
+                                        result.getString(prevRow, messageQueryColumn)));
     }
 
     return stationQueryValues.first->second;
@@ -396,33 +398,33 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   ~Engine() override = default;
   Engine() = default;
 
-  virtual StationQueryData queryStations(QueryOptions & /* queryOptions */) const
+  virtual StationQueryData queryStations(QueryOptions& /* queryOptions */) const
   {
     unavailable(BCP);
   }
 
-  virtual StationQueryData queryMessages(const StationIdList & /* stationIdList */,
-                                         const QueryOptions & /* queryOptions */) const
+  virtual StationQueryData queryMessages(const StationIdList& /* stationIdList */,
+                                         const QueryOptions& /* queryOptions */) const
   {
     unavailable(BCP);
   }
-  virtual StationQueryData &joinStationAndMessageData(const StationQueryData & /* stationData */,
-                                                      StationQueryData & /*messageData*/) const
-  {
-    unavailable(BCP);
-  }
-
-  virtual StationQueryData queryStationsAndMessages(QueryOptions & /*queryOptions*/) const
+  virtual StationQueryData& joinStationAndMessageData(const StationQueryData& /* stationData */,
+                                                      StationQueryData& /*messageData*/) const
   {
     unavailable(BCP);
   }
 
-  virtual QueryData queryRejectedMessages(const QueryOptions & /*queryOptions*/) const
+  virtual StationQueryData queryStationsAndMessages(QueryOptions& /*queryOptions*/) const
   {
     unavailable(BCP);
   }
 
-  virtual const FIRQueryData &queryFIRAreas() const { unavailable(BCP); }
+  virtual QueryData queryRejectedMessages(const QueryOptions& /*queryOptions*/) const
+  {
+    unavailable(BCP);
+  }
+
+  virtual const FIRQueryData& queryFIRAreas() const { unavailable(BCP); }
 
  protected:
   void init() override {}
@@ -430,7 +432,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   void shutdown() override {}
 
  private:
-  [[noreturn]] static void unavailable(const char *file, int line, const char *function)
+  [[noreturn]] static void unavailable(const char* file, int line, const char* function)
   {
     throw Fmi::Exception(file, line, function, "AVI engine not available");
   }

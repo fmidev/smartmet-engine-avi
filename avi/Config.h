@@ -26,7 +26,7 @@ enum class TimeRangeType
   CreationValidTimeRangeLatest
 };
 
-std::ostream &operator<<(std::ostream &os, TimeRangeType t);
+std::ostream& operator<<(std::ostream& os, TimeRangeType t);
 
 enum class MessageScope
 {
@@ -36,17 +36,17 @@ enum class MessageScope
   GlobalScope
 };
 
-std::ostream &operator<<(std::ostream &os, MessageScope s);
+std::ostream& operator<<(std::ostream& os, MessageScope s);
 
 class MessageType
 {
  public:
-  bool operator==(const std::string &theMessageType) const
+  bool operator==(const std::string& theMessageType) const
   {
     return (std::find(itsTypes.begin(), itsTypes.end(), theMessageType) != itsTypes.end());
   }
 
-  void addType(const std::string &theType) { itsTypes.push_back(theType); }
+  void addType(const std::string& theType) { itsTypes.push_back(theType); }
   void setScope(MessageScope theScope) { itsScope = theScope; }
   void setTimeRangeType(TimeRangeType theTimeRangeType) { itsTimeRangeType = theTimeRangeType; }
   void setValidityHours(unsigned int theValidityHours) { itsValidityHours = theValidityHours; }
@@ -54,23 +54,23 @@ class MessageType
   {
     itsLatestMessageOnly = theLatestMessageOnly;
   }
-  void addMessirPattern(const std::string &theMessirPattern)
+  void addMessirPattern(const std::string& theMessirPattern)
   {
     itsMessirPatterns.push_back(theMessirPattern);
   }
-  void setQueryRestrictionHours(const std::string &hours) { itsQueryRestrictionHours = hours; }
-  void addQueryRestrictionIcaoPattern(const std::string &theIcaoPattern)
+  void setQueryRestrictionHours(const std::string& hours) { itsQueryRestrictionHours = hours; }
+  void addQueryRestrictionIcaoPattern(const std::string& theIcaoPattern)
   {
     itsQueryRestrictionIcaoPatterns.push_back(theIcaoPattern);
   }
-  void addQueryRestrictionCountryCode(const std::string &theCountryCode)
+  void addQueryRestrictionCountryCode(const std::string& theCountryCode)
   {
     itsQueryRestrictionCountryCodes.push_back(theCountryCode);
   }
   void setQueryRestrictionStartMinute(int minute) { itsQueryRestrictionStartMinute = minute; }
   void setQueryRestrictionEndMinute(int minute) { itsQueryRestrictionEndMinute = minute; }
 
-  const std::list<std::string> &getMessageTypes() const { return itsTypes; }
+  const std::list<std::string>& getMessageTypes() const { return itsTypes; }
   MessageScope getScope() const { return itsScope; }
   TimeRangeType getTimeRangeType() const { return itsTimeRangeType; }
   bool hasValidityHours() const
@@ -82,13 +82,13 @@ class MessageType
   }
   unsigned int getValidityHours() const { return itsValidityHours; }
   bool getLatestMessageOnly() const { return itsLatestMessageOnly; }
-  const std::list<std::string> &getMessirPatterns() const { return itsMessirPatterns; }
-  const std::string &getQueryRestrictionHours() const { return itsQueryRestrictionHours; }
-  const std::list<std::string> &getQueryRestrictionIcaoPatterns() const
+  const std::list<std::string>& getMessirPatterns() const { return itsMessirPatterns; }
+  const std::string& getQueryRestrictionHours() const { return itsQueryRestrictionHours; }
+  const std::list<std::string>& getQueryRestrictionIcaoPatterns() const
   {
     return itsQueryRestrictionIcaoPatterns;
   }
-  const std::list<std::string> &getQueryRestrictionCountryCodes() const
+  const std::list<std::string>& getQueryRestrictionCountryCodes() const
   {
     return itsQueryRestrictionCountryCodes;
   }
@@ -117,17 +117,17 @@ class Config : public SmartMet::Spine::ConfigBase
 {
  public:
   ~Config() override;
-  Config(const std::string &theFileName);
+  Config(const std::string& theFileName);
   Config() = delete;
-  Config(const Config &) = delete;
-  Config &operator=(const Config &) = delete;
+  Config(const Config&) = delete;
+  Config& operator=(const Config&) = delete;
 
-  const std::string &getHost() const { return itsHost; }
+  const std::string& getHost() const { return itsHost; }
   int getPort() const { return itsPort; }
-  const std::string &getDatabase() const { return itsDatabase; }
-  const std::string &getUsername() const { return itsUsername; }
-  const std::string &getPassword() const { return itsPassword; }
-  const std::string &getEncoding() const { return itsEncoding; }
+  const std::string& getDatabase() const { return itsDatabase; }
+  const std::string& getUsername() const { return itsUsername; }
+  const std::string& getPassword() const { return itsPassword; }
+  const std::string& getEncoding() const { return itsEncoding; }
   unsigned getStartConnections() const { return startConnections; }
   unsigned getMaxConnections() const { return maxConnections; }
   int getMaxMessageStations() const { return itsMaxMessageStations; }
@@ -135,12 +135,20 @@ class Config : public SmartMet::Spine::ConfigBase
   int getRecordSetStartTimeOffsetHours() const { return itsRecordSetStartTimeOffsetHours; }
   int getRecordSetEndTimeOffsetHours() const { return itsRecordSetEndTimeOffsetHours; }
   bool getFilterFIMETARxxx() const { return itsFilterFIMETARxxx; }
-  const std::list<std::string> &getFilterFIMETARxxxExcludeIcaos() const
+  const std::list<std::string>& getFilterFIMETARxxxExcludeIcaos() const
   {
     return itsFilterFIMETARxxxExcludeIcaos;
   }
 
-  const MessageTypes &getMessageTypes() const { return itsMessageTypes; }
+  // In-memory message cache (DuckDB mirror)
+  bool getCacheEnabled() const { return itsCacheEnabled; }
+  unsigned getCacheDurationHours() const { return itsCacheDurationHours; }
+  unsigned getCacheUpdateIntervalSec() const { return itsCacheUpdateIntervalSec; }
+  unsigned getCacheSafetyMarginSec() const { return itsCacheSafetyMarginSec; }
+  bool getCacheShadowCompare() const { return itsCacheShadowCompare; }
+  unsigned getCacheMemoryLimitMb() const { return itsCacheMemoryLimitMb; }
+
+  const MessageTypes& getMessageTypes() const { return itsMessageTypes; }
 
  private:
   std::string itsHost;
@@ -185,6 +193,14 @@ class Config : public SmartMet::Spine::ConfigBase
 
   bool itsFilterFIMETARxxx;
   std::list<std::string> itsFilterFIMETARxxxExcludeIcaos;
+
+  // In-memory message cache (DuckDB mirror). Disabled by default; opt-in.
+  bool itsCacheEnabled = false;
+  unsigned itsCacheDurationHours = 48;      // hours of avidb_messages kept in the mirror
+  unsigned itsCacheUpdateIntervalSec = 10;  // background refresh interval
+  unsigned itsCacheSafetyMarginSec = 600;   // re-read window for late/updated rows
+  bool itsCacheShadowCompare = false;       // run both PG and cache and diff (rollout)
+  unsigned itsCacheMemoryLimitMb = 0;       // 0 = unlimited / DuckDB default
 };  // class Config
 
 }  // namespace Avi
