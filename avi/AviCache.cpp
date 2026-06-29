@@ -27,9 +27,16 @@ const char* kMessageCreate =
     "messir_heading VARCHAR, version VARCHAR, "
     "type_id INTEGER, format_id INTEGER, route_id INTEGER)";
 
+// Timestamps are loaded as epoch microseconds computed in SQL and appended via
+// duckdb_append_timestamp. This avoids parsing timestamp text (which fails for
+// sentinel values such as '1700-01-01' and is timezone-format sensitive) and
+// yields the exact UTC instant DuckDB stores in its naive TIMESTAMP columns.
+#define TS_US(col) "(EXTRACT(EPOCH FROM " col ")*1000000)::bigint AS " col
+
 const char* kMessageSelect =
-    "SELECT station_id, message_id, message, message_time, valid_from, valid_to, "
-    "created, file_modified, messir_heading, version, type_id, format_id, route_id "
+    "SELECT station_id, message_id, message, " TS_US("message_time") ", " TS_US(
+        "valid_from") ", " TS_US("valid_to") ", " TS_US("created") ", " TS_US("file_modified") ", "
+    "messir_heading, version, type_id, format_id, route_id "
     "FROM avidb_messages";
 
 const char* kStationCreate =
@@ -38,14 +45,14 @@ const char* kStationCreate =
     "valid_from TIMESTAMP, valid_to TIMESTAMP, modified_last TIMESTAMP, country_code VARCHAR)";
 
 const char* kStationSelect =
-    "SELECT station_id, icao_code, name, elevation, valid_from, valid_to, "
-    "modified_last, country_code FROM avidb_stations";
+    "SELECT station_id, icao_code, name, elevation, " TS_US("valid_from") ", " TS_US(
+        "valid_to") ", " TS_US("modified_last") ", country_code FROM avidb_stations";
 
 const char* kTypeCreate =
     "CREATE TABLE avidb_message_types "
     "(type_id INTEGER, type VARCHAR, description VARCHAR, modified_last TIMESTAMP)";
 const char* kTypeSelect =
-    "SELECT type_id, type, description, modified_last FROM avidb_message_types";
+    "SELECT type_id, type, description, " TS_US("modified_last") " FROM avidb_message_types";
 
 const char* kFormatCreate = "CREATE TABLE avidb_message_format (format_id INTEGER, name VARCHAR)";
 const char* kFormatSelect = "SELECT format_id, name FROM avidb_message_format";
@@ -54,7 +61,7 @@ const char* kRouteCreate =
     "CREATE TABLE avidb_message_routes "
     "(route_id INTEGER, name VARCHAR, description VARCHAR, modified_last TIMESTAMP)";
 const char* kRouteSelect =
-    "SELECT route_id, name, description, modified_last FROM avidb_message_routes";
+    "SELECT route_id, name, description, " TS_US("modified_last") " FROM avidb_message_routes";
 
 // Column type tags for the generic loader
 enum class ColType
@@ -134,15 +141,6 @@ class DuckResult : public IResult
   std::map<std::string, idx_t> itsIndex;
 };
 
-// Convert a PostgreSQL timestamp text (as parsed by the engine elsewhere) to
-// DuckDB microseconds since the epoch.
-duckdb_timestamp tsMicros(const std::string& s)
-{
-  duckdb_timestamp ts;
-  ts.micros = (Fmi::DateTime::from_string(s) - Fmi::DateTime::epoch).total_microseconds();
-  return ts;
-}
-
 void check(duckdb_state state, const char* what)
 {
   if (state == DuckDBError)
@@ -182,9 +180,12 @@ void appendField(duckdb_appender app, const pqxx::row& row, int field, ColType t
       check(duckdb_append_varchar(app, row[field].as<std::string>().c_str()), "append_varchar");
       break;
     case ColType::Ts:
-      check(duckdb_append_timestamp(app, tsMicros(row[field].as<std::string>())),
-            "append_timestamp");
+    {
+      // The SELECT delivers timestamps as epoch microseconds (see TS_US).
+      duckdb_timestamp ts{static_cast<int64_t>(row[field].as<long long>())};
+      check(duckdb_append_timestamp(app, ts), "append_timestamp");
       break;
+    }
   }
 }
 
@@ -257,8 +258,7 @@ void AviCache::run()
   {
     // Initial load failed: leave itsReady false so the engine keeps using
     // PostgreSQL. Log and still enter the loop to retry.
-    Fmi::Exception ex(BCP, "AVI cache initial load failed; using PostgreSQL only");
-    ex.printError();
+    Fmi::Exception::Trace(BCP, "AVI cache initial load failed; using PostgreSQL only").printError();
   }
 
   const auto interval = std::chrono::seconds(itsConfig.getCacheUpdateIntervalSec());
@@ -299,8 +299,7 @@ void AviCache::run()
     }
     catch (...)
     {
-      Fmi::Exception ex(BCP, "AVI cache refresh failed");
-      ex.printError();
+      Fmi::Exception::Trace(BCP, "AVI cache refresh failed").printError();
     }
   }
 }
