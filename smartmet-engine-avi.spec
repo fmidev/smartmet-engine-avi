@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 26.6.24
+Version: 26.7.9
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -26,16 +26,16 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 26.6.24
-BuildRequires: smartmet-library-macgyver-devel >= 26.6.15
+BuildRequires: smartmet-library-spine-devel >= 26.7.7
+BuildRequires: smartmet-library-macgyver-devel >= 26.6.26
 BuildRequires: smartmet-library-timeseries-devel >= 26.5.5
-Requires: smartmet-library-macgyver >= 26.6.15
-Requires: smartmet-library-spine >= 26.6.24
+Requires: smartmet-library-macgyver >= 26.6.26
+Requires: smartmet-library-spine >= 26.7.7
 Requires: smartmet-library-timeseries >= 26.5.5
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
 #TestRequires: smartmet-utils-devel
-#TestRequires: smartmet-library-spine-devel >= 26.6.24
+#TestRequires: smartmet-library-spine-devel >= 26.7.7
 #TestRequires: smartmet-library-timeseries-devel >= 26.5.5
 #TestRequires: zlib-devel
 #TestRequires: bzip2-devel
@@ -100,6 +100,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Thu Jul  9 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.7.9-1.fmi
+- Fix swapped X accessors on BBox
+
 * Wed Jun 24 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.6.24-1.fmi
 - Mass rebuild
 
