@@ -143,7 +143,9 @@ const char* messageValidityTableJoin = "mv.type = mt.type";
 const char* messageTimeRangeLatestMessagesTableName = "messagetimerangelatest_messages";
 
 // Messages may be stored with surrounding whitespace, depending on the route the message arrived
-// from. The whitespace is trimmed off when filtering the messages
+// from. The whitespace is trimmed off when selecting, ordering and filtering the messages; thus
+// otherwise identical messages arrived by different routes are returned trimmed and are detected
+// as duplicates
 
 const char* messageWhitespaceChars = "E' \\t\\r\\n'";
 
@@ -158,6 +160,19 @@ string trimmedMessageExpression(const string& tableAlias, const string& tableCol
   // BTRIM(me.message,E' \t\r\n')
 
   return string("BTRIM(") + tableAlias + "." + tableColumnName + "," + messageWhitespaceChars + ")";
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Return whitespace trimmed message column select expression
+ */
+// ----------------------------------------------------------------------
+
+string messageExpression(const string& tableColumnName, const string& queryColumnName)
+{
+  // BTRIM(me.message,E' \t\r\n') AS message
+
+  return trimmedMessageExpression(messageTableAlias, tableColumnName) + " AS " + queryColumnName;
 }
 
 // Table/query column mapping
@@ -228,7 +243,7 @@ Column messageQueryColumns[] = {
     //
     {ColumnType::Integer, "station_id", stationIdQueryColumn},
     {ColumnType::Integer, messageIdTableColumn, "messageid"},
-    {ColumnType::String, messageTableColumn, messageQueryColumn},
+    {ColumnType::String, messageTableColumn, messageQueryColumn, messageExpression, nullptr},
     {ColumnType::DateTime, "message_time", "messagetime"},
     {ColumnType::DateTime, "valid_from", "messagevalidfrom"},
     {ColumnType::DateTime, "valid_to", "messagevalidto"},
@@ -2379,7 +2394,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
       fromWhereOrderByClause << " AND (" << whereStationClause.str() << ")";
     }
 
-    // ORDER BY { st.icao_code | rs.position } [,me.message] [,me.message_id]
+    // ORDER BY { st.icao_code | rs.position } [,BTRIM(me.message,E' \t\r\n')] [,me.message_id]
 
     if (!queryOptions.itsLocationOptions.itsWKTs.isRoute)
       fromWhereOrderByClause << " ORDER BY " << stationTableAlias << "." << stationIcaoTableColumn;
@@ -2395,7 +2410,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
       if (queryOptions.itsDistinctMessages)
         // Using message for ordering too (needed to check/skip duplicates)
         //
-        fromWhereOrderByClause << "," << messageTableAlias << "." << messageTableColumn
+        fromWhereOrderByClause << "," << trimmedMessageExpression(messageTableAlias,
+                                                                  messageTableColumn)
                                << " COLLATE \"C\"";
 
       // Using message id for ordering too (needed to ensure regression tests can succeed)
@@ -3003,8 +3019,8 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
       column.itsSelection = ColumnSelection::Automatic;
       table.itsSelectedColumns.push_back(column);
 
-      selectClause += (string(",") + messageTableAlias + "." + queryColumn->itsTableColumnName +
-                       " AS " + queryColumn->itsName);
+      selectClause +=
+          (string(",") + messageExpression(queryColumn->itsTableColumnName, queryColumn->itsName));
     }
 
     // SELECT [DISTINCT] ...
