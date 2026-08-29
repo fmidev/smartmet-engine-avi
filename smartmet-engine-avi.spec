@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 26.7.9
+Version: 26.8.30
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -100,6 +100,10 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Sat Aug 30 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.8.30-1.fmi
+- Security: bind/escape the request-supplied WKT geometry via connection.quote()
+  instead of concatenating it into the PostGIS SQL, closing the last unbound WKT
+  sites in the station query builder.
 * Thu Jul  9 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.7.9-1.fmi
 - Fix swapped X accessors on BBox
 

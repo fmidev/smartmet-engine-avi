@@ -503,8 +503,8 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
           << "FROM (SELECT ST_PointN(route,generate_series(1,ST_NPoints(route)-1)) as segstart,"
           << "ST_PointN(route,generate_series(2,ST_NPoints(route))) as segend,"
           << "generate_series(1,ST_NPoints(route)-1) as segindex "
-          << "FROM (SELECT '" << locationOptions.itsWKTs.itsWKTs.front()
-          << "'::geometry as route) AS route) AS segpoints) AS segments";
+          << "FROM (SELECT " << connection.quote(locationOptions.itsWKTs.itsWKTs.front())
+          << "::geometry as route) AS route) AS segpoints) AS segments";
     }
 
     fromWhereOrderByClause << " WHERE ((";
@@ -531,8 +531,9 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
       else
         // Limit by distance between geometries
         //
-        condition << "ST_Length(ST_ShortestLine(geom,ST_GeogFromText('SRID=4326;" << wkt
-                  << "')::geometry)::geography) <= " << fixed << setprecision(0)
+        condition << "ST_Length(ST_ShortestLine(geom,ST_GeogFromText("
+                  << connection.quote("SRID=4326;" + wkt)
+                  << ")::geometry)::geography) <= " << fixed << setprecision(0)
                   << locationOptions.itsMaxDistance;
 
       fromWhereOrderByClause << ((n == 0) ? "(" : ") OR (") << condition.str();
