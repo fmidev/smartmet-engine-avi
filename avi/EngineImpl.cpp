@@ -3383,6 +3383,7 @@ void EngineImpl::queryStationsWithCoordinates(const Fmi::Database::PostgreSQLCon
 void EngineImpl::queryStationsWithIds(const Fmi::Database::PostgreSQLConnection& connection,
                                       const StationIdList& stationIdList,
                                       const string& selectClause,
+                                      bool firIdQuery,
                                       bool debug,
                                       StationQueryData& stationQueryData) const
 {
@@ -3392,12 +3393,18 @@ void EngineImpl::queryStationsWithIds(const Fmi::Database::PostgreSQLConnection&
 
     ostringstream whereClause;
 
+    string fromClause(string(" FROM avidb_stations ") + stationTableAlias);
+
     buildStationQueryWhereClause(stationIdList, whereClause);
 
-    executeQuery<StationQueryData>(connection,
-                                   selectClause + " FROM avidb_stations " + whereClause.str(),
-                                   debug,
-                                   stationQueryData);
+    if (firIdQuery)
+    {
+      fromClause += (string(",") + firTableName + " AS " + firTableAlias);
+      whereClause << " AND " << firTableJoin;
+    }
+
+    executeQuery<StationQueryData>(
+        connection, selectClause + fromClause + " " + whereClause.str(), debug, stationQueryData);
   }
   catch (...)
   {
@@ -3496,6 +3503,7 @@ void EngineImpl::queryStationsWithCountries(const Fmi::Database::PostgreSQLConne
 void EngineImpl::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection& connection,
                                          const StringList& placeNameList,
                                          const string& selectClause,
+                                         bool firIdQuery,
                                          bool debug,
                                          StationQueryData& stationQueryData) const
 {
@@ -3505,13 +3513,19 @@ void EngineImpl::queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnecti
 
     ostringstream whereClause;
 
+    string fromClause(string(" FROM avidb_stations ") + stationTableAlias);
+
     buildStationQueryWhereClause(
         connection, "UPPER(BTRIM(name))", placeNameList, "", {}, whereClause);
 
-    executeQuery<StationQueryData>(connection,
-                                   selectClause + " FROM avidb_stations " + whereClause.str(),
-                                   debug,
-                                   stationQueryData);
+    if (firIdQuery)
+    {
+      fromClause += (string(",") + firTableName + " AS " + firTableAlias);
+      whereClause << " AND " << firTableJoin;
+    }
+
+    executeQuery<StationQueryData>(
+        connection, selectClause + fromClause + " " + whereClause.str(), debug, stationQueryData);
   }
   catch (...)
   {
@@ -3566,6 +3580,7 @@ void EngineImpl::queryStationsWithWKTs(const Fmi::Database::PostgreSQLConnection
 void EngineImpl::queryStationsWithBBoxes(const Fmi::Database::PostgreSQLConnection& connection,
                                          const LocationOptions& locationOptions,
                                          const string& selectClause,
+                                         bool firIdQuery,
                                          bool debug,
                                          StationQueryData& stationQueryData) const
 {
@@ -3575,13 +3590,22 @@ void EngineImpl::queryStationsWithBBoxes(const Fmi::Database::PostgreSQLConnecti
 
     ostringstream whereClause;
 
-    buildStationQueryWhereClause(
-        locationOptions.itsBBoxes, locationOptions.itsMaxDistance, whereClause);
+    string fromClause(string(" FROM avidb_stations ") + stationTableAlias);
 
-    executeQuery<StationQueryData>(connection,
-                                   selectClause + " FROM avidb_stations " + whereClause.str(),
-                                   debug,
-                                   stationQueryData);
+    buildStationQueryWhereClause(locationOptions.itsBBoxes,
+                                 locationOptions.itsMaxDistance,
+                                 whereClause,
+                                 "WHERE ",
+                                 stationTableAlias);
+
+    if (firIdQuery)
+    {
+      fromClause += (string(",") + firTableName + " AS " + firTableAlias);
+      whereClause << " AND " << firTableJoin;
+    }
+
+    executeQuery<StationQueryData>(
+        connection, selectClause + fromClause + " " + whereClause.str(), debug, stationQueryData);
   }
   catch (...)
   {
@@ -4281,6 +4305,7 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
       queryStationsWithIds(connection,
                            locationOptions.itsStationIds,
                            selectClause,
+                           firIdQuery,
                            queryOptions.itsDebug,
                            stationQueryData);
 
@@ -4305,6 +4330,7 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
       queryStationsWithPlaces(connection,
                               locationOptions.itsPlaces,
                               selectClause,
+                              firIdQuery,
                               queryOptions.itsDebug,
                               stationQueryData);
 
@@ -4317,8 +4343,12 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
                             stationQueryData);
 
     if (!locationOptions.itsBBoxes.empty())
-      queryStationsWithBBoxes(
-          connection, locationOptions, selectClause, queryOptions.itsDebug, stationQueryData);
+      queryStationsWithBBoxes(connection,
+                              locationOptions,
+                              selectClause,
+                              firIdQuery,
+                              queryOptions.itsDebug,
+                              stationQueryData);
 
     if (!queryOptions.itsMessageColumnSelected)
     {
