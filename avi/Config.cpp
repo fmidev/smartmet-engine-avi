@@ -196,7 +196,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
     }
 
     // Filtering of finnish METARs; if true/enabled, by default returning finnish METARs only when
-    // they are LIKE "METAR%".
+    // they are LIKE "METAR%" (surrounding whitespace is trimmed off before matching).
     // Stations can be excluded from filtering by their icao code
 
     itsFilterFIMETARxxx = get_optional_config_param<bool>(

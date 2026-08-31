@@ -142,6 +142,39 @@ const char* messageValidityTableAlias = "mv";
 const char* messageValidityTableJoin = "mv.type = mt.type";
 const char* messageTimeRangeLatestMessagesTableName = "messagetimerangelatest_messages";
 
+// Messages may be stored with surrounding whitespace, depending on the route the message arrived
+// from. The whitespace is trimmed off when selecting, ordering and filtering the messages; thus
+// otherwise identical messages arrived by different routes are returned trimmed and are detected
+// as duplicates
+
+const char* messageWhitespaceChars = "E' \\t\\r\\n'";
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Return whitespace trimmed message column expression
+ */
+// ----------------------------------------------------------------------
+
+string trimmedMessageExpression(const string& tableAlias, const string& tableColumnName)
+{
+  // BTRIM(me.message,E' \t\r\n')
+
+  return string("BTRIM(") + tableAlias + "." + tableColumnName + "," + messageWhitespaceChars + ")";
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Return whitespace trimmed message column select expression
+ */
+// ----------------------------------------------------------------------
+
+string messageExpression(const string& tableColumnName, const string& queryColumnName)
+{
+  // BTRIM(me.message,E' \t\r\n') AS message
+
+  return trimmedMessageExpression(messageTableAlias, tableColumnName) + " AS " + queryColumnName;
+}
+
 // Table/query column mapping
 
 Column firQueryColumns[] = {
@@ -210,7 +243,7 @@ Column messageQueryColumns[] = {
     //
     {ColumnType::Integer, "station_id", stationIdQueryColumn},
     {ColumnType::Integer, messageIdTableColumn, "messageid"},
-    {ColumnType::String, messageTableColumn, messageQueryColumn},
+    {ColumnType::String, messageTableColumn, messageQueryColumn, messageExpression, nullptr},
     {ColumnType::DateTime, "message_time", "messagetime"},
     {ColumnType::DateTime, "valid_from", "messagevalidfrom"},
     {ColumnType::DateTime, "valid_to", "messagevalidto"},
@@ -1681,7 +1714,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
              FROM record_set me,avidb_message_types mt,message_validity mv[,avidb_stations st]
              WHERE [ st.station_id = me.station_id AND ((st.country_code != 'FI' OR mt.type !=
     'METAR'
-    OR me.message LIKE 'METAR%')
+    OR BTRIM(me.message,E' \t\r\n') LIKE 'METAR%')
                              [ OR st.icao_code IN (ExcludedIcaoList) ]
                              ) AND
                        ]
@@ -1821,8 +1854,9 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 
         if (filterMETARs)
         {
-          withClause << "((mt.type != 'METAR' OR " << messageTableAlias
-                     << ".message LIKE 'METAR%')";
+          withClause << "((mt.type != 'METAR' OR "
+                     << trimmedMessageExpression(messageTableAlias, messageTableColumn)
+                     << " LIKE 'METAR%')";
 
           if (!filterFIMETARxxxExcludeIcaos.empty())
             withClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos)
@@ -1956,7 +1990,7 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
             FROM record_set me,avidb_message_types mt[,avidb_stations st]
             WHERE [ st.station_id = me.station_id AND ((st.country_code != 'FI' OR mt.type !=
     'METAR'
-    OR " << messageTableAlias << ".message LIKE 'METAR%')
+    OR BTRIM(" << messageTableAlias << ".message,E' \t\r\n') LIKE 'METAR%')
                             [ OR st.icao_code IN (ExcludedIcaoList) ]
                             ) AND
                       ]
@@ -1968,7 +2002,7 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
             FROM record_set me,avidb_message_types mt,message_validity mv[,avidb_stations st]
             WHERE [ st.station_id = me.station_id AND ((st.country_code != 'FI' OR mt.type !=
     'METAR'
-    OR " << messageTableAlias << ".message LIKE 'METAR%')
+    OR BTRIM(" << messageTableAlias << ".message,E' \t\r\n') LIKE 'METAR%')
                             [ OR st.icao_code IN (ExcludedIcaoList) ]
                             ) AND
                       ]
@@ -2007,8 +2041,9 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
 
       if (filterMETARs)
       {
-        filterClause << "((mt.type != 'METAR' OR " << messageTableAlias
-                     << ".message LIKE 'METAR%')";
+        filterClause << "((mt.type != 'METAR' OR "
+                     << trimmedMessageExpression(messageTableAlias, messageTableColumn)
+                     << " LIKE 'METAR%')";
 
         if (!filterFIMETARxxxExcludeIcaos.empty())
           filterClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos)
@@ -2292,7 +2327,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
           //      (
           //       [
           //       (
-          //        (mt.type != 'METAR' OR me.message LIKE 'METAR%')
+          //        (mt.type != 'METAR' OR BTRIM(me.message,E' \t\r\n') LIKE 'METAR%')
           //        [ OR st.icao_code IN (ExcludedIcaoList) ]
           //       )
           //       ]
@@ -2305,7 +2340,9 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
           if (filterMETARs)
           {
             fromWhereOrderByClause << "((" << messageTypeTableAlias << ".type != 'METAR' OR "
-                                   << messageTableAlias << ".message LIKE 'METAR%')";
+                                   << trimmedMessageExpression(messageTableAlias,
+                                                               messageTableColumn)
+                                   << " LIKE 'METAR%')";
 
             auto const& filterFIMETARxxxExcludeIcaos = config.getFilterFIMETARxxxExcludeIcaos();
 
@@ -2357,7 +2394,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
       fromWhereOrderByClause << " AND (" << whereStationClause.str() << ")";
     }
 
-    // ORDER BY { st.icao_code | rs.position } [,me.message] [,me.message_id]
+    // ORDER BY { st.icao_code | rs.position } [,BTRIM(me.message,E' \t\r\n')] [,me.message_id]
 
     if (!queryOptions.itsLocationOptions.itsWKTs.isRoute)
       fromWhereOrderByClause << " ORDER BY " << stationTableAlias << "." << stationIcaoTableColumn;
@@ -2373,7 +2410,8 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
       if (queryOptions.itsDistinctMessages)
         // Using message for ordering too (needed to check/skip duplicates)
         //
-        fromWhereOrderByClause << "," << messageTableAlias << "." << messageTableColumn
+        fromWhereOrderByClause << "," << trimmedMessageExpression(messageTableAlias,
+                                                                  messageTableColumn)
                                << " COLLATE \"C\"";
 
       // Using message id for ordering too (needed to ensure regression tests can succeed)
@@ -2981,8 +3019,8 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
       column.itsSelection = ColumnSelection::Automatic;
       table.itsSelectedColumns.push_back(column);
 
-      selectClause += (string(",") + messageTableAlias + "." + queryColumn->itsTableColumnName +
-                       " AS " + queryColumn->itsName);
+      selectClause +=
+          (string(",") + messageExpression(queryColumn->itsTableColumnName, queryColumn->itsName));
     }
 
     // SELECT [DISTINCT] ...

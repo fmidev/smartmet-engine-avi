@@ -162,8 +162,8 @@ struct QueryOptions
   int itsMaxMessageStations = -1;         // if 0, unlimited; if < 0, engine rules
   int itsMaxMessageRows = -1;             // if 0, unlimited; if < 0, engine rules
   bool itsDistinctMessages = true;        // Whether to skip duplicate messages or not
-  bool itsFilterMETARs = true;  // Whether to filter (finnish) METARs (LIKE 'METAR%', if enabled by
-                                // engine's configuration) or not
+  bool itsFilterMETARs = true;  // Whether to filter (finnish) METARs (LIKE 'METAR%' ignoring
+                                // leading whitespace, if enabled by engine's configuration) or not
   bool itsExcludeSPECIs = false;
   // Whether to exclude (finnish) SPECIs (if enabled with request parameter)
   bool itsDebug = false;  // Whether to write generated sql queries to stderr or not

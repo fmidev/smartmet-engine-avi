@@ -178,8 +178,9 @@ class Config : public SmartMet::Spine::ConfigBase
 
   // Currently METARs from some finnish stations are stored twice into the database, with and
   // without "METAR" in the beginning of message.
-  // Only messages LIKE "METAR%" are returned by default if configuration has setting
-  // "message.filter_FI_METARxxx.filter" with value true.
+  // Only messages LIKE "METAR%" (surrounding whitespace is trimmed off before matching) are
+  // returned by default if configuration has setting "message.filter_FI_METARxxx.filter" with
+  // value true.
   // Stations can be excluded from filtering by listing their icao code in configuration setting
   // "message.filter_FI_METARxxx.excludeicaos"
 
