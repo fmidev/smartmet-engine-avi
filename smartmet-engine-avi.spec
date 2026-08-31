@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 26.7.9
+Version: 26.8.31
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -100,6 +100,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Mon Aug 31 2026 Andris Pavēnis <andris.pavenis@fmi.fi> 26.8.31-1.fmi
+- Support messages with extra whitespace at start
+
 * Thu Jul  9 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.7.9-1.fmi
 - Fix swapped X accessors on BBox
 
