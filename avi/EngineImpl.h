@@ -114,6 +114,7 @@ class EngineImpl : public Engine
   void queryStationsWithIds(const Fmi::Database::PostgreSQLConnection &connection,
                             const StationIdList &stationIdList,
                             const std::string &selectClause,
+                            bool firIdQuery,
                             bool debug,
                             StationQueryData &queryData) const;
   void queryStationsWithIcaos(const Fmi::Database::PostgreSQLConnection &connection,
@@ -132,6 +133,7 @@ class EngineImpl : public Engine
   void queryStationsWithPlaces(const Fmi::Database::PostgreSQLConnection &connection,
                                const StringList &placeList,
                                const std::string &selectClause,
+                               bool firIdQuery,
                                bool debug,
                                StationQueryData &queryData) const;
   void queryStationsWithCoordinates(const Fmi::Database::PostgreSQLConnection &connection,
@@ -149,6 +151,7 @@ class EngineImpl : public Engine
   void queryStationsWithBBoxes(const Fmi::Database::PostgreSQLConnection &connection,
                                const LocationOptions &locationOptions,
                                const std::string &selectClause,
+                               bool firIdQuery,
                                bool debug,
                                StationQueryData &queryData) const;
 
