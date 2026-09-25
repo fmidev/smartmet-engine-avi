@@ -121,10 +121,5 @@ layout requires rebuilding those together with the engine.
   or SIGMET). Keep the offsets at least as long as the longest validity.
 * **Validation hits the database.** Station ids, ICAO codes, places, countries and WKTs are
   checked with database queries before the actual query runs.
-* **`queryFIRAreas()` lazy loading is not fully safe.** The loaded map is published with a
-  relaxed atomic store and read with a relaxed load (formally a data race; it needs
-  release/acquire), and a thread that waited on the mutex does not re-check the pointer,
-  so it runs the FIR query again. If the FIR table is empty, every call queries the
-  database.
 * **Short ICAO strings are prefix matches.** `EF` means every station starting with `EF`.
 * **Virtual API order is ABI** (§6).
