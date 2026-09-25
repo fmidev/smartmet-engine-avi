@@ -144,7 +144,7 @@ class Config : public SmartMet::Spine::ConfigBase
 
  private:
   std::string itsHost;
-  int itsPort;
+  int itsPort = 5432;
   std::string itsDatabase;
   std::string itsUsername;
   std::string itsPassword;
