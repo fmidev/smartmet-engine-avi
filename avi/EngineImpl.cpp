@@ -5125,17 +5125,25 @@ const FIRQueryData& EngineImpl::queryFIRAreas() const
 {
   try
   {
-    auto* ptr = itsFIRAreasPtr.load(std::memory_order_relaxed);
+    // Double-checked lazy loading. The acquire load pairs with the release
+    // store below, so a thread seeing the pointer also sees the loaded map.
+    auto* ptr = itsFIRAreasPtr.load(std::memory_order_acquire);
 
     if (ptr)
       return *ptr;
 
     std::unique_lock<std::mutex> lock(itsFIRMutex);
 
+    // Another thread may have loaded the areas while this one waited for the lock
+    ptr = itsFIRAreasPtr.load(std::memory_order_relaxed);
+    if (ptr)
+      return *ptr;
+
     loadFIRAreas();
 
-    if (!itsFIRAreas.empty())
-      itsFIRAreasPtr.store(&itsFIRAreas, std::memory_order_relaxed);
+    // Publish also an empty result, otherwise every call would query the
+    // database again. If loading fails, the next call tries again.
+    itsFIRAreasPtr.store(&itsFIRAreas, std::memory_order_release);
 
     return itsFIRAreas;
   }
