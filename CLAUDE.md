@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `smartmet-engine-avi` is a SmartMet Server engine that provides access to aviation weather data (METAR, TAF, SIGMET, and other message types) from a PostgreSQL/PostGIS database. It is loaded as a shared library (`avi.so`) by the SmartMet Server daemon and consumed by plugins (timeseries, edr, avi plugin, etc.).
 
+Full developer documentation: `docs/developer-guide.md`.
+
 ## Build commands
 
 ```bash

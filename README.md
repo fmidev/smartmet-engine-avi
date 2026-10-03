@@ -6,6 +6,10 @@ Part of [SmartMet Server](https://github.com/fmidev/smartmet-server). See the [S
 
 The AVI engine provides access to aviation weather data — METAR (airport observations), TAF (terminal aerodrome forecasts), and SIGMET (significant meteorological information) — for use by SmartMet Server plugins.
 
+## Documentation
+
+- [Developer guide](docs/developer-guide.md) — API, query building, message types and time ranges, configuration, pitfalls
+
 ## License
 
 MIT — see [LICENSE](LICENSE)
