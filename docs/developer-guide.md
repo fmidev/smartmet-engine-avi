@@ -106,6 +106,17 @@ to its configuration.
 | `message.types` | The message types with `timerangetype`, `validityhours`, `latestmessage`, `messirpatterns`, scope and query restrictions. |
 | `message.recordsetstarttimeoffsethours`, `recordsetendtimeoffsethours` | The CTE window around the requested time (required, > 0). It must be wide enough for every type's validity. |
 | `message.filter_FI_METARxxx` | The Finnish METAR deduplication. |
+| `disabled` | Optional, default false. When true, the engine loads in dummy mode (see below). |
+
+**Dummy mode.** `engine_class_creator` returns the base `Engine` instead of `EngineImpl` when
+the server gives it no configuration file name, or an empty one, or when the file sets
+`disabled = true`. The base class needs no database and every query method throws
+`AVI engine not available`. Only `disabled` is read in that case, so the rest of the file
+may be missing. This lets plugins that look up the engine at startup (avi, wms) run on a
+machine without the AVI database. An empty configuration file is not the same thing: the
+full engine is then created and fails on the missing `postgis` settings. Setting
+`disabled = true` in the server's `engines.avi` section is different again: the server
+does not load `avi.so`, and plugins that require it fail at startup.
 
 ## 6. Compatibility
 
