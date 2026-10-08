@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(config_accessors,
 
   MessageTypes messageTypesEmpty;
   BOOST_CHECK(typeid(config.getMessageTypes()) == typeid(messageTypesEmpty));
-  BOOST_CHECK_EQUAL(config.getMessageTypes().size(), 10);
+  BOOST_CHECK_EQUAL(config.getMessageTypes().size(), 9);
 }
 }  // namespace Avi
 }  // namespace Engine
