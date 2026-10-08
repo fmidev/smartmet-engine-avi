@@ -64,8 +64,8 @@ test:	$(TEST_PREPARE_TARGETS) $(TESTSUITE_TARGETS)
 	for test in $(TESTSUITE_TARGETS); do \
 		if ! ./$$test --log_level=message ; then ok=false; fi; \
 	done; \
-	$(MAKE) $(TEST_FINISH_TARGETS)
-	$$ok;
+	$(MAKE) $(TEST_FINISH_TARGETS); \
+	$$ok
 
 %.test : obj/%.o ; @echo "Building $@"
 	$(CXX) -o $@ $(CFLAGS) $(INCLUDES) $< -Ltestsuite $(LIBWFS_LDFLAGS) $(LIBS)
