@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 26.10.3
+Version: 26.10.10
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -100,6 +100,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Sat Oct 10 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.10-1.fmi
+- Use raw string literals and std::make_shared where clang-tidy suggests it, no functional changes
+
 * Sat Oct 03 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.3-1.fmi
 - Default postgis.port to 5432
 - Load the FIR areas once and publish them safely

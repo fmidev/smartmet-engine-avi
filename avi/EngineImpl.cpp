@@ -147,7 +147,7 @@ const char* messageTimeRangeLatestMessagesTableName = "messagetimerangelatest_me
 // otherwise identical messages arrived by different routes are returned trimmed and are detected
 // as duplicates
 
-const char* messageWhitespaceChars = "E' \\t\\r\\n'";
+const char* messageWhitespaceChars = R"(E' \t\r\n')";
 
 // ----------------------------------------------------------------------
 /*!
