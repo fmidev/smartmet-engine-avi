@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 26.10.10
+Version: 26.10.11
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -26,17 +26,17 @@ BuildRequires: make
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
-BuildRequires: smartmet-library-spine-devel >= 26.10.3
-BuildRequires: smartmet-library-macgyver-devel >= 26.10.3
-BuildRequires: smartmet-library-timeseries-devel >= 26.10.3
-Requires: smartmet-library-macgyver >= 26.10.3
-Requires: smartmet-library-spine >= 26.10.3
-Requires: smartmet-library-timeseries >= 26.10.3
+BuildRequires: smartmet-library-spine-devel >= 26.10.11
+BuildRequires: smartmet-library-macgyver-devel >= 26.10.11
+BuildRequires: smartmet-library-timeseries-devel >= 26.10.11
+Requires: smartmet-library-macgyver >= 26.10.11
+Requires: smartmet-library-spine >= 26.10.11
+Requires: smartmet-library-timeseries >= 26.10.11
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
 #TestRequires: smartmet-utils-devel
-#TestRequires: smartmet-library-spine-devel >= 26.10.3
-#TestRequires: smartmet-library-timeseries-devel >= 26.10.3
+#TestRequires: smartmet-library-spine-devel >= 26.10.11
+#TestRequires: smartmet-library-timeseries-devel >= 26.10.11
 #TestRequires: zlib-devel
 #TestRequires: bzip2-devel
 
@@ -100,7 +100,7 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
-* Sat Oct 10 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.10-1.fmi
+* Sun Oct 11 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.11-1.fmi
 - Use raw string literals and std::make_shared where clang-tidy suggests it, no functional changes
 
 * Sat Oct 03 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.3-1.fmi
