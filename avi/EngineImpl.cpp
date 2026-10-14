@@ -3623,10 +3623,10 @@ Fmi::DateTime parseTime(const string& timeName, const string& timeStr)
 
     if ((!(*timestamptz)) && (*c == ' '))
     {
-      do
+      for (bool more = true; more; more = *c == ' ')
       {
         c++;
-      } while (*c == ' ');
+      }
 
       const char* c2 = nullptr;
       if (*c == '\'')
@@ -3636,10 +3636,10 @@ Fmi::DateTime parseTime(const string& timeName, const string& timeStr)
       {
         const auto* c3 = c2;
 
-        do
+        for (bool more = true; more; more = *c3 == ' ')
         {
           c3++;
-        } while (*c3 == ' ');
+        }
 
         if (!(*c3))
         {
