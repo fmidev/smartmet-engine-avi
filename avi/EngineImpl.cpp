@@ -1812,7 +1812,7 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
       string messirHeadingGroupByExpr = buildMessirHeadingGroupByExpr(
           messageTypes, knownMessageTypes, TimeRangeType::MessageValidTimeRangeLatest);
 
-      bool bStationJoin;
+      bool bStationJoin = false;
       string stationAndTimeCondition = buildMessageValidTimeRangeLatestTimeCondition(
           messageTypes, knownMessageTypes, observationTime, messageCreatedTime, bStationJoin);
 
@@ -2226,7 +2226,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
           //
           bool disableQueryRestriction = (!queryOptions.itsTimeOptions.itsMessageTimeChecks);
 
-          bool bStationJoin;
+          bool bStationJoin = false;
           string stationAndTimeRangeCondition =
               buildMessageValidTimeRangeTimeCondition(queryOptions.itsMessageTypes,
                                                       knownMessageTypes,
@@ -2308,7 +2308,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
         string messageTypeIn = buildMessageTypeInClause(
             queryOptions.itsMessageTypes, knownMessageTypes, list<TimeRangeType>());
 
-        auto ltORle = (queryOptions.itsTimeOptions.itsClosedTimeRange ? " <= " : " < ");
+        const auto* ltORle = (queryOptions.itsTimeOptions.itsClosedTimeRange ? " <= " : " < ");
 
         fromWhereOrderByClause << " AND " << messageTypeIn << " AND " << messageTableAlias << "."
                                << timeRangeColumn->getTableColumnName()
@@ -2704,7 +2704,7 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
     // Selected columns
 
     Columns columns;
-    bool duplicate;
+    bool duplicate = false;
 
     selectClause.clear();
     firIdQuery = false;
@@ -3096,7 +3096,7 @@ void EngineImpl::loadQueryResult(
         (distinctRows &&
          (find(queryData.itsColumns.begin(), queryData.itsColumns.end(), messageQueryColumn) !=
           queryData.itsColumns.end()));
-    bool duplicate;
+    bool duplicate = false;
 
     for (pqxx::result::const_iterator row = result.begin(), prevRow = result.begin();
          (row != result.end());
@@ -3165,7 +3165,7 @@ void EngineImpl::loadQueryResult(
         }
         else if (column.itsType == ColumnType::String)
         {
-          bool isNull;
+          bool isNull = false;
 
           try
           {
@@ -4260,7 +4260,7 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
     bool selectStationListOnly = queryOptions.itsMessageColumnSelected;
     bool autoSelectDistance =
         ((!locationOptions.itsLonLats.empty()) && (locationOptions.itsNumberOfNearestStations > 0));
-    bool firIdQuery;
+    bool firIdQuery = false;
     string selectClause;
 
     stationQueryData.itsColumns = buildStationQuerySelectClause(
@@ -5055,7 +5055,7 @@ QueryData EngineImpl::queryRejectedMessages(const QueryOptions& queryOptions) co
     auto connectionPtr = itsConnectionPool->get();
     auto& connection = *connectionPtr.get();
 
-    bool messageColumnSelected;
+    bool messageColumnSelected = false;
 
     validateParameters(queryOptions.itsParameters, Validity::Rejected, messageColumnSelected);
 

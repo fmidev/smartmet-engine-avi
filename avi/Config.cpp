@@ -485,7 +485,7 @@ Config::Config(const std::string &theConfigFileName) : ConfigBase(theConfigFileN
 
       // Whether to query latest or all messages within the time range
 
-      bool latestMessageOnly;
+      bool latestMessageOnly = false;
 
       if (r->latestMessagesOnly)
       {
