@@ -4,7 +4,7 @@
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
 Version: 26.10.15
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-avi
@@ -102,6 +102,11 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Thu Oct 15 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.15-2.fmi
+- Added an optional in-memory message cache (embedded DuckDB copy of the recent messages)
+  that answers latest-valid-message queries at the current time without PostgreSQL
+  (message.cache.* settings, disabled by default; requires the duckdb package)
+
 * Thu Oct 15 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.15-1.fmi
 - Fixed mechanical clang-tidy findings (internal linkage, unused parameters, initialization, redundant code), no functional changes
 - Requires 26.10.15 versions of spine due to their ABI changes
