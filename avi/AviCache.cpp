@@ -318,6 +318,12 @@ void AviCache::createSchema()
     // All timestamps are treated as UTC, matching the engine's UTC handling.
     exec(con, "SET GLOBAL TimeZone='UTC'");
 
+    // Optional cap on the memory DuckDB may use, 0 keeps DuckDB's default (80% of RAM)
+    if (itsConfig.getCacheMemoryLimitMb() > 0)
+      exec(con,
+           "SET GLOBAL memory_limit='" + Fmi::to_string(itsConfig.getCacheMemoryLimitMb()) +
+               "MB'");
+
     // Drop any earlier tables (retry path) before recreating.
     for (const char* t : {"avidb_messages",
                           "avidb_stations",

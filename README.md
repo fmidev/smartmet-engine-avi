@@ -6,6 +6,10 @@ Part of [SmartMet Server](https://github.com/fmidev/smartmet-server). See the [S
 
 The AVI engine provides access to aviation weather data — METAR (airport observations), TAF (terminal aerodrome forecasts), and SIGMET (significant meteorological information) — for use by SmartMet Server plugins.
 
+## In-memory message cache
+
+Requests for the latest messages at the current time can be served from an optional in-process DuckDB copy of the recent messages instead of PostgreSQL. It is disabled by default (`message.cache.enabled`); see `cnf/avi.conf.sample` and the developer guide.
+
 ## Running without a database (dummy mode)
 
 The engine can be loaded in a dummy mode that needs no database. In this mode it starts normally, so plugins that look up the Avi engine still initialize, but every query method throws `AVI engine not available`. Dummy mode is enabled in either of two ways:
@@ -32,7 +36,7 @@ Setting `disabled = true` in the server's `engines.avi` section is different: th
 
 ## Documentation
 
-- [Developer guide](docs/developer-guide.md) — API, query building, message types and time ranges, configuration, pitfalls
+- [Developer guide](docs/developer-guide.md) — API, query building, message types and time ranges, configuration, the in-memory message cache, pitfalls
 
 ## License
 

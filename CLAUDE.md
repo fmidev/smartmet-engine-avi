@@ -39,6 +39,8 @@ Tests require a PostgreSQL test database. In CI, a local test database is create
 
 - **`Engine`** (`Engine.h`) — Public API base class inheriting `SmartMet::Spine::SmartMetEngine`. All public query methods are virtual with default implementations that throw "AVI engine not available". This allows plugins to link against the header without the engine actually being loaded.
 - **`EngineImpl`** (`EngineImpl.h`) — Private implementation class that overrides all virtual methods. Manages a PostgreSQL connection pool and handles SQL query generation, validation, and result loading.
+- **`AviCache`** (`AviCache.h`) — Optional in-memory DuckDB copy of the recent messages and the station/type/format/route tables, refreshed by a background thread. `EngineImpl::queryMessages` runs the generated SQL against it for "latest at current time" queries (`isCacheable`), falling back to PostgreSQL otherwise or on any error.
+- **`IResult`** (`ResultAccessor.h`) — Backend-neutral query result access; `PqxxResult.h` wraps libpqxx, `AviCache.cpp` wraps DuckDB. Result loading (`loadQueryResult`, `getValues`) uses only this interface.
 - **`Config`** (`Config.h`) — Parses libconfig configuration files. Defines `MessageType` objects that control time range queries, validity periods, message scoping (station/FIR/global), and Finnish METAR filtering rules.
 
 ### Query flow
@@ -68,6 +70,7 @@ Configuration uses libconfig format (`cnf/avi.conf.sample`). Key sections:
 - `message.types` — List of known message types with their time range type (`validtime`, `messagevalidtime`, `messagetime`, `creationtime`), validity hours, latest-message behavior, messir patterns, and query restriction settings
 - `message.recordsetstarttimeoffsethours` / `recordsetendtimeoffsethours` — Expand the message_time CTE window to capture messages valid at the requested time (required, must be > 0)
 - `message.filter_FI_METARxxx` — Finnish METAR deduplication filter
+- `message.cache` — Optional in-memory message cache (`enabled` false by default, `durationhours`, `updateintervalsec`, `safetymarginsec`, `shadowcompare`, `memorylimitmb`); see docs/developer-guide.md §6
 
 ## Dependencies
 
@@ -75,4 +78,5 @@ Configuration uses libconfig format (`cnf/avi.conf.sample`). Key sections:
 - `smartmet-library-macgyver` (PostgreSQL connection pool, exceptions, time parsing, string utils)
 - `smartmet-library-timeseries` (time series value types)
 - `libpqxx` (PostgreSQL C++ client)
+- `duckdb` / `duckdb-devel` (embedded database for the message cache; only the C API is used, since the C++ API is not ABI-stable across compilers)
 - `libconfig` (via `configpp` pkg-config)

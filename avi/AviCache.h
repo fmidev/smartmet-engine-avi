@@ -15,9 +15,12 @@
  * their own short-lived DuckDB connections; DuckDB MVCC gives them a consistent
  * snapshot while the updater commits.
  *
- * Until the first full load completes (itsReady) and for any request whose time
- * window is not fully inside the cached span, the engine falls back to the
- * PostgreSQL path, so the cache is always a pure optimization.
+ * Until the first full load completes (itsReady), for requests that
+ * EngineImpl::isCacheable rejects, and whenever a cache query fails (for
+ * example SQL the mirror cannot run), the engine uses the PostgreSQL path, so
+ * the cache is always a pure optimization. Coverage of "latest at current
+ * time" queries is guaranteed by Config requiring durationhours >
+ * recordsetstarttimeoffsethours.
  */
 // ======================================================================
 

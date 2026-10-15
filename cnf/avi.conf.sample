@@ -32,11 +32,15 @@ message:
 
 	# In-memory message cache (DuckDB mirror of recent avidb_* rows).
 	#
-	# When enabled, "latest valid messages at current time" requests whose needed message_time
-	# window is inside the cached span are answered from the in-process mirror instead of the
-	# PostgreSQL backend, offloading load bursts. All other requests (time ranges, historical
-	# times, rejected messages, spatial station selection, uncached message types, geometry-
-	# derived columns) transparently fall back to PostgreSQL, so the cache is a pure optimization.
+	# When enabled, a background thread copies the last durationhours of avidb_messages and the
+	# station, message type, format and route tables into an in-process DuckDB database, and
+	# refreshes it every updateintervalsec. Requests for the latest valid TAC or IWXXM messages at
+	# the current time are then answered from the mirror instead of PostgreSQL. Everything else
+	# (time ranges, explicit times, rejected messages, routes, longitude/latitude/lonlat/latlon/
+	# distance/bearing columns) uses PostgreSQL, and so does any query the mirror fails to run,
+	# so the cache is a pure optimization. Station lookups always use PostgreSQL.
+	#
+	# When disabled (the default), no DuckDB database is created and all requests use PostgreSQL.
 
 	cache:
 	{
@@ -45,7 +49,7 @@ message:
 		updateintervalsec = 10;		# background refresh interval in seconds
 		safetymarginsec   = 600;	# re-read window (seconds) for late-arriving / updated rows
 		shadowcompare     = false;	# rollout aid: run both PostgreSQL and cache, log differences, return the PostgreSQL result
-		# memorylimitmb   = 0;		# optional DuckDB memory limit in MB; 0 = unlimited / default
+		# memorylimitmb   = 0;		# optional DuckDB memory limit in MB; 0 = DuckDB default (80% of RAM)
 	};
 
 	# Filtering of finnish METARs; if enabled, by default returning finnish METARs only when they are LIKE "METAR%".
