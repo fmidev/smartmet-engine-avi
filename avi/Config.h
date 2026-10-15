@@ -167,12 +167,12 @@ class Config : public SmartMet::Spine::ConfigBase
   //
   // Message type specific time restrictions/queries are then applied to the record_set.
 
-  unsigned int itsRecordSetStartTimeOffsetHours;  // record_set's starting message_time as # of
+  unsigned int itsRecordSetStartTimeOffsetHours = 0;  // record_set's starting message_time as # of
                                                   // hours backwards from observation time / time
                                                   // range start time
-  unsigned int itsRecordSetEndTimeOffsetHours;    // record_set's ending message_time as # of hours
-                                                  // forwards from observation time / time range end
-                                                  // time
+  unsigned int itsRecordSetEndTimeOffsetHours = 0;  // record_set's ending message_time as # of
+                                                    // hours forwards from observation time / time
+                                                    // range end time
 
   MessageTypes itsMessageTypes;
 
