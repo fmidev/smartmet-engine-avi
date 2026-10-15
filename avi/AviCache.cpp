@@ -211,7 +211,7 @@ void AviCache::start()
 void AviCache::shutdown()
 {
   {
-    std::lock_guard<std::mutex> lock(itsWakeupMutex);
+    std::scoped_lock lock(itsWakeupMutex);
     itsStop.store(true, std::memory_order_release);
   }
   itsWakeup.notify_all();
@@ -229,7 +229,7 @@ void AviCache::shutdown()
 
 AviCache::Span AviCache::cachedSpan() const
 {
-  std::lock_guard<std::mutex> lock(itsSpanMutex);
+  std::scoped_lock lock(itsSpanMutex);
   return itsSpan;
 }
 
@@ -589,7 +589,7 @@ void AviCache::refreshSpan()
     span.valid = false;
   }
 
-  std::lock_guard<std::mutex> lock(itsSpanMutex);
+  std::scoped_lock lock(itsSpanMutex);
   itsSpan = span;
 }
 
