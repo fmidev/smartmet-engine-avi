@@ -849,6 +849,37 @@ string buildRequestStationsWithClause(const StationIdList& stationIdList, bool r
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Append (type,validity) values of the message types to the WITH clause
+ */
+// ----------------------------------------------------------------------
+
+void appendValidityValues(ostringstream& withClause,
+                          const StringList& types,
+                          const MessageType& knownType,
+                          size_t& n)
+{
+  for (auto it = types.begin(); (it != types.end()); it++, n++)
+    withClause << ((n == 0) ? "('" : "),('") << *it << "',INTERVAL '"
+               << knownType.getValidityHours() << " hours'";
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Find the known message type with configured validity hours for the message type
+ */
+// ----------------------------------------------------------------------
+
+const MessageType* findValidityMessageType(const string& messageType,
+                                           const MessageTypes& knownMessageTypes)
+{
+  for (auto const& knownType : knownMessageTypes)
+    if (knownType.hasValidityHours() && (knownType == messageType))
+      return &knownType;
+  return nullptr;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Build 'message_validity' table (WITH clause) for requested message
  *        types and their configured validity in hours
  */
@@ -880,28 +911,18 @@ string buildMessageTypeValidityWithClause(const StringList& messageTypeList,
       //
       for (auto const& knownType : knownMessageTypes)
         if (knownType.hasValidityHours())
-        {
-          auto const& knownTypes = knownType.getMessageTypes();
-
-          for (auto it = knownTypes.begin(); (it != knownTypes.end()); it++, n++)
-            withClause << ((n == 0) ? "('" : "),('") << *it << "',INTERVAL '"
-                       << knownType.getValidityHours() << " hours'";
-        }
+          appendValidityValues(withClause, knownType.getMessageTypes(), knownType, n);
     }
     else
     {
       // Get given message types with configured validity hours
       //
       for (auto const& messageType : messageTypeList)
-        for (auto const& knownType : knownMessageTypes)
-          if (knownType.hasValidityHours() && (knownType == messageType))
-          {
-            withClause << ((n == 0) ? "('" : "),('") << messageType << "',INTERVAL '"
-                       << knownType.getValidityHours() << " hours'";
-            n++;
-
-            break;
-          }
+      {
+        auto const* knownType = findValidityMessageType(messageType, knownMessageTypes);
+        if (knownType != nullptr)
+          appendValidityValues(withClause, StringList{messageType}, *knownType, n);
+      }
     }
 
     withClause << ")) AS message_validity (type,validityhours))";
@@ -989,6 +1010,50 @@ void scopeMessageTypes(const StringList& messageTypeList,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Test whether the time range type of the message type is one of the given ones
+ */
+// ----------------------------------------------------------------------
+
+bool hasTimeRangeType(const MessageType& knownType, const list<TimeRangeType>& timeRangeTypes)
+{
+  return (find(timeRangeTypes.begin(), timeRangeTypes.end(), knownType.getTimeRangeType()) !=
+          timeRangeTypes.end());
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Test whether the message type is known and has one of the time range types
+ */
+// ----------------------------------------------------------------------
+
+bool isKnownTimeRangeMessageType(const string& messageType,
+                                 const MessageTypes& knownMessageTypes,
+                                 const list<TimeRangeType>& timeRangeTypes,
+                                 bool getAll)
+{
+  for (auto const& knownType : knownMessageTypes)
+    if ((knownType == messageType) && (getAll || hasTimeRangeType(knownType, timeRangeTypes)))
+      return true;
+  return false;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Append message types to the IN clause
+ */
+// ----------------------------------------------------------------------
+
+void appendInValues(ostringstream& whereClause,
+                    const StringList& types,
+                    const string& messageTypeIn,
+                    size_t& n)
+{
+  for (auto it = types.begin(); (it != types.end()); it++, n++)
+    whereClause << ((n == 0) ? messageTypeIn : "','") << *it;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Build message type IN clause with given message and time range type(s)
  */
 // ----------------------------------------------------------------------
@@ -1011,32 +1076,16 @@ string buildMessageTypeInClause(const StringList& messageTypeList,
       // Get all message types or all types matching timeRangeType(s)
       //
       for (auto const& knownType : knownMessageTypes)
-        if (getAll ||
-            (find(timeRangeTypes.begin(), timeRangeTypes.end(), knownType.getTimeRangeType()) !=
-             timeRangeTypes.end()))
-        {
-          auto const& knownTypes = knownType.getMessageTypes();
-
-          for (auto it = knownTypes.begin(); (it != knownTypes.end()); it++, n++)
-            whereClause << ((n == 0) ? messageTypeIn : "','") << *it;
-        }
+        if (getAll || hasTimeRangeType(knownType, timeRangeTypes))
+          appendInValues(whereClause, knownType.getMessageTypes(), messageTypeIn, n);
     }
     else
     {
       // Get all given message types or given types matching timeRangeType(s)
       //
       for (auto const& messageType : messageTypeList)
-        for (auto const& knownType : knownMessageTypes)
-          if ((knownType == messageType) &&
-              (getAll ||
-               (find(timeRangeTypes.begin(), timeRangeTypes.end(), knownType.getTimeRangeType()) !=
-                timeRangeTypes.end())))
-          {
-            whereClause << ((n == 0) ? messageTypeIn : "','") << messageType;
-            n++;
-
-            break;
-          }
+        if (isKnownTimeRangeMessageType(messageType, knownMessageTypes, timeRangeTypes, getAll))
+          appendInValues(whereClause, StringList{messageType}, messageTypeIn, n);
     }
 
     whereClause << "')";
