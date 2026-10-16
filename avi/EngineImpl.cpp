@@ -5096,6 +5096,38 @@ StationQueryData EngineImpl::queryMessages(const StationIdList& stationIdList,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Test whether the column list contains the given column
+ */
+// ----------------------------------------------------------------------
+
+template <typename Name>
+bool hasColumn(const Columns& columns, const Name& name)
+{
+  return (find(columns.begin(), columns.end(), name) != columns.end());
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Copy a nonnull double station value to all message rows of the station
+ */
+// ----------------------------------------------------------------------
+
+template <typename Values, typename Name>
+void copyStationValue(const Values& stationValues, Values& messageValues, const Name& column)
+{
+  auto const& stationValue = stationValues.find(column)->second.front();
+
+  if (const double* valuePtr = std::get_if<double>(&stationValue))
+  {
+    auto value = *valuePtr;
+
+    for (auto& messageValue : messageValues[column])
+      messageValue = value;
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Join station data to another by station id
  */
 // ----------------------------------------------------------------------
@@ -5107,18 +5139,10 @@ StationQueryData& EngineImpl::joinStationAndMessageData(const StationQueryData& 
   {
     // If distance or bearing is available, copy the values from station data to message data
 
-    bool hasDistance = ((find(stationData.itsColumns.begin(),
-                              stationData.itsColumns.end(),
-                              stationDistanceQueryColumn) != stationData.itsColumns.end()) &&
-                        (find(messageData.itsColumns.begin(),
-                              messageData.itsColumns.end(),
-                              stationDistanceQueryColumn) != messageData.itsColumns.end()));
-    bool hasBearing = ((find(stationData.itsColumns.begin(),
-                             stationData.itsColumns.end(),
-                             stationBearingQueryColumn) != stationData.itsColumns.end()) &&
-                       (find(messageData.itsColumns.begin(),
-                             messageData.itsColumns.end(),
-                             stationBearingQueryColumn) != messageData.itsColumns.end()));
+    bool hasDistance = (hasColumn(stationData.itsColumns, stationDistanceQueryColumn) &&
+                        hasColumn(messageData.itsColumns, stationDistanceQueryColumn));
+    bool hasBearing = (hasColumn(stationData.itsColumns, stationBearingQueryColumn) &&
+                       hasColumn(messageData.itsColumns, stationBearingQueryColumn));
 
     if (hasDistance || hasBearing)
     {
@@ -5130,39 +5154,17 @@ StationQueryData& EngineImpl::joinStationAndMessageData(const StationQueryData& 
         //
         if (messageData.itsValues.find(station.first) != messageData.itsValues.end())
         {
+          // Copy nonnull distance value to all message rows for the station
+          //
           if (hasDistance)
-          {
-            // Copy nonnull distance value to all message rows for the station
-            //
-            auto const& distanceValue =
-                station.second.find(stationDistanceQueryColumn)->second.front();
+            copyStationValue(
+                station.second, messageData.itsValues[station.first], stationDistanceQueryColumn);
 
-            const double* distancePtr = std::get_if<double>(&distanceValue);
-            if (distancePtr)
-            {
-              auto stationDistance = *distancePtr;
-
-              for (auto& distance :
-                   messageData.itsValues[station.first][stationDistanceQueryColumn])
-                distance = stationDistance;
-            }
-          }
-
+          // Copy bearing value to all message rows for the station
+          //
           if (hasBearing)
-          {
-            // Copy bearing value to all message rows for the station
-            //
-            auto const& bearingValue =
-                station.second.find(stationBearingQueryColumn)->second.front();
-
-            if (const double* bearingPtr = std::get_if<double>(&bearingValue))
-            {
-              auto stationBearing = *bearingPtr;
-
-              for (auto& bearing : messageData.itsValues[station.first][stationBearingQueryColumn])
-                bearing = stationBearing;
-            }
-          }
+            copyStationValue(
+                station.second, messageData.itsValues[station.first], stationBearingQueryColumn);
         }
     }
 
