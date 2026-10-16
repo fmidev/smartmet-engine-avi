@@ -72,6 +72,7 @@ class EngineImpl : public Engine
                                       int columnNumber = -1);
 
   static std::string buildStationQueryCoordinateExpressions(const Columns& columns);
+  static void appendStationQuerySelectColumn(const Column& queryColumn, std::string& selectClause);
   static Columns buildStationQuerySelectClause(const StringList& paramList,
                                                bool selectStationListOnly,
                                                bool autoSelectDistance,

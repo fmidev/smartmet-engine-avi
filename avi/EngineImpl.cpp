@@ -2814,6 +2814,46 @@ string EngineImpl::buildStationQueryCoordinateExpressions(const Columns& columns
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Append a station query column to the select clause
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::appendStationQuerySelectColumn(const Column& queryColumn, string& selectClause)
+{
+  if (queryColumn.itsExpression)
+  {
+    // ST_X(geom) AS longitudes
+    // ST_Y(geom) AS latitude
+    // ST_X(geom) || ',' || ST_Y(geom) AS lonlat
+    // ST_Y(geom) || ',' || ST_X(geom) AS latlon
+    //
+    selectClause +=
+        (string(selectClause.empty() ? "SELECT " : ",") +
+         queryColumn.itsExpression(queryColumn.itsTableColumnName, queryColumn.itsName));
+  }
+  else if (queryColumn.itsCoordinateExpression)
+  {
+    // Parametrized expression for each given coordinate
+    //
+    // Note: Column expression is generated and added to the select clause only when querying
+    // with coordinates (queryStationsWithCoordinates())
+  }
+  else
+  {
+    selectClause +=
+        (string(selectClause.empty() ? "SELECT " : ",") + queryColumn.itsTableColumnName);
+
+    if (queryColumn.itsType == ColumnType::DateTime)
+      selectClause += string(" AT TIME ZONE 'UTC'");
+
+    if ((queryColumn.itsType == ColumnType::DateTime) ||
+        (queryColumn.itsName != queryColumn.itsTableColumnName))
+      selectClause += (string(" AS ") + queryColumn.itsName);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Build select clause for querying stations
  */
 // ----------------------------------------------------------------------
@@ -2883,36 +2923,7 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
 
       if (queryColumn && ((!selectStationListOnly) || queryColumn->itsCoordinateExpression))
       {
-        if (queryColumn->itsExpression)
-        {
-          // ST_X(geom) AS longitudes
-          // ST_Y(geom) AS latitude
-          // ST_X(geom) || ',' || ST_Y(geom) AS lonlat
-          // ST_Y(geom) || ',' || ST_X(geom) AS latlon
-          //
-          selectClause +=
-              (string(selectClause.empty() ? "SELECT " : ",") +
-               queryColumn->itsExpression(queryColumn->itsTableColumnName, queryColumn->itsName));
-        }
-        else if (queryColumn->itsCoordinateExpression)
-        {
-          // Parametrized expression for each given coordinate
-          //
-          // Note: Column expression is generated and added to the select clause only when querying
-          // with coordinates (queryStationsWithCoordinates())
-        }
-        else
-        {
-          selectClause +=
-              (string(selectClause.empty() ? "SELECT " : ",") + queryColumn->itsTableColumnName);
-
-          if (queryColumn->itsType == ColumnType::DateTime)
-            selectClause += string(" AT TIME ZONE 'UTC'");
-
-          if ((queryColumn->itsType == ColumnType::DateTime) ||
-              (queryColumn->itsName != queryColumn->itsTableColumnName))
-            selectClause += (string(" AS ") + queryColumn->itsName);
-        }
+        appendStationQuerySelectColumn(*queryColumn, selectClause);
 
         columns.push_back(*queryColumn);
         columns.back().itsNumber = columnNumber;
