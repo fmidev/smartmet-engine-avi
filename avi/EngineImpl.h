@@ -47,6 +47,9 @@ class EngineImpl : public Engine
                      const StringList& icaoList,
                      bool debug) const;
   static void validateIcaoFilters(const LocationOptions& locationOptions);
+  void validateStationQuery(const Fmi::Database::PostgreSQLConnection& connection,
+                            QueryOptions& queryOptions) const;
+  static void eraseAutomaticColumns(Columns& columns);
   void validatePlaces(const Fmi::Database::PostgreSQLConnection& connection,
                       StringList& placeNameList,
                       bool debug) const;

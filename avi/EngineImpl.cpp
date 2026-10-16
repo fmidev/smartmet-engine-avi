@@ -4407,6 +4407,57 @@ void EngineImpl::validateWKTs(const Fmi::Database::PostgreSQLConnection& connect
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Validate requested parameters, station id's, icao codes, country codes and wkts
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::validateStationQuery(const Fmi::Database::PostgreSQLConnection& connection,
+                                      QueryOptions& queryOptions) const
+{
+  auto const& paramList = queryOptions.itsParameters;
+  auto& locationOptions = queryOptions.itsLocationOptions;
+
+  validateParameters(paramList, Validity::Accepted, queryOptions.itsMessageColumnSelected);
+
+  if (!locationOptions.itsStationIds.empty())
+    validateStationIds(connection, locationOptions.itsStationIds, queryOptions.itsDebug);
+
+  if (!locationOptions.itsIcaos.empty())
+    validateIcaos(connection, locationOptions.itsIcaos, queryOptions.itsDebug);
+
+  if ((!locationOptions.itsIncludeIcaoFilters.empty()) ||
+      (!locationOptions.itsExcludeIcaoFilters.empty()))
+    validateIcaoFilters(locationOptions);
+
+  if (!locationOptions.itsPlaces.empty())
+    validatePlaces(connection, locationOptions.itsPlaces, queryOptions.itsDebug);
+
+  if (!locationOptions.itsCountries.empty())
+    validateCountries(connection, locationOptions.itsCountries, queryOptions.itsDebug);
+
+  if ((!locationOptions.itsWKTs.itsWKTs.empty()) && (!locationOptions.itsWKTs.isRoute))
+    validateWKTs(connection, locationOptions, queryOptions.itsDebug);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Erase automatically selected columns
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::eraseAutomaticColumns(Columns& columns)
+{
+  for (auto it = columns.begin(); (it != columns.end());)
+  {
+    if (it->itsSelection == ColumnSelection::Automatic)
+      it = columns.erase(it);
+    else
+      it++;
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Query stations
  */
 // ----------------------------------------------------------------------
@@ -4425,28 +4476,7 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
     auto& locationOptions = queryOptions.itsLocationOptions;
 
     if (validateQuery)
-    {
-      validateParameters(paramList, Validity::Accepted, queryOptions.itsMessageColumnSelected);
-
-      if (!locationOptions.itsStationIds.empty())
-        validateStationIds(connection, locationOptions.itsStationIds, queryOptions.itsDebug);
-
-      if (!locationOptions.itsIcaos.empty())
-        validateIcaos(connection, locationOptions.itsIcaos, queryOptions.itsDebug);
-
-      if ((!locationOptions.itsIncludeIcaoFilters.empty()) ||
-          (!locationOptions.itsExcludeIcaoFilters.empty()))
-        validateIcaoFilters(locationOptions);
-
-      if (!locationOptions.itsPlaces.empty())
-        validatePlaces(connection, locationOptions.itsPlaces, queryOptions.itsDebug);
-
-      if (!locationOptions.itsCountries.empty())
-        validateCountries(connection, locationOptions.itsCountries, queryOptions.itsDebug);
-
-      if ((!locationOptions.itsWKTs.itsWKTs.empty()) && (!locationOptions.itsWKTs.isRoute))
-        validateWKTs(connection, locationOptions, queryOptions.itsDebug);
-    }
+      validateStationQuery(connection, queryOptions);
 
     // If any message column is requested, select only stationid and additionally distance/bearing
     // if requested (all other requested station columns except distance/bearing are selected by
@@ -4532,14 +4562,7 @@ StationQueryData EngineImpl::queryStations(const Fmi::Database::PostgreSQLConnec
       {
         sortColumnList(stationQueryData.itsColumns);
 
-        for (auto it = stationQueryData.itsColumns.begin();
-             (it != stationQueryData.itsColumns.end());)
-        {
-          if (it->itsSelection == ColumnSelection::Automatic)
-            it = stationQueryData.itsColumns.erase(it);
-          else
-            it++;
-        }
+        eraseAutomaticColumns(stationQueryData.itsColumns);
       }
     }
 
