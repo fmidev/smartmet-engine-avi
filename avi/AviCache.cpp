@@ -9,6 +9,12 @@
 #include <map>
 #include <vector>
 
+#if PQXX_VERSION_MAJOR < 8
+using row_ref = pqxx::result::reference;
+#else
+using row_ref = pqxx::row_ref;
+#endif
+
 namespace SmartMet
 {
 namespace Engine
@@ -161,7 +167,7 @@ void exec(duckdb_connection con, const std::string& sql)
 }
 
 // Append one PostgreSQL column value (or NULL) to the appender per its type tag.
-void appendField(duckdb_appender app, const pqxx::row& row, int field, ColType type)
+void appendField(duckdb_appender app, const row_ref& row, int field, ColType type)
 {
   if (row[field].is_null())
   {
