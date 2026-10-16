@@ -39,6 +39,7 @@ class EngineImpl : public Engine
   static void validateParameters(const StringList& paramList,
                                  Validity validity,
                                  bool& messageColumnSelected);
+  static void addKnownParameter(const std::string& param, Columns& columns);
   void validateStationIds(const Fmi::Database::PostgreSQLConnection& connection,
                           const StationIdList& stationIdList,
                           bool debug) const;

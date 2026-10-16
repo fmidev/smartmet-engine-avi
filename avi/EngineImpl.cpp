@@ -3858,6 +3858,55 @@ void EngineImpl::validateTimes(const QueryOptions& queryOptions)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Add the column of a parameter from the message, rejected message or FIR tables
+ *
+ * Throws if the parameter is unknown or a duplicate.
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::addKnownParameter(const std::string& param, Columns& columns)
+{
+  QueryTable* queryTables = messageQueryTables;
+  bool duplicate = false;
+
+  for (QueryTable* qt = queryTables;;)
+  {
+    const QueryTable& queryTable = *qt;
+
+    if (queryTable.itsName.empty())
+    {
+      if (queryTables == messageQueryTables)
+      {
+        qt = queryTables = rejectedMessageQueryTables;
+        continue;
+      }
+      if (queryTables == rejectedMessageQueryTables)
+      {
+        qt = queryTables = firQueryTables;
+        continue;
+      }
+
+      break;
+    }
+
+    const auto* queryColumn = getQueryColumn(queryTable.itsColumns, columns, param, duplicate);
+
+    if (queryColumn)
+    {
+      columns.emplace_back(*queryColumn);
+      return;
+    }
+    if (duplicate)
+      throw Fmi::Exception(BCP, "Duplicate 'param' name '" + param + "'");
+
+    qt++;
+  }
+
+  throw Fmi::Exception(BCP, "Unknown 'param' name '" + param + "'");
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Check requested parameters are known
  */
 // ----------------------------------------------------------------------
@@ -3879,52 +3928,9 @@ void EngineImpl::validateParameters(const StringList& paramList,
       throw Fmi::Exception(BCP, "The 'param'option is missing or empty!");
 
     Columns columns;
-    bool paramKnown = false;
-    bool duplicate = false;
 
     for (auto const& param : paramList)
-    {
-      QueryTable* queryTables = messageQueryTables;
-      paramKnown = false;
-
-      for (QueryTable* qt = queryTables;;)
-      {
-        const QueryTable& queryTable = *qt;
-
-        if (queryTable.itsName.empty())
-        {
-          if (queryTables == messageQueryTables)
-          {
-            qt = queryTables = rejectedMessageQueryTables;
-            continue;
-          }
-          if (queryTables == rejectedMessageQueryTables)
-          {
-            qt = queryTables = firQueryTables;
-            continue;
-          }
-
-          break;
-        }
-
-        const auto* queryColumn = getQueryColumn(queryTable.itsColumns, columns, param, duplicate);
-
-        if (queryColumn)
-        {
-          columns.emplace_back(*queryColumn);
-          paramKnown = true;
-
-          break;
-        }
-        if (duplicate)
-          throw Fmi::Exception(BCP, "Duplicate 'param' name '" + param + "'");
-
-        qt++;
-      }
-
-      if (!paramKnown)
-        throw Fmi::Exception(BCP, "Unknown 'param' name '" + param + "'");
-    }
+      addKnownParameter(param, columns);
 
     string selectClause;
     bool distinct = false;
