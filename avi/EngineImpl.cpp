@@ -1779,6 +1779,64 @@ string getStringList(const list<string>& stringList)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Append the station join and the METAR/SPECI filter for finnish stations
+ */
+// ----------------------------------------------------------------------
+
+void appendFIStationFilter(ostringstream& withClause,
+                           bool filterMETARs,
+                           bool excludeSPECIs,
+                           const list<string>& filterFIMETARxxxExcludeIcaos)
+{
+  withClause << "," << stationTableName << " " << stationTableAlias << " WHERE "
+             << stationTableJoin << " AND (st.country_code != 'FI' OR (";
+
+  if (filterMETARs)
+  {
+    withClause << "((mt.type != 'METAR' OR "
+               << trimmedMessageExpression(messageTableAlias, messageTableColumn)
+               << " LIKE 'METAR%')";
+
+    if (!filterFIMETARxxxExcludeIcaos.empty())
+      withClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos)
+                 << ")";
+
+    withClause << ")";
+  }
+
+  if (excludeSPECIs)
+    withClause << (filterMETARs ? " AND " : "") << "mt.type != 'SPECI'";
+
+  withClause << "))";
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Append the time condition for creation/valid time range types
+ */
+// ----------------------------------------------------------------------
+
+void appendCreationValidTimeCondition(ostringstream& withClause,
+                                      bool edrQuery,
+                                      bool useCurrentTime,
+                                      const string& observationTime,
+                                      const string& createdTime)
+{
+  if (edrQuery)
+  {
+    if (useCurrentTime)
+      withClause << "current_timestamp BETWEEN " << messageTableAlias << ".valid_from AND "
+                 << messageTableAlias << ".valid_to";
+    else
+      withClause << messageTableAlias << ".message_time = " << observationTime;
+  }
+  else
+    withClause << createdTime << " >= " << messageTableAlias << ".created AND " << observationTime
+               << " < " << messageTableAlias << ".valid_to";
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Build 'latest_messages' table (WITH clause) for querying latest
  *        accepted messages for given observation time
  */
@@ -1968,27 +2026,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
 
       if (filterMETARs || excludeSPECIs)
       {
-        withClause << "," << stationTableName << " " << stationTableAlias << " WHERE "
-                   << stationTableJoin << " AND (st.country_code != 'FI' OR (";
-
-        if (filterMETARs)
-        {
-          withClause << "((mt.type != 'METAR' OR "
-                     << trimmedMessageExpression(messageTableAlias, messageTableColumn)
-                     << " LIKE 'METAR%')";
-
-          if (!filterFIMETARxxxExcludeIcaos.empty())
-            withClause << " OR st.icao_code IN (" << getStringList(filterFIMETARxxxExcludeIcaos)
-                       << ")";
-
-          withClause << ")";
-        }
-
-        if (excludeSPECIs)
-          withClause << (filterMETARs ? " AND " : "") << "mt.type != 'SPECI'";
-
-        withClause << "))";
-
+        appendFIStationFilter(
+            withClause, filterMETARs, excludeSPECIs, filterFIMETARxxxExcludeIcaos);
         whereOrAnd = " AND ";
       }
 
@@ -2062,17 +2101,8 @@ string buildLatestMessagesWithClause(const StringList& messageTypes,
                  << ",avidb_message_types mt"
                  << " WHERE " << messageTypeTableJoin << " AND " << messageTypeIn << " AND ";
 
-      if (edrQuery)
-      {
-        if (useCurrentTime)
-          withClause << "current_timestamp BETWEEN " << messageTableAlias << ".valid_from AND "
-                     << messageTableAlias << ".valid_to";
-        else
-          withClause << messageTableAlias << ".message_time = " << observationTime;
-      }
-      else
-        withClause << createdTime << " >= " << messageTableAlias << ".created AND "
-                   << observationTime << " < " << messageTableAlias << ".valid_to";
+      appendCreationValidTimeCondition(
+          withClause, edrQuery, useCurrentTime, observationTime, createdTime);
     }
 
     withClause << ")";
