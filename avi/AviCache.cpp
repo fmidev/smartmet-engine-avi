@@ -447,6 +447,51 @@ void AviCache::fullLoad()
   duckdb_disconnect(&con);
 }
 
+namespace
+{
+// Replace the mirror table rows with the ids of the result rows by the result rows
+template <typename Id>
+void upsertRows(duckdb_connection con,
+                const pqxx::result& result,
+                const std::string& table,
+                const std::string& idColumn,
+                const std::vector<ColType>& colTypes,
+                const std::string& what)
+{
+  if (result.empty())
+    return;
+
+  std::string ids;
+  for (const auto& row : result)
+  {
+    if (!ids.empty())
+      ids += ',';
+    ids += Fmi::to_string(row[idColumn].as<Id>());
+  }
+  exec(con, "DELETE FROM " + table + " WHERE " + idColumn + " IN (" + ids + ")");
+
+  duckdb_appender app = nullptr;
+  if (duckdb_appender_create(con, nullptr, table.c_str(), &app) == DuckDBError)
+    throw Fmi::Exception(BCP, "AviCache: appender_create failed for incremental " + what);
+  try
+  {
+    for (const auto& row : result)
+    {
+      for (std::size_t c = 0; c < colTypes.size(); c++)
+        appendField(app, row, static_cast<int>(c), colTypes[c]);
+      check(duckdb_appender_end_row(app), "appender_end_row");
+    }
+    check(duckdb_appender_flush(app), "appender_flush");
+  }
+  catch (...)
+  {
+    duckdb_appender_destroy(&app);
+    throw;
+  }
+  duckdb_appender_destroy(&app);
+}
+}  // namespace
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Refresh the mirror: upsert recent changes, reload lookups, expire.
@@ -479,38 +524,8 @@ void AviCache::incrementalUpdate()
       auto& connection = *connectionPtr.get();
       pqxx::result result = connection.executeNonTransaction(pgQuery);
 
-      if (!result.empty())
-      {
-        // Delete the affected ids first (idempotent upsert), then append.
-        std::string ids;
-        for (const auto& row : result)
-        {
-          if (!ids.empty())
-            ids += ',';
-          ids += Fmi::to_string(row["message_id"].as<long>());
-        }
-        exec(con, "DELETE FROM avidb_messages WHERE message_id IN (" + ids + ")");
-
-        duckdb_appender app = nullptr;
-        if (duckdb_appender_create(con, nullptr, "avidb_messages", &app) == DuckDBError)
-          throw Fmi::Exception(BCP, "AviCache: appender_create failed for incremental messages");
-        try
-        {
-          for (const auto& row : result)
-          {
-            for (std::size_t c = 0; c < kMessageTypes.size(); c++)
-              appendField(app, row, static_cast<int>(c), kMessageTypes[c]);
-            check(duckdb_appender_end_row(app), "appender_end_row");
-          }
-          check(duckdb_appender_flush(app), "appender_flush");
-        }
-        catch (...)
-        {
-          duckdb_appender_destroy(&app);
-          throw;
-        }
-        duckdb_appender_destroy(&app);
-      }
+      // Delete the affected ids first (idempotent upsert), then append.
+      upsertRows<long>(con, result, "avidb_messages", "message_id", kMessageTypes, "messages");
     }
 
     // 2) Reload the small lookup tables wholesale (cheap), and stations.
@@ -527,37 +542,7 @@ void AviCache::incrementalUpdate()
       auto connectionPtr = itsPool.get();
       auto& connection = *connectionPtr.get();
       pqxx::result result = connection.executeNonTransaction(pgQuery);
-      if (!result.empty())
-      {
-        std::string ids;
-        for (const auto& row : result)
-        {
-          if (!ids.empty())
-            ids += ',';
-          ids += Fmi::to_string(row["station_id"].as<int>());
-        }
-        exec(con, "DELETE FROM avidb_stations WHERE station_id IN (" + ids + ")");
-
-        duckdb_appender app = nullptr;
-        if (duckdb_appender_create(con, nullptr, "avidb_stations", &app) == DuckDBError)
-          throw Fmi::Exception(BCP, "AviCache: appender_create failed for incremental stations");
-        try
-        {
-          for (const auto& row : result)
-          {
-            for (std::size_t c = 0; c < kStationTypes.size(); c++)
-              appendField(app, row, static_cast<int>(c), kStationTypes[c]);
-            check(duckdb_appender_end_row(app), "appender_end_row");
-          }
-          check(duckdb_appender_flush(app), "appender_flush");
-        }
-        catch (...)
-        {
-          duckdb_appender_destroy(&app);
-          throw;
-        }
-        duckdb_appender_destroy(&app);
-      }
+      upsertRows<int>(con, result, "avidb_stations", "station_id", kStationTypes, "stations");
     }
 
     // 3) Expire messages older than the configured window.
