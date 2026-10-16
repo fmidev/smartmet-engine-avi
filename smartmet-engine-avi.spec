@@ -3,8 +3,8 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 26.10.15
-Release: 2%{?dist}.fmi
+Version: 26.10.16
+Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-avi
@@ -27,18 +27,18 @@ BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
 BuildRequires: duckdb-devel
-BuildRequires: smartmet-library-spine-devel >= 26.10.15
-BuildRequires: smartmet-library-macgyver-devel >= 26.10.15
-BuildRequires: smartmet-library-timeseries-devel >= 26.10.15
-Requires: smartmet-library-macgyver >= 26.10.15
-Requires: smartmet-library-spine >= 26.10.15
-Requires: smartmet-library-timeseries >= 26.10.15
+BuildRequires: smartmet-library-spine-devel >= 26.10.16
+BuildRequires: smartmet-library-macgyver-devel >= 26.10.16
+BuildRequires: smartmet-library-timeseries-devel >= 26.10.16
+Requires: smartmet-library-macgyver >= 26.10.16
+Requires: smartmet-library-spine >= 26.10.16
+Requires: smartmet-library-timeseries >= 26.10.16
 Requires: duckdb
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
 #TestRequires: smartmet-utils-devel
-#TestRequires: smartmet-library-spine-devel >= 26.10.15
-#TestRequires: smartmet-library-timeseries-devel >= 26.10.15
+#TestRequires: smartmet-library-spine-devel >= 26.10.16
+#TestRequires: smartmet-library-timeseries-devel >= 26.10.16
 #TestRequires: zlib-devel
 #TestRequires: bzip2-devel
 
@@ -102,6 +102,9 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Oct 16 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.16-1.fmi
+- Fixed compiler warnings and clang-tidy findings (unused code, unreachable code, empty statements, member initialization, parameter passing, noexcept), no functional changes
+
 * Thu Oct 15 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.15-2.fmi
 - Added an optional in-memory message cache (embedded DuckDB copy of the recent messages)
   that answers latest-valid-message queries at the current time without PostgreSQL
