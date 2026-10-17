@@ -1214,6 +1214,100 @@ string buildRecordSetWithClause(bool bboxQuery,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Add WHEN UPPER(mt.type) IN (type1,type2,..) THEN type1 for a message type group
+ */
+// ----------------------------------------------------------------------
+
+void addMessageTypeGroupWhen(ostringstream& groupBy,
+                             const string& whenMessageTypeIn,
+                             const std::list<std::string>& knownTypes,
+                             size_t& n)
+{
+  size_t nn = 0;
+
+  for (auto it = knownTypes.begin(); (it != knownTypes.end()); it++, n++, nn++)
+    groupBy << ((nn == 0) ? whenMessageTypeIn : "','") << *it;
+
+  groupBy << "') THEN '" << knownTypes.front() << "'";
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Check if all the given types are in the message type list
+ */
+// ----------------------------------------------------------------------
+
+bool allTypesGiven(const std::list<std::string>& knownTypes, const StringList& messageTypeList)
+{
+  for (const auto& type : knownTypes)
+    if (find(messageTypeList.begin(), messageTypeList.end(), type) == messageTypeList.end())
+      return false;
+  return true;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Add WHEN .. THEN for the group of a given message type, if all
+ *        the group's types are given
+ */
+// ----------------------------------------------------------------------
+
+void addGivenMessageTypeGroupWhen(ostringstream& groupBy,
+                                  const string& whenMessageTypeIn,
+                                  const string& messageType,
+                                  const StringList& messageTypeList,
+                                  const MessageTypes& knownMessageTypes,
+                                  TimeRangeType timeRangeType,
+                                  StringList& handledMessageTypes,
+                                  size_t& n)
+{
+  for (auto const& knownType : knownMessageTypes)
+  {
+    if (knownType.getTimeRangeType() != timeRangeType)
+      continue;
+
+    // If all group's types are given, return the latest message for the group
+    //
+    auto const& knownTypes = knownType.getMessageTypes();
+
+    if ((knownTypes.size() > 1) && (knownType == messageType) &&
+        allTypesGiven(knownTypes, messageTypeList))
+    {
+      addMessageTypeGroupWhen(groupBy, whenMessageTypeIn, knownTypes, n);
+
+      handledMessageTypes.insert(handledMessageTypes.end(), knownTypes.begin(), knownTypes.end());
+
+      break;
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Add WHEN UPPER(mt.type) = 'type' THEN CASE WHEN messir_heading LIKE .. END
+ */
+// ----------------------------------------------------------------------
+
+void addMessirHeadingWhen(ostringstream& groupBy,
+                          const string& whenMessageTypeIs,
+                          const string& whenMessirHeadingLike,
+                          const string& messageType,
+                          const std::list<std::string>& messirPatterns,
+                          size_t& n)
+{
+  size_t nn = 1;
+
+  groupBy << whenMessageTypeIs << messageType << "' THEN CASE";
+
+  for (auto it = messirPatterns.begin(); (it != messirPatterns.end()); it++, nn++)
+    groupBy << whenMessirHeadingLike << *it << "' THEN " << nn;
+
+  groupBy << " ELSE 0 END";
+  n++;
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Build GROUP BY expression for message type with given message types
  *        (e.g. METREP,SPECIAL) and time range type for querying latest accepted messages
  */
@@ -1238,20 +1332,8 @@ string buildMessageTypeGroupByExpr(const StringList& messageTypeList,
       // Get all message types matching timeRangeType
       //
       for (auto const& knownType : knownMessageTypes)
-        if (knownType.getTimeRangeType() == timeRangeType)
-        {
-          auto const& knownTypes = knownType.getMessageTypes();
-
-          if (knownTypes.size() > 1)
-          {
-            size_t nn = 0;
-
-            for (auto it = knownTypes.begin(); (it != knownTypes.end()); it++, n++, nn++)
-              groupBy << ((nn == 0) ? whenMessageTypeIn : "','") << *it;
-
-            groupBy << "') THEN '" << knownTypes.front() << "'";
-          }
-        }
+        if (knownType.getTimeRangeType() == timeRangeType && knownType.getMessageTypes().size() > 1)
+          addMessageTypeGroupWhen(groupBy, whenMessageTypeIn, knownType.getMessageTypes(), n);
     }
     else
     {
@@ -1262,38 +1344,14 @@ string buildMessageTypeGroupByExpr(const StringList& messageTypeList,
       for (auto const& messageType : messageTypeList)
         if (find(handledMessageTypes.begin(), handledMessageTypes.end(), messageType) ==
             handledMessageTypes.end())
-          for (auto const& knownType : knownMessageTypes)
-            if (knownType.getTimeRangeType() == timeRangeType)
-            {
-              // If all group's types are given, return the latest message for the group
-              //
-              auto const& knownTypes = knownType.getMessageTypes();
-
-              if ((knownTypes.size() > 1) && (knownType == messageType))
-              {
-                auto it = knownTypes.begin();
-
-                for (; (it != knownTypes.end()); it++)
-                  if (find(messageTypeList.begin(), messageTypeList.end(), *it) ==
-                      messageTypeList.end())
-                    break;
-
-                if (it == knownTypes.end())
-                {
-                  size_t nn = 0;
-
-                  for (auto it = knownTypes.begin(); (it != knownTypes.end()); it++, n++, nn++)
-                    groupBy << ((nn == 0) ? whenMessageTypeIn : "','") << *it;
-
-                  groupBy << "') THEN '" << knownTypes.front() << "'";
-
-                  handledMessageTypes.insert(
-                      handledMessageTypes.end(), knownTypes.begin(), knownTypes.end());
-
-                  break;
-                }
-              }
-            }
+          addGivenMessageTypeGroupWhen(groupBy,
+                                       whenMessageTypeIn,
+                                       messageType,
+                                       messageTypeList,
+                                       knownMessageTypes,
+                                       timeRangeType,
+                                       handledMessageTypes,
+                                       n);
     }
 
     if (n > 0)
@@ -1352,20 +1410,15 @@ string buildMessirHeadingGroupByExpr(const StringList& messageTypeList,
           auto const& knownTypes = knownType.getMessageTypes();
           auto const& messirPatterns = knownType.getMessirPatterns();
 
+          // We don't expect/support 'grouped' messagetypes (e.g. METREP,SPECIAL) currently
+          //
           if (!messirPatterns.empty())
-          {
-            // We don't expect/support 'grouped' messagetypes (e.g. METREP,SPECIAL) currently
-            //
-            size_t nn = 1;
-
-            groupBy << whenMessageTypeIs << knownTypes.front() << "' THEN CASE";
-
-            for (auto it = messirPatterns.begin(); (it != messirPatterns.end()); it++, nn++)
-              groupBy << whenMessirHeadingLike << *it << "' THEN " << nn;
-
-            groupBy << " ELSE 0 END";
-            n++;
-          }
+            addMessirHeadingWhen(groupBy,
+                                 whenMessageTypeIs,
+                                 whenMessirHeadingLike,
+                                 knownTypes.front(),
+                                 messirPatterns,
+                                 n);
         }
     }
     else
@@ -1374,26 +1427,15 @@ string buildMessirHeadingGroupByExpr(const StringList& messageTypeList,
       //
       for (auto const& messageType : messageTypeList)
         for (auto const& knownType : knownMessageTypes)
-          if (knownType.getTimeRangeType() == timeRangeType)
-          {
-            if (knownType.getMessageTypes().front() == messageType)
-            {
-              auto const& messirPatterns = knownType.getMessirPatterns();
-
-              if (!messirPatterns.empty())
-              {
-                size_t nn = 1;
-
-                groupBy << whenMessageTypeIs << messageType << "' THEN CASE";
-
-                for (auto it = messirPatterns.begin(); (it != messirPatterns.end()); it++, nn++)
-                  groupBy << whenMessirHeadingLike << *it << "' THEN " << nn;
-
-                groupBy << " ELSE 0 END";
-                n++;
-              }
-            }
-          }
+          if (knownType.getTimeRangeType() == timeRangeType &&
+              knownType.getMessageTypes().front() == messageType &&
+              !knownType.getMessirPatterns().empty())
+            addMessirHeadingWhen(groupBy,
+                                 whenMessageTypeIs,
+                                 whenMessirHeadingLike,
+                                 messageType,
+                                 knownType.getMessirPatterns(),
+                                 n);
     }
 
     if (n > 0)
