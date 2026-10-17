@@ -515,6 +515,149 @@ void buildStationQueryWhereClause(const Fmi::Database::PostgreSQLConnection& con
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Determine the common message scope of the message types for a route query
+ */
+// ----------------------------------------------------------------------
+
+MessageScope routeMessageScope(const StringList& messageTypes,
+                               const MessageTypes& knownMessageTypes)
+{
+  MessageScope scope = MessageScope::NoScope;
+
+  for (auto const& messageType : messageTypes)
+  {
+    MessageScope knownScope = MessageScope::NoScope;
+
+    for (auto const& knownType : knownMessageTypes)
+    {
+      if (!messageType.empty() && !(knownType == messageType))
+        continue;
+
+      knownScope = knownType.getScope();
+
+      if (scope == MessageScope::NoScope)
+        scope = knownScope;
+      else if (knownScope != scope)
+        throw Fmi::Exception::Trace(
+            BCP, "All requested message types must have same scope for route query");
+
+      if (!messageType.empty())
+        break;
+    }
+
+    if (knownScope == MessageScope::NoScope)
+      throw Fmi::Exception::Trace(
+          BCP, "buildStationQueryFromWhereOrderByClause: internal: message scope unknown");
+  }
+
+  return scope;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Build the station selection condition for a wkt
+ */
+// ----------------------------------------------------------------------
+
+string stationWKTCondition(const Fmi::Database::PostgreSQLConnection& connection,
+                           const LocationOptions& locationOptions,
+                           const string& wkt,
+                           const string& geom,
+                           MessageScope scope)
+{
+  ostringstream condition;
+
+  if (locationOptions.itsWKTs.isRoute)
+  {
+    // For a route (a single linestring), limit the stations by their shortest distance to route
+    // segments
+    //
+    condition << "ST_DWithin(" << geom << "::geography,ST_ClosestPoint(segment," << geom
+              << ")::geography," << fixed << setprecision(0) << locationOptions.itsMaxDistance
+              << ")";
+
+    if (scope == MessageScope::FIRScope)
+      condition << " AND ST_Within(" << stationTableAlias << ".geom," << firTableAlias
+                << ".areageom)";
+  }
+  else
+    // Limit by distance between geometries
+    //
+    condition << "ST_Length(ST_ShortestLine(geom,ST_GeogFromText("
+              << connection.quote("SRID=4326;" + wkt) << ")::geometry)::geography) <= " << fixed
+              << setprecision(0) << locationOptions.itsMaxDistance;
+
+  return condition.str();
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Add " AND column [NOT] ILIKE ALL (ARRAY[filters])" condition. Icao code
+ *        filters shorter than 4 characters are used as prefixes.
+ */
+// ----------------------------------------------------------------------
+
+void addIlikeAllCondition(const Fmi::Database::PostgreSQLConnection& connection,
+                          const char* column,
+                          const char* op,
+                          const std::list<std::string>& filters,
+                          bool isIcaoFilter,
+                          ostringstream& fromWhereOrderByClause)
+{
+  size_t n = 0;
+
+  fromWhereOrderByClause << " AND " << stationTableAlias << "." << column << op << " ALL (ARRAY[";
+
+  for (auto const& str : filters)
+  {
+    if (isIcaoFilter)
+      fromWhereOrderByClause << (n ? "," : "")
+                             << connection.quote(str + ((str.size() < 4) ? "%" : ""));
+    else
+      fromWhereOrderByClause << (n ? "," : "") << connection.quote(str);
+    n++;
+  }
+
+  fromWhereOrderByClause << "])";
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Add the country and icao code filters for the stations
+ */
+// ----------------------------------------------------------------------
+
+void addStationFilters(const Fmi::Database::PostgreSQLConnection& connection,
+                       const LocationOptions& locationOptions,
+                       ostringstream& fromWhereOrderByClause)
+{
+  if (!locationOptions.itsIncludeCountryFilters.empty())
+    addIlikeAllCondition(connection,
+                         stationCountryCodeTableColumn,
+                         " ILIKE",
+                         locationOptions.itsIncludeCountryFilters,
+                         false,
+                         fromWhereOrderByClause);
+
+  if (!locationOptions.itsIncludeIcaoFilters.empty())
+    addIlikeAllCondition(connection,
+                         stationIcaoTableColumn,
+                         " ILIKE",
+                         locationOptions.itsIncludeIcaoFilters,
+                         true,
+                         fromWhereOrderByClause);
+
+  if (!locationOptions.itsExcludeIcaoFilters.empty())
+    addIlikeAllCondition(connection,
+                         stationIcaoTableColumn,
+                         " NOT ILIKE",
+                         locationOptions.itsExcludeIcaoFilters,
+                         true,
+                         fromWhereOrderByClause);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Build from and where (and order by for route query) clause with given wkts for querying
  *        stations
  */
@@ -541,34 +684,7 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
         (locationOptions.itsWKTs.isRoute ? MessageScope::NoScope : MessageScope::StationScope);
 
     if (scope == MessageScope::NoScope)
-    {
-      for (auto const& messageType : messageTypes)
-      {
-        MessageScope knownScope = MessageScope::NoScope;
-
-        for (auto const& knownType : knownMessageTypes)
-          if (messageType.empty() || (knownType == messageType))
-          {
-            knownScope = knownType.getScope();
-
-            if (scope != MessageScope::NoScope)
-            {
-              if (knownScope != scope)
-                throw Fmi::Exception::Trace(
-                    BCP, "All requested message types must have same scope for route query");
-            }
-            else
-              scope = knownScope;
-
-            if (!messageType.empty())
-              break;
-          }
-
-        if (knownScope == MessageScope::NoScope)
-          throw Fmi::Exception::Trace(
-              BCP, "buildStationQueryFromWhereOrderByClause: internal: message scope unknown");
-      }
-    }
+      scope = routeMessageScope(messageTypes, knownMessageTypes);
 
     string geom;
 
@@ -615,30 +731,8 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
 
     for (auto const& wkt : locationOptions.itsWKTs.itsWKTs)
     {
-      ostringstream condition;
-
-      if (locationOptions.itsWKTs.isRoute)
-      {
-        // For a route (a single linestring), limit the stations by their shortest distance to route
-        // segments
-        //
-        condition << "ST_DWithin(" << geom << "::geography,ST_ClosestPoint(segment," << geom
-                  << ")::geography," << fixed << setprecision(0) << locationOptions.itsMaxDistance
-                  << ")";
-
-        if (scope == MessageScope::FIRScope)
-          condition << " AND ST_Within(" << stationTableAlias << ".geom," << firTableAlias
-                    << ".areageom)";
-      }
-      else
-        // Limit by distance between geometries
-        //
-        condition << "ST_Length(ST_ShortestLine(geom,ST_GeogFromText("
-                  << connection.quote("SRID=4326;" + wkt)
-                  << ")::geometry)::geography) <= " << fixed << setprecision(0)
-                  << locationOptions.itsMaxDistance;
-
-      fromWhereOrderByClause << ((n == 0) ? "(" : ") OR (") << condition.str();
+      fromWhereOrderByClause << ((n == 0) ? "(" : ") OR (")
+                             << stationWKTCondition(connection, locationOptions, wkt, geom, scope);
 
       n++;
     }
@@ -657,55 +751,7 @@ void buildStationQueryFromWhereOrderByClause(const Fmi::Database::PostgreSQLConn
       //
       // For edr SIGMET collection icao code filter (e.g. "EFIN") must be applied
       //
-      if (!locationOptions.itsIncludeCountryFilters.empty())
-      {
-        n = 0;
-
-        fromWhereOrderByClause << " AND " << stationTableAlias << "."
-                               << stationCountryCodeTableColumn << " ILIKE ALL (ARRAY[";
-
-        for (auto const& str : locationOptions.itsIncludeCountryFilters)
-        {
-          fromWhereOrderByClause << (n ? "," : "") << connection.quote(str);
-          n++;
-        }
-
-        fromWhereOrderByClause << "])";
-      }
-
-      if (!locationOptions.itsIncludeIcaoFilters.empty())
-      {
-        n = 0;
-
-        fromWhereOrderByClause << " AND " << stationTableAlias << "." << stationIcaoTableColumn
-                               << " ILIKE ALL (ARRAY[";
-
-        for (auto const& str : locationOptions.itsIncludeIcaoFilters)
-        {
-          fromWhereOrderByClause << (n ? "," : "")
-                                 << connection.quote(str + ((str.size() < 4) ? "%" : ""));
-          n++;
-        }
-
-        fromWhereOrderByClause << "])";
-      }
-
-      if (!locationOptions.itsExcludeIcaoFilters.empty())
-      {
-        n = 0;
-
-        fromWhereOrderByClause << " AND " << stationTableAlias << "." << stationIcaoTableColumn
-                               << " NOT ILIKE ALL (ARRAY[";
-
-        for (auto const& str : locationOptions.itsExcludeIcaoFilters)
-        {
-          fromWhereOrderByClause << (n ? "," : "")
-                                 << connection.quote(str + ((str.size() < 4) ? "%" : ""));
-          n++;
-        }
-
-        fromWhereOrderByClause << "])";
-      }
+      addStationFilters(connection, locationOptions, fromWhereOrderByClause);
     }
 
     fromWhereOrderByClause << ")";
