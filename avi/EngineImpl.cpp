@@ -1367,6 +1367,29 @@ string buildMessageTypeGroupByExpr(const StringList& messageTypeList,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Add the icao pattern and country code query restriction conditions
+ */
+// ----------------------------------------------------------------------
+
+void addQueryRestrictionStationConditions(ostringstream& whereExpr, const MessageType& knownType)
+{
+  auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
+
+  for (auto const& pattern : icaoPatterns)
+    whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ") << "(UPPER("
+              << stationTableAlias << "." << stationIcaoTableColumn << ") NOT LIKE '" << pattern
+              << "')";
+
+  auto countryCodes = knownType.getQueryRestrictionCountryCodes();
+
+  for (auto const& code : countryCodes)
+    whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty()) ? "" : " AND ")
+              << "(UPPER(" << stationTableAlias << "." << stationCountryCodeTableColumn << ") != '"
+              << code << "')";
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Build GROUP BY expression for messir_heading with given message types
  *        (e.g. GAFOR) and time range type for querying latest accepted messages
  */
@@ -1449,6 +1472,58 @@ string buildMessirHeadingGroupByExpr(const StringList& messageTypeList,
   }
 }
 
+void addValidTimeRangeLatestTimeCondition(ostringstream& whereExpr,
+                                          const MessageType& knownType,
+                                          const string& observationTime,
+                                          const string& createdTime,
+                                          bool disableQueryRestriction,
+                                          bool& bStationJoin)
+{
+  std::string noMatch("99");
+
+  if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
+  {
+    // Messages (i.e. TAFs) are stored e.g. every n'th (3rd) hour between xx:20 and xx:40
+    // and then published; during publication hour delay latest message until xx:40
+
+    if (!(whereExpr.str().empty()))
+      throw Fmi::Exception::Trace(
+          BCP, "Query time restriction settings not supported for multiple messagetypes");
+
+    whereExpr << "(((" << observationTime << " >= " << messageTableAlias << ".message_time AND "
+              << observationTime << " < " << messageTableAlias << ".valid_to) AND ((";
+
+    addQueryRestrictionStationConditions(whereExpr, knownType);
+
+    auto const& queryRestrictionHours =
+        (disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
+
+    whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
+              << ".message_time) != DATE_TRUNC('hour'," << observationTime << ")) OR "
+              << "(EXTRACT(HOUR FROM " << observationTime << ") NOT IN (" << queryRestrictionHours
+              << ")) OR "
+              << "(EXTRACT(MINUTE FROM " << messageTableAlias << ".message_time) < "
+              << knownType.getQueryRestrictionStartMinute() << ") OR "
+              << "(EXTRACT(MINUTE FROM " << observationTime
+              << ") >= " << knownType.getQueryRestrictionEndMinute() << "))) OR ("
+              << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
+              << ".valid_to IS NULL AND " << observationTime << " >= " << messageTableAlias
+              << ".message_time AND " << observationTime << " < (" << messageTableAlias
+              << ".message_time + " << messageValidityTableAlias << ".validityhours))) AND "
+              << createdTime << " >= " << messageTableAlias << ".created";
+
+    bStationJoin = true;
+  }
+  else if (whereExpr.str().empty())
+    whereExpr << "((" << observationTime << " BETWEEN " << messageTableAlias << ".message_time AND "
+              << messageTableAlias << ".valid_to)"
+              << " OR (" << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
+              << ".valid_to IS NULL AND " << observationTime << " >= " << messageTableAlias
+              << ".message_time AND " << observationTime << " < (" << messageTableAlias
+              << ".message_time + " << messageValidityTableAlias << ".validityhours))) AND "
+              << createdTime << " >= " << messageTableAlias << ".created";
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Build WHERE time and icao and country code(s) (when configured) conditions
@@ -1473,7 +1548,6 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
     //
     bool disableQueryRestriction = (!messageCreatedTime.empty());
     auto const& createdTime = (messageCreatedTime.empty() ? observationTime : messageCreatedTime);
-    std::string noMatch("99");
 
     bStationJoin = false;
 
@@ -1486,62 +1560,12 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
       for (auto const& knownType : knownMessageTypes)
         if (knownType.getTimeRangeType() == TimeRangeType::MessageValidTimeRangeLatest)
         {
-          if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
-          {
-            // Messages (i.e. TAFs) are stored e.g. every n'th (3rd) hour between xx:20 and xx:40
-            // and then published; during publication hour delay latest message until xx:40
-
-            if (!(whereExpr.str().empty()))
-              throw Fmi::Exception::Trace(
-                  BCP, "Query time restriction settings not supported for multiple messagetypes");
-
-            whereExpr << "(((" << observationTime << " >= " << messageTableAlias
-                      << ".message_time AND " << observationTime << " < " << messageTableAlias
-                      << ".valid_to) AND ((";
-
-            auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
-
-            for (auto const& pattern : icaoPatterns)
-              whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ") << "(UPPER("
-                        << stationTableAlias << "." << stationIcaoTableColumn << ") NOT LIKE '"
-                        << pattern << "')";
-
-            auto countryCodes = knownType.getQueryRestrictionCountryCodes();
-
-            for (auto const& code : countryCodes)
-              whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty()) ? ""
-                                                                                       : " AND ")
-                        << "(UPPER(" << stationTableAlias << "." << stationCountryCodeTableColumn
-                        << ") != '" << code << "')";
-
-            auto const& queryRestrictionHours =
-                (disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
-
-            whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
-                      << ".message_time) != DATE_TRUNC('hour'," << observationTime << ")) OR "
-                      << "(EXTRACT(HOUR FROM " << observationTime << ") NOT IN ("
-                      << queryRestrictionHours << ")) OR "
-                      << "(EXTRACT(MINUTE FROM " << messageTableAlias << ".message_time) < "
-                      << knownType.getQueryRestrictionStartMinute() << ") OR "
-                      << "(EXTRACT(MINUTE FROM " << observationTime
-                      << ") >= " << knownType.getQueryRestrictionEndMinute() << "))) OR ("
-                      << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
-                      << ".valid_to IS NULL AND " << observationTime << " >= " << messageTableAlias
-                      << ".message_time AND " << observationTime << " < (" << messageTableAlias
-                      << ".message_time + " << messageValidityTableAlias << ".validityhours))) AND "
-                      << createdTime << " >= " << messageTableAlias << ".created";
-
-            bStationJoin = true;
-          }
-          else if (whereExpr.str().empty())
-            whereExpr << "((" << observationTime << " BETWEEN " << messageTableAlias
-                      << ".message_time AND " << messageTableAlias << ".valid_to)"
-                      << " OR (" << messageTableAlias << ".valid_from IS NULL AND "
-                      << messageTableAlias << ".valid_to IS NULL AND " << observationTime
-                      << " >= " << messageTableAlias << ".message_time AND " << observationTime
-                      << " < (" << messageTableAlias << ".message_time + "
-                      << messageValidityTableAlias << ".validityhours))) AND " << createdTime
-                      << " >= " << messageTableAlias << ".created";
+          addValidTimeRangeLatestTimeCondition(whereExpr,
+                                               knownType,
+                                               observationTime,
+                                               createdTime,
+                                               disableQueryRestriction,
+                                               bStationJoin);
         }
 
       return whereExpr.str();
@@ -1555,60 +1579,12 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
         {
           if (knownType.getMessageTypes().front() == messageType)
           {
-            if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
-            {
-              if (!(whereExpr.str().empty()))
-                throw Fmi::Exception::Trace(
-                    BCP, "Query time restriction settings not supported for multiple messagetypes");
-
-              whereExpr << "(((" << observationTime << " >= " << messageTableAlias
-                        << ".message_time AND " << observationTime << " < " << messageTableAlias
-                        << ".valid_to) AND ((";
-
-              auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
-
-              for (auto const& pattern : icaoPatterns)
-                whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ") << "(UPPER("
-                          << stationTableAlias << "." << stationIcaoTableColumn << ") NOT LIKE '"
-                          << pattern << "')";
-
-              auto countryCodes = knownType.getQueryRestrictionCountryCodes();
-
-              for (auto const& code : countryCodes)
-                whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty()) ? ""
-                                                                                         : " AND ")
-                          << "(UPPER(" << stationTableAlias << "." << stationCountryCodeTableColumn
-                          << ") != '" << code << "')";
-
-              auto const& queryRestrictionHours =
-                  (disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
-
-              whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
-                        << ".message_time) != DATE_TRUNC('hour'," << observationTime << ")) OR "
-                        << "(EXTRACT(HOUR FROM " << observationTime << ") NOT IN ("
-                        << queryRestrictionHours << ")) OR "
-                        << "(EXTRACT(MINUTE FROM " << messageTableAlias << ".message_time) < "
-                        << knownType.getQueryRestrictionStartMinute() << ") OR "
-                        << "(EXTRACT(MINUTE FROM " << observationTime
-                        << ") >= " << knownType.getQueryRestrictionEndMinute() << "))) OR ("
-                        << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
-                        << ".valid_to IS NULL AND " << observationTime
-                        << " >= " << messageTableAlias << ".message_time AND " << observationTime
-                        << " < (" << messageTableAlias << ".message_time + "
-                        << messageValidityTableAlias << ".validityhours))) AND " << createdTime
-                        << " >= " << messageTableAlias << ".created";
-
-              bStationJoin = true;
-            }
-            else if (whereExpr.str().empty())
-              whereExpr << "((" << observationTime << " BETWEEN " << messageTableAlias
-                        << ".message_time AND " << messageTableAlias << ".valid_to)"
-                        << " OR (" << messageTableAlias << ".valid_from IS NULL AND "
-                        << messageTableAlias << ".valid_to IS NULL AND " << observationTime
-                        << " >= " << messageTableAlias << ".message_time AND " << observationTime
-                        << " < (" << messageTableAlias << ".message_time + "
-                        << messageValidityTableAlias << ".validityhours))) AND " << createdTime
-                        << " >= " << messageTableAlias << ".created";
+            addValidTimeRangeLatestTimeCondition(whereExpr,
+                                                 knownType,
+                                                 observationTime,
+                                                 createdTime,
+                                                 disableQueryRestriction,
+                                                 bStationJoin);
 
             break;
           }
@@ -1623,6 +1599,61 @@ string buildMessageValidTimeRangeLatestTimeCondition(const StringList& messageTy
   {
     throw Fmi::Exception::Trace(BCP, "Operation failed!");
   }
+}
+
+void addValidTimeRangeTimeCondition(ostringstream& whereExpr,
+                                    const MessageType& knownType,
+                                    const string& startTime,
+                                    const string& endTime,
+                                    bool disableQueryRestriction,
+                                    bool& bStationJoin)
+{
+  std::string noMatch("99");
+
+  if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
+  {
+    // Messages (i.e. TAFs) are stored e.g. every n'th (3rd) hour between xx:20 and xx:40
+    // and then published; ignore publication hour's messages unless xx:40 within range
+
+    if (!(whereExpr.str().empty()))
+      throw Fmi::Exception::Trace(
+          BCP, "Query time restriction settings not supported for multiple messagetypes");
+
+    whereExpr << "(((" << startTime << " < " << messageTableAlias << ".valid_to AND " << endTime
+              << " > " << messageTableAlias << ".message_time) AND ((";
+
+    addQueryRestrictionStationConditions(whereExpr, knownType);
+
+    // BRAINSTORM-3301
+    //
+    // No (effective) query time restriction for edr -queries
+    //
+    auto const& queryRestrictionHours =
+        (disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
+
+    whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
+              << ".message_time) != DATE_TRUNC('hour'," << endTime << ")) OR "
+              << "(EXTRACT(HOUR FROM " << endTime << ") NOT IN (" << queryRestrictionHours
+              << ")) OR "
+              << "(EXTRACT(MINUTE FROM " << messageTableAlias << ".message_time) < "
+              << knownType.getQueryRestrictionStartMinute() << ") OR "
+              << "(EXTRACT(MINUTE FROM " << endTime
+              << ") >= " << knownType.getQueryRestrictionEndMinute() << "))) OR ("
+              << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
+              << ".valid_to IS NULL AND "
+              << "(" << startTime << " < (" << messageTableAlias << ".message_time + "
+              << messageValidityTableAlias << ".validityhours)"
+              << " AND " << endTime << " > " << messageTableAlias << ".message_time)))";
+
+    bStationJoin = true;
+  }
+  else if (whereExpr.str().empty())
+    whereExpr << "((" << startTime << " < " << messageTableAlias << ".valid_to AND " << endTime
+              << " > " << messageTableAlias << ".message_time) OR (" << messageTableAlias
+              << ".valid_from IS NULL AND " << messageTableAlias << ".valid_to IS NULL AND ("
+              << startTime << " < (" << messageTableAlias << ".message_time + "
+              << messageValidityTableAlias << ".validityhours) AND " << endTime << " > "
+              << messageTableAlias << ".message_time)))";
 }
 
 // ----------------------------------------------------------------------
@@ -1643,7 +1674,6 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
   try
   {
     ostringstream whereExpr;
-    std::string noMatch("99");
 
     bStationJoin = false;
 
@@ -1656,63 +1686,8 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
       for (auto const& knownType : knownMessageTypes)
         if (knownType.getTimeRangeType() == TimeRangeType::MessageValidTimeRangeLatest)
         {
-          if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
-          {
-            // Messages (i.e. TAFs) are stored e.g. every n'th (3rd) hour between xx:20 and xx:40
-            // and then published; ignore publication hour's messages unless xx:40 within range
-
-            if (!(whereExpr.str().empty()))
-              throw Fmi::Exception::Trace(
-                  BCP, "Query time restriction settings not supported for multiple messagetypes");
-
-            whereExpr << "(((" << startTime << " < " << messageTableAlias << ".valid_to AND "
-                      << endTime << " > " << messageTableAlias << ".message_time) AND ((";
-
-            auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
-
-            for (auto const& pattern : icaoPatterns)
-              whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ") << "(UPPER("
-                        << stationTableAlias << "." << stationIcaoTableColumn << ") NOT LIKE '"
-                        << pattern << "')";
-
-            auto countryCodes = knownType.getQueryRestrictionCountryCodes();
-
-            for (auto const& code : countryCodes)
-              whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty()) ? ""
-                                                                                       : " AND ")
-                        << "(UPPER(" << stationTableAlias << "." << stationCountryCodeTableColumn
-                        << ") != '" << code << "')";
-
-            // BRAINSTORM-3301
-            //
-            // No (effective) query time restriction for edr -queries
-            //
-            auto const& queryRestrictionHours =
-                (disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
-
-            whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
-                      << ".message_time) != DATE_TRUNC('hour'," << endTime << ")) OR "
-                      << "(EXTRACT(HOUR FROM " << endTime << ") NOT IN (" << queryRestrictionHours
-                      << ")) OR "
-                      << "(EXTRACT(MINUTE FROM " << messageTableAlias << ".message_time) < "
-                      << knownType.getQueryRestrictionStartMinute() << ") OR "
-                      << "(EXTRACT(MINUTE FROM " << endTime
-                      << ") >= " << knownType.getQueryRestrictionEndMinute() << "))) OR ("
-                      << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
-                      << ".valid_to IS NULL AND "
-                      << "(" << startTime << " < (" << messageTableAlias << ".message_time + "
-                      << messageValidityTableAlias << ".validityhours)"
-                      << " AND " << endTime << " > " << messageTableAlias << ".message_time)))";
-
-            bStationJoin = true;
-          }
-          else if (whereExpr.str().empty())
-            whereExpr << "((" << startTime << " < " << messageTableAlias << ".valid_to AND "
-                      << endTime << " > " << messageTableAlias << ".message_time) OR ("
-                      << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
-                      << ".valid_to IS NULL AND (" << startTime << " < (" << messageTableAlias
-                      << ".message_time + " << messageValidityTableAlias << ".validityhours) AND "
-                      << endTime << " > " << messageTableAlias << ".message_time)))";
+          addValidTimeRangeTimeCondition(
+              whereExpr, knownType, startTime, endTime, disableQueryRestriction, bStationJoin);
         }
 
       return whereExpr.str();
@@ -1726,60 +1701,8 @@ string buildMessageValidTimeRangeTimeCondition(const StringList& messageTypeList
         {
           if (knownType.getMessageTypes().front() == messageType)
           {
-            if ((!knownType.getQueryRestrictionHours().empty()) || bStationJoin)
-            {
-              if (!(whereExpr.str().empty()))
-                throw Fmi::Exception::Trace(
-                    BCP, "Query time restriction settings not supported for multiple messagetypes");
-
-              whereExpr << "(((" << startTime << " < " << messageTableAlias << ".valid_to AND "
-                        << endTime << " > " << messageTableAlias << ".message_time) AND ((";
-
-              auto icaoPatterns = knownType.getQueryRestrictionIcaoPatterns();
-
-              for (auto const& pattern : icaoPatterns)
-                whereExpr << ((&pattern == &icaoPatterns.front()) ? "" : " AND ") << "(UPPER("
-                          << stationTableAlias << "." << stationIcaoTableColumn << ") NOT LIKE '"
-                          << pattern << "')";
-
-              auto countryCodes = knownType.getQueryRestrictionCountryCodes();
-
-              for (auto const& code : countryCodes)
-                whereExpr << (((&code == &countryCodes.front()) && icaoPatterns.empty()) ? ""
-                                                                                         : " AND ")
-                          << "(UPPER(" << stationTableAlias << "." << stationCountryCodeTableColumn
-                          << ") != '" << code << "')";
-
-              // BRAINSTORM-3301
-              //
-              // No (effective) query time restriction for edr -queries
-              //
-              auto const& queryRestrictionHours =
-                  (disableQueryRestriction ? noMatch : knownType.getQueryRestrictionHours());
-
-              whereExpr << ") OR (DATE_TRUNC('hour'," << messageTableAlias
-                        << ".message_time) != DATE_TRUNC('hour'," << endTime << ")) OR "
-                        << "(EXTRACT(HOUR FROM " << endTime << ") NOT IN (" << queryRestrictionHours
-                        << ")) OR "
-                        << "(EXTRACT(MINUTE FROM " << messageTableAlias << ".message_time) < "
-                        << knownType.getQueryRestrictionStartMinute() << ") OR "
-                        << "(EXTRACT(MINUTE FROM " << endTime
-                        << ") >= " << knownType.getQueryRestrictionEndMinute() << "))) OR ("
-                        << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
-                        << ".valid_to IS NULL AND "
-                        << "(" << startTime << " < (" << messageTableAlias << ".message_time + "
-                        << messageValidityTableAlias << ".validityhours)"
-                        << " AND " << endTime << " > " << messageTableAlias << ".message_time)))";
-
-              bStationJoin = true;
-            }
-            else if (whereExpr.str().empty())
-              whereExpr << "((" << startTime << " < " << messageTableAlias << ".valid_to AND "
-                        << endTime << " > " << messageTableAlias << ".message_time) OR ("
-                        << messageTableAlias << ".valid_from IS NULL AND " << messageTableAlias
-                        << ".valid_to IS NULL AND (" << startTime << " < (" << messageTableAlias
-                        << ".message_time + " << messageValidityTableAlias << ".validityhours) AND "
-                        << endTime << " > " << messageTableAlias << ".message_time)))";
+            addValidTimeRangeTimeCondition(
+                whereExpr, knownType, startTime, endTime, disableQueryRestriction, bStationJoin);
 
             break;
           }
