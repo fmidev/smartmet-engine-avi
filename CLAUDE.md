@@ -60,7 +60,7 @@ Tests require a PostgreSQL test database. In CI, a local test database is create
 
 ### Database schema assumptions
 
-The engine queries against `avidb_stations`, `avidb_messages`, `avidb_rejected_messages`, `avidb_messages_routes`, `avidb_messages_types`, and `latest_messages` tables/views in a PostGIS-enabled PostgreSQL database.
+The engine queries against `avidb_stations`, `avidb_messages`, `avidb_rejected_messages`, `avidb_message_routes`, `avidb_message_types`, and `latest_messages` tables/views in a PostGIS-enabled PostgreSQL database.
 
 ## Configuration
 

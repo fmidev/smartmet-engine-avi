@@ -93,6 +93,22 @@ message:
 		#
 		#	messirpatterns = [ "pattern1", "pattern2", ... ];
 		#
+		# Message scope (default "station"):
+		#
+		#	scope = "station";				messages are bound to stations
+		#	scope = "fir";					messages are bound to FIR areas
+		#	scope = "global";				messages are not bound to any location
+		#
+		# Delaying the latest message during publication (timerangetype = "messagevalidtime" and
+		# latestmessage = true only); e.g. TAFs are stored every 3rd hour between xx:20 and xx:40,
+		# and during those hours the output of the latest message is delayed until the end minute:
+		#
+		#	queryrestrictionhours = [ hour1, hour2, ... ];
+		#	queryrestrictionicaopatterns = [ "pattern1", ... ];	stations restricted by icao LIKE pattern(s) and/or
+		#	queryrestrictioncountrycodes = [ "code1", ... ];		by country code(s); at least one of them is required
+		#	queryrestrictionstartminute = minute;				both minutes (0-59) are required,
+		#	queryrestrictionendminute = minute;				end minute > start minute
+		#
 		{
 			names = [ "METAR","SPECI" ];
 			timerangetype = "messagetime";

@@ -69,7 +69,7 @@ Results are `StationQueryData` (column values per station id) or `QueryData`.
    message types and parameters;
 2. **builds the SQL** from `Column` / `Table` / `QueryTable` descriptions: the requested
    columns, the joins they need (`avidb_stations`, `avidb_messages`,
-   `avidb_messages_types`, `avidb_messages_routes`, `latest_messages`), and the
+   `avidb_message_types`, `avidb_message_routes`, `latest_messages`), and the
    conditions. Every user-supplied string is quoted with the connection's `quote()`;
 3. uses a **record-set CTE**: candidate rows are first selected by the indexed
    `message_time`, within `recordsetstarttimeoffsethours` before and
