@@ -5544,12 +5544,17 @@ StationQueryData* EngineImpl::queryScopeStationsAndMessages(
       if (data != &messageData)
         appendStationQueryValues(messageData, *data);
     }
+    else if (!data)
+      data = &stationData;
     else
     {
-      if (data)
-        data->itsValues.insert(stationData.itsValues.begin(), stationData.itsValues.end());
-
-      data = &stationData;
+      // Add the stations not found in the previous scopes, in the order of the query
+      for (auto stationId : stationData.itsStationIds)
+      {
+        auto it = stationData.itsValues.find(stationId);
+        if (it != stationData.itsValues.end() && data->itsValues.insert(*it).second)
+          data->itsStationIds.push_back(stationId);
+      }
     }
   }
 
