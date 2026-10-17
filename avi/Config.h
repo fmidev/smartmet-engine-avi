@@ -151,6 +151,37 @@ class Config : public SmartMet::Spine::ConfigBase
   const MessageTypes& getMessageTypes() const { return itsMessageTypes; }
 
  private:
+  void readPostgisSettings(const libconfig::Config& theConfig,
+                           const std::string& theConfigFileName);
+  void readMessageQuerySettings(const libconfig::Config& theConfig,
+                                const std::string& theConfigFileName);
+  void readCacheSettings(const libconfig::Config& theConfig, const std::string& theConfigFileName);
+  void readFIMETARFilterSettings(const libconfig::Config& theConfig,
+                                 const std::string& theConfigFileName);
+  void readFIMETARExcludeIcaos(const libconfig::Config& theConfig,
+                               const std::string& theConfigFileName);
+  std::list<std::string> readMessageTypes(const libconfig::Config& theConfig,
+                                          const std::string& theConfigFileName);
+  MessageType readMessageType(const libconfig::Config& theConfig,
+                              libconfig::Setting& typeSetting,
+                              const std::string& blockName,
+                              const std::string& theConfigFileName,
+                              std::list<std::string>& knownMessageTypes);
+  void readMessageTypeNames(const libconfig::Config& theConfig,
+                            libconfig::Setting& typeSetting,
+                            const std::string& blockName,
+                            const std::string& theConfigFileName,
+                            std::list<std::string>& knownMessageTypes,
+                            MessageType& messageType);
+  void readMessageScope(libconfig::Setting& typeSetting,
+                        const std::string& blockName,
+                        const std::string& theConfigFileName,
+                        MessageType& messageType);
+  bool readMessageTimeRangeType(libconfig::Setting& typeSetting,
+                                const std::string& blockName,
+                                const std::string& theConfigFileName,
+                                MessageType& messageType);
+
   std::string itsHost;
   int itsPort = 5432;
   std::string itsDatabase;
