@@ -210,6 +210,14 @@ class EngineImpl : public Engine
                                 bool excludeSPECIs,
                                 std::string& withClause,
                                 TableMap& tableMap) const;
+  StationQueryData* queryScopeStationsAndMessages(
+      const Fmi::Database::PostgreSQLConnection& connection,
+      QueryOptions& queryOptions,
+      MessageScope scope,
+      StationQueryData& stationData,
+      StationQueryData& messageData,
+      bool& validateQuery,
+      StationQueryData* data) const;
   void runMessageQuery(const Fmi::Database::PostgreSQLConnection& connection,
                        const std::string& finalSql,
                        const QueryOptions& queryOptions,

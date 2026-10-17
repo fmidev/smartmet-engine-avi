@@ -5475,6 +5475,87 @@ StationQueryData& EngineImpl::joinStationAndMessageData(const StationQueryData& 
   }
 }
 
+namespace
+{
+// ----------------------------------------------------------------------
+/*!
+ * \brief Append the station values of the source data into the target data
+ */
+// ----------------------------------------------------------------------
+
+void appendStationQueryValues(const StationQueryData& source, StationQueryData& target)
+{
+  for (const auto& station : source.itsValues)
+  {
+    auto its = target.itsValues.insert(make_pair(station.first, QueryValues()));
+
+    if (its.second)
+      target.itsStationIds.push_back(station.first);
+
+    for (auto column : station.second)
+    {
+      auto itc = its.first->second.insert(make_pair(column.first, ValueVector()));
+      itc.first->second.insert(itc.first->second.end(), column.second.begin(), column.second.end());
+    }
+  }
+}
+}  // namespace
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Query stations and messages of a scope and collect the data
+ *
+ * Returns the data object containing the collected data
+ */
+// ----------------------------------------------------------------------
+
+StationQueryData* EngineImpl::queryScopeStationsAndMessages(
+    const Fmi::Database::PostgreSQLConnection& connection,
+    QueryOptions& queryOptions,
+    MessageScope scope,
+    StationQueryData& stationData,
+    StationQueryData& messageData,
+    bool& validateQuery,
+    StationQueryData* data) const
+{
+  // Query stations
+
+  stationData = queryStations(connection, queryOptions, validateQuery);
+  validateQuery = false;
+
+  if ((scope == MessageScope::GlobalScope) || !stationData.itsStationIds.empty())
+  {
+    // Query messages if any message column were requested
+
+    if (queryOptions.itsMessageColumnSelected)
+    {
+      // Query messages and join station and message data to get distance and bearing values
+      // for message data rows
+      //
+      messageData =
+          queryMessages(connection, stationData.itsStationIds, queryOptions, validateQuery);
+      joinStationAndMessageData(stationData, messageData);
+
+      // Collect/combine data
+
+      if (!data)
+        data = &messageData;
+
+      if (data != &messageData)
+        appendStationQueryValues(messageData, *data);
+    }
+    else
+    {
+      if (data)
+        data->itsValues.insert(stationData.itsValues.begin(), stationData.itsValues.end());
+
+      data = &stationData;
+    }
+  }
+
+  return data;
+}
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Query stations and/or accepted messages.
@@ -5553,56 +5634,13 @@ StationQueryData EngineImpl::queryStationsAndMessages(QueryOptions& queryOptions
                         queryOptions.itsMessageTypes);
 
       if (!queryOptions.itsMessageTypes.empty())
-      {
-        // Query stations
-
-        scope.stationData = queryStations(connection, queryOptions, validateQuery);
-        validateQuery = false;
-
-        if ((scope.scope == MessageScope::GlobalScope) || !scope.stationData.itsStationIds.empty())
-        {
-          // Query messages if any message column were requested
-
-          if (queryOptions.itsMessageColumnSelected)
-          {
-            // Query messages and join station and message data to get distance and bearing values
-            // for message data rows
-            //
-            scope.messageData = queryMessages(
-                connection, scope.stationData.itsStationIds, queryOptions, validateQuery);
-            joinStationAndMessageData(scope.stationData, scope.messageData);
-
-            // Collect/combine data
-
-            if (!data)
-              data = &scope.messageData;
-
-            if (data != &scope.messageData)
-              for (const auto& station : scope.messageData.itsValues)
-              {
-                auto its = data->itsValues.insert(make_pair(station.first, QueryValues()));
-
-                if (its.second)
-                  data->itsStationIds.push_back(station.first);
-
-                for (auto column : station.second)
-                {
-                  auto itc = its.first->second.insert(make_pair(column.first, ValueVector()));
-                  itc.first->second.insert(
-                      itc.first->second.end(), column.second.begin(), column.second.end());
-                }
-              }
-          }
-          else
-          {
-            if (data)
-              data->itsValues.insert(scope.stationData.itsValues.begin(),
-                                     scope.stationData.itsValues.end());
-
-            data = &scope.stationData;
-          }
-        }
-      }
+        data = queryScopeStationsAndMessages(connection,
+                                             queryOptions,
+                                             scope.scope,
+                                             scope.stationData,
+                                             scope.messageData,
+                                             validateQuery,
+                                             data);
 
       if (scope.scope == MessageScope::NoScope)
         break;
