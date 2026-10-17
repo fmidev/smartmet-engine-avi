@@ -2247,6 +2247,274 @@ string buildMessageTimeRangeMessagesWithClause(const StringList& messageTypes,
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Build FROM clause for message query
+ */
+// ----------------------------------------------------------------------
+
+void addMessageQueryFromClause(const TableMap& tableMap, ostringstream& fromWhereOrderByClause)
+{
+  auto it = tableMap.find(messageValidityTableName);
+  Table validityTable((it != tableMap.end()) ? it->second : Table());
+  size_t n = 0;
+
+  for (auto const& from : tableMap)
+  {
+    // No FROM clause entry for subquerys (latest_messages)
+    //
+    if (!from.second.subQuery)
+    {
+      if ((from.first == recordSetTableName) || (from.first == messageTableName) ||
+          (((from.first != messageTypeTableName) || (!validityTable.leftOuter)) &&
+           (!from.second.leftOuter) && (!from.second.itsJoin.empty())))
+      {
+        fromWhereOrderByClause << ((n == 0) ? " FROM " : ",") << from.first << " "
+                               << from.second.itsAlias;
+        n++;
+      }
+      else if ((from.first == messageTypeTableName) && (!from.second.itsJoin.empty()))
+      {
+        fromWhereOrderByClause << ((n == 0) ? " FROM " : ",") << from.first << " "
+                               << from.second.itsAlias << " LEFT OUTER JOIN "
+                               << messageValidityTableName << " " << validityTable.itsAlias
+                               << " ON (" << validityTable.itsJoin << ")";
+        n++;
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Build time conditions for querying valid messages within time range
+ */
+// ----------------------------------------------------------------------
+
+void addValidRangeMessagesCondition(const QueryOptions& queryOptions,
+                                    const MessageTypes& knownMessageTypes,
+                                    const char* whereOrAnd,
+                                    ostringstream& fromWhereOrderByClause)
+{
+  // Querying valid messages within time range.
+  //
+  // Note: User given time range is taken as a half open range where start <= time < end. The
+  // valid_from-valid_to range and any range calculated with range start time and period
+  // length (here me.message_time + mv.validityhours) are taken as a closed range.
+  //
+  // AND
+  // (
+  //  [ (mt.type IN (ValidTimeRangeTypes,ValidTimeRangeLatestTypes) AND starttime <=
+  //  me.valid_to
+  //  AND endtime > me.valid_from) ]
+  //  [ [ OR ] (mt.type IN (MessageValidTimeRangeTypes,MessageValidTimeRangeLatestTypes) AND (
+  //			  (starttime <= me.valid_to AND endtime > me.message_time) OR
+  //			  (me.valid_from IS NULL AND me.valid_to IS NULL AND (starttime <=
+  // me.message_time + mv.validityhours AND endtime > me.message_time))
+  //			 ))
+  //	]
+  //  [ [ OR ] (mt.type IN (MessageTimeRangeTypes) AND (starttime <= me.message_time +
+  //  mv.validityhours AND endtime > me.message_time)) ]
+  //  [ [ OR ] ([mt.type IN (MessageTimeRangeLatestTypes) AND] (me.message_id IN (SELECT
+  //  message_id FROM messagetimerangelatest_messages))) ]
+  //  [ [ OR ] (mt.type IN (CreationValidTimeRangeTypes,CreationValidTimeRangeLatestTypes) AND
+  // (starttime <= me.valid_to AND endtime > me.creation_time)) ]
+  // )
+  //
+  fromWhereOrderByClause << whereOrAnd << "(";
+
+  list<TimeRangeType> timeRangeTypes;
+  timeRangeTypes.push_back(TimeRangeType::ValidTimeRange);
+  timeRangeTypes.push_back(TimeRangeType::ValidTimeRangeLatest);
+
+  string messageTypeIn =
+      buildMessageTypeInClause(queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
+  string emptyOrOr;
+
+  if (!messageTypeIn.empty())
+  {
+    fromWhereOrderByClause << "(" << messageTypeIn << " AND "
+                           << "(" << queryOptions.itsTimeOptions.itsStartTime << " < "
+                           << messageTableAlias << ".valid_to"
+                           << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
+                           << messageTableAlias << ".valid_from))";
+    emptyOrOr = " OR ";
+  }
+
+  timeRangeTypes.clear();
+  timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRange);
+  timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRangeLatest);
+
+  messageTypeIn =
+      buildMessageTypeInClause(queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
+
+  if (!messageTypeIn.empty())
+  {
+    // BRAINSTORM-3301
+    //
+    // No (effective) query time restriction for edr -queries
+    //
+    bool disableQueryRestriction = (!queryOptions.itsTimeOptions.itsMessageTimeChecks);
+
+    bool bStationJoin = false;
+    string stationAndTimeRangeCondition =
+        buildMessageValidTimeRangeTimeCondition(queryOptions.itsMessageTypes,
+                                                knownMessageTypes,
+                                                queryOptions.itsTimeOptions.itsStartTime,
+                                                queryOptions.itsTimeOptions.itsEndTime,
+                                                disableQueryRestriction,
+                                                bStationJoin);
+
+    fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND ("
+                           << stationAndTimeRangeCondition << "))";
+    emptyOrOr = " OR ";
+  }
+
+  messageTypeIn = buildMessageTypeInClause(
+      queryOptions.itsMessageTypes, knownMessageTypes, TimeRangeType::MessageTimeRange);
+
+  if (!messageTypeIn.empty())
+  {
+    fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND "
+                           << "(" << queryOptions.itsTimeOptions.itsStartTime << " < ("
+                           << messageTableAlias << ".message_time + " << messageValidityTableAlias
+                           << ".validityhours)"
+                           << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
+                           << messageTableAlias << ".message_time))";
+    emptyOrOr = " OR ";
+  }
+
+  // For MessageTimeRangeLatest restriction querying 'messagetimerangelatest_messages' for the
+  // id's of the latest valid messages having message_time earlier than starttime in addition
+  // to all messages having starttime <= message_time < endtime
+  //
+  // Note: Even through 'messagetimerangelatest_messages' contains message id's only for
+  // MessageTimeRangeLatest types, type restriction must be combined with IN clause below;
+  // otherwise query throughput drastically drops with longer time ranges (query planner is
+  // somehow fooled by the query)
+
+  messageTypeIn = buildMessageTypeInClause(
+      queryOptions.itsMessageTypes, knownMessageTypes, TimeRangeType::MessageTimeRangeLatest);
+
+  if (!messageTypeIn.empty())
+  {
+    fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND (" << messageTableAlias
+                           << ".message_id IN (SELECT message_id FROM "
+                           << messageTimeRangeLatestMessagesTableName << ")))";
+    emptyOrOr = " OR ";
+  }
+
+  timeRangeTypes.clear();
+  timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRange);
+  timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRangeLatest);
+
+  messageTypeIn =
+      buildMessageTypeInClause(queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
+
+  if (!messageTypeIn.empty())
+    fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND "
+                           << "(" << queryOptions.itsTimeOptions.itsStartTime << " < "
+                           << messageTableAlias << ".valid_to"
+                           << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
+                           << messageTableAlias << ".created))";
+
+  fromWhereOrderByClause << ")";
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Build FI METAR and SPECI filtering conditions
+ */
+// ----------------------------------------------------------------------
+
+void addFIMETARFilter(const Config& config,
+                      bool filterMETARs,
+                      bool excludeSPECIs,
+                      ostringstream& fromWhereOrderByClause)
+{
+  // AND (
+  //      st.country_code != 'FI' OR
+  //      (
+  //       [
+  //       (
+  //        (mt.type != 'METAR' OR BTRIM(me.message,E' \t\r\n') LIKE 'METAR%')
+  //        [ OR st.icao_code IN (ExcludedIcaoList) ]
+  //       )
+  //       ]
+  //       [ [ AND ] mt.type != 'SPECI' ]
+  //      )
+  //     )
+
+  fromWhereOrderByClause << " AND (" << stationTableAlias << ".country_code != 'FI' OR (";
+
+  if (filterMETARs)
+  {
+    fromWhereOrderByClause << "((" << messageTypeTableAlias << ".type != 'METAR' OR "
+                           << trimmedMessageExpression(messageTableAlias, messageTableColumn)
+                           << " LIKE 'METAR%')";
+
+    auto const& filterFIMETARxxxExcludeIcaos = config.getFilterFIMETARxxxExcludeIcaos();
+
+    if (!filterFIMETARxxxExcludeIcaos.empty())
+      fromWhereOrderByClause << " OR st.icao_code IN ("
+                             << getStringList(filterFIMETARxxxExcludeIcaos) << ")";
+
+    fromWhereOrderByClause << ")";
+  }
+
+  if (excludeSPECIs)
+    fromWhereOrderByClause << (filterMETARs ? " AND " : "") << messageTypeTableAlias
+                           << ".type != 'SPECI'";
+
+  fromWhereOrderByClause << "))";
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Build conditions for querying messages created within time range
+ */
+// ----------------------------------------------------------------------
+
+void addCreatedRangeMessagesCondition(const StationIdList& stationIdList,
+                                      const QueryOptions& queryOptions,
+                                      const MessageTypes& knownMessageTypes,
+                                      const Config& config,
+                                      const Column* timeRangeColumn,
+                                      ostringstream& fromWhereOrderByClause)
+{
+  // Querying messages created within time range.
+  //
+  // Note: User given time range is taken as a half open range where start <= time < end
+  //
+  // AND me.statation_id IN (StationIdList)
+  // AND mt.type IN (MessageTypeList) ]
+  // AND me.message_time >= starttime AND me.message_time < endtime
+  //
+  if (!timeRangeColumn)
+    throw Fmi::Exception(
+        BCP, "buildMessageQueryFromWhereOrderByClause(): internal: time column is NULL");
+
+  buildMessageQueryWhereStationIdInClause(stationIdList, fromWhereOrderByClause);
+  string messageTypeIn = buildMessageTypeInClause(
+      queryOptions.itsMessageTypes, knownMessageTypes, list<TimeRangeType>());
+
+  const auto* ltORle = (queryOptions.itsTimeOptions.itsClosedTimeRange ? " <= " : " < ");
+
+  fromWhereOrderByClause << " AND " << messageTypeIn << " AND " << messageTableAlias << "."
+                         << timeRangeColumn->getTableColumnName()
+                         << " >= " << queryOptions.itsTimeOptions.itsStartTime << " AND "
+                         << messageTableAlias << "." << timeRangeColumn->getTableColumnName()
+                         << ltORle << queryOptions.itsTimeOptions.itsEndTime;
+
+  bool filterMETARs = (queryOptions.itsFilterMETARs && config.getFilterFIMETARxxx() &&
+                       (messageTypeIn.find("'METAR") != string::npos));
+  bool excludeSPECIs =
+      (queryOptions.itsExcludeSPECIs && (messageTypeIn.find("'SPECI'") != string::npos));
+
+  if (filterMETARs || excludeSPECIs)
+    addFIMETARFilter(config, filterMETARs, excludeSPECIs, fromWhereOrderByClause);
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Build from, where and order by clause with given station id's, message types,
  *        tables and time instant/range for querying accepted messages
  */
@@ -2274,34 +2542,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
     // restriction types (when leftOuter is set for message_validity)
 
     const auto& knownMessageTypes = config.getMessageTypes();
-    auto it = tableMap.find(messageValidityTableName);
-    Table validityTable((it != tableMap.end()) ? it->second : Table());
-    size_t n = 0;
-
-    for (auto const& from : tableMap)
-    {
-      // No FROM clause entry for subquerys (latest_messages)
-      //
-      if (!from.second.subQuery)
-      {
-        if ((from.first == recordSetTableName) || (from.first == messageTableName) ||
-            (((from.first != messageTypeTableName) || (!validityTable.leftOuter)) &&
-             (!from.second.leftOuter) && (!from.second.itsJoin.empty())))
-        {
-          fromWhereOrderByClause << ((n == 0) ? " FROM " : ",") << from.first << " "
-                                 << from.second.itsAlias;
-          n++;
-        }
-        else if ((from.first == messageTypeTableName) && (!from.second.itsJoin.empty()))
-        {
-          fromWhereOrderByClause << ((n == 0) ? " FROM " : ",") << from.first << " "
-                                 << from.second.itsAlias << " LEFT OUTER JOIN "
-                                 << messageValidityTableName << " " << validityTable.itsAlias
-                                 << " ON (" << validityTable.itsJoin << ")";
-          n++;
-        }
-      }
-    }
+    addMessageQueryFromClause(tableMap, fromWhereOrderByClause);
 
     // [ WHERE|AND me.route_id = mr.route_id ]
     // [ WHERE|AND me.type_id = mt.type_id ]
@@ -2325,200 +2566,17 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
     {
       if (queryOptions.itsTimeOptions.itsQueryValidRangeMessages)
       {
-        // Querying valid messages within time range.
-        //
-        // Note: User given time range is taken as a half open range where start <= time < end. The
-        // valid_from-valid_to range and any range calculated with range start time and period
-        // length (here me.message_time + mv.validityhours) are taken as a closed range.
-        //
-        // AND
-        // (
-        //  [ (mt.type IN (ValidTimeRangeTypes,ValidTimeRangeLatestTypes) AND starttime <=
-        //  me.valid_to
-        //  AND endtime > me.valid_from) ]
-        //  [ [ OR ] (mt.type IN (MessageValidTimeRangeTypes,MessageValidTimeRangeLatestTypes) AND (
-        //			  (starttime <= me.valid_to AND endtime > me.message_time) OR
-        //			  (me.valid_from IS NULL AND me.valid_to IS NULL AND (starttime <=
-        // me.message_time + mv.validityhours AND endtime > me.message_time))
-        //			 ))
-        //	]
-        //  [ [ OR ] (mt.type IN (MessageTimeRangeTypes) AND (starttime <= me.message_time +
-        //  mv.validityhours AND endtime > me.message_time)) ]
-        //  [ [ OR ] ([mt.type IN (MessageTimeRangeLatestTypes) AND] (me.message_id IN (SELECT
-        //  message_id FROM messagetimerangelatest_messages))) ]
-        //  [ [ OR ] (mt.type IN (CreationValidTimeRangeTypes,CreationValidTimeRangeLatestTypes) AND
-        // (starttime <= me.valid_to AND endtime > me.creation_time)) ]
-        // )
-        //
-        fromWhereOrderByClause << whereOrAnd << "(";
-
-        list<TimeRangeType> timeRangeTypes;
-        timeRangeTypes.push_back(TimeRangeType::ValidTimeRange);
-        timeRangeTypes.push_back(TimeRangeType::ValidTimeRangeLatest);
-
-        string messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
-        string emptyOrOr;
-
-        if (!messageTypeIn.empty())
-        {
-          fromWhereOrderByClause << "(" << messageTypeIn << " AND "
-                                 << "(" << queryOptions.itsTimeOptions.itsStartTime << " < "
-                                 << messageTableAlias << ".valid_to"
-                                 << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
-                                 << messageTableAlias << ".valid_from))";
-          emptyOrOr = " OR ";
-        }
-
-        timeRangeTypes.clear();
-        timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRange);
-        timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRangeLatest);
-
-        messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
-
-        if (!messageTypeIn.empty())
-        {
-          // BRAINSTORM-3301
-          //
-          // No (effective) query time restriction for edr -queries
-          //
-          bool disableQueryRestriction = (!queryOptions.itsTimeOptions.itsMessageTimeChecks);
-
-          bool bStationJoin = false;
-          string stationAndTimeRangeCondition =
-              buildMessageValidTimeRangeTimeCondition(queryOptions.itsMessageTypes,
-                                                      knownMessageTypes,
-                                                      queryOptions.itsTimeOptions.itsStartTime,
-                                                      queryOptions.itsTimeOptions.itsEndTime,
-                                                      disableQueryRestriction,
-                                                      bStationJoin);
-
-          fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND ("
-                                 << stationAndTimeRangeCondition << "))";
-          emptyOrOr = " OR ";
-        }
-
-        messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, TimeRangeType::MessageTimeRange);
-
-        if (!messageTypeIn.empty())
-        {
-          fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND "
-                                 << "(" << queryOptions.itsTimeOptions.itsStartTime << " < ("
-                                 << messageTableAlias << ".message_time + "
-                                 << messageValidityTableAlias << ".validityhours)"
-                                 << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
-                                 << messageTableAlias << ".message_time))";
-          emptyOrOr = " OR ";
-        }
-
-        // For MessageTimeRangeLatest restriction querying 'messagetimerangelatest_messages' for the
-        // id's of the latest valid messages having message_time earlier than starttime in addition
-        // to all messages having starttime <= message_time < endtime
-        //
-        // Note: Even through 'messagetimerangelatest_messages' contains message id's only for
-        // MessageTimeRangeLatest types, type restriction must be combined with IN clause below;
-        // otherwise query throughput drastically drops with longer time ranges (query planner is
-        // somehow fooled by the query)
-
-        messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, TimeRangeType::MessageTimeRangeLatest);
-
-        if (!messageTypeIn.empty())
-        {
-          fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND ("
-                                 << messageTableAlias << ".message_id IN (SELECT message_id FROM "
-                                 << messageTimeRangeLatestMessagesTableName << ")))";
-          emptyOrOr = " OR ";
-        }
-
-        timeRangeTypes.clear();
-        timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRange);
-        timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRangeLatest);
-
-        messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, timeRangeTypes);
-
-        if (!messageTypeIn.empty())
-          fromWhereOrderByClause << emptyOrOr << "(" << messageTypeIn << " AND "
-                                 << "(" << queryOptions.itsTimeOptions.itsStartTime << " < "
-                                 << messageTableAlias << ".valid_to"
-                                 << " AND " << queryOptions.itsTimeOptions.itsEndTime << " > "
-                                 << messageTableAlias << ".created))";
-
-        fromWhereOrderByClause << ")";
+        addValidRangeMessagesCondition(
+            queryOptions, knownMessageTypes, whereOrAnd, fromWhereOrderByClause);
       }
       else
       {
-        // Querying messages created within time range.
-        //
-        // Note: User given time range is taken as a half open range where start <= time < end
-        //
-        // AND me.statation_id IN (StationIdList)
-        // AND mt.type IN (MessageTypeList) ]
-        // AND me.message_time >= starttime AND me.message_time < endtime
-        //
-        if (!timeRangeColumn)
-          throw Fmi::Exception(
-              BCP, "buildMessageQueryFromWhereOrderByClause(): internal: time column is NULL");
-
-        buildMessageQueryWhereStationIdInClause(stationIdList, fromWhereOrderByClause);
-        string messageTypeIn = buildMessageTypeInClause(
-            queryOptions.itsMessageTypes, knownMessageTypes, list<TimeRangeType>());
-
-        const auto* ltORle = (queryOptions.itsTimeOptions.itsClosedTimeRange ? " <= " : " < ");
-
-        fromWhereOrderByClause << " AND " << messageTypeIn << " AND " << messageTableAlias << "."
-                               << timeRangeColumn->getTableColumnName()
-                               << " >= " << queryOptions.itsTimeOptions.itsStartTime << " AND "
-                               << messageTableAlias << "." << timeRangeColumn->getTableColumnName()
-                               << ltORle << queryOptions.itsTimeOptions.itsEndTime;
-
-        bool filterMETARs = (queryOptions.itsFilterMETARs && config.getFilterFIMETARxxx() &&
-                             (messageTypeIn.find("'METAR") != string::npos));
-        bool excludeSPECIs =
-            (queryOptions.itsExcludeSPECIs && (messageTypeIn.find("'SPECI'") != string::npos));
-
-        if (filterMETARs || excludeSPECIs)
-        {
-          // AND (
-          //      st.country_code != 'FI' OR
-          //      (
-          //       [
-          //       (
-          //        (mt.type != 'METAR' OR BTRIM(me.message,E' \t\r\n') LIKE 'METAR%')
-          //        [ OR st.icao_code IN (ExcludedIcaoList) ]
-          //       )
-          //       ]
-          //       [ [ AND ] mt.type != 'SPECI' ]
-          //      )
-          //     )
-
-          fromWhereOrderByClause << " AND (" << stationTableAlias << ".country_code != 'FI' OR (";
-
-          if (filterMETARs)
-          {
-            fromWhereOrderByClause << "((" << messageTypeTableAlias << ".type != 'METAR' OR "
-                                   << trimmedMessageExpression(messageTableAlias,
-                                                               messageTableColumn)
-                                   << " LIKE 'METAR%')";
-
-            auto const& filterFIMETARxxxExcludeIcaos = config.getFilterFIMETARxxxExcludeIcaos();
-
-            if (!filterFIMETARxxxExcludeIcaos.empty())
-              fromWhereOrderByClause << " OR st.icao_code IN ("
-                                     << getStringList(filterFIMETARxxxExcludeIcaos) << ")";
-
-            fromWhereOrderByClause << ")";
-          }
-
-          if (excludeSPECIs)
-            fromWhereOrderByClause << (filterMETARs ? " AND " : "") << messageTypeTableAlias
-                                   << ".type != 'SPECI'";
-
-          fromWhereOrderByClause << "))";
-        }
+        addCreatedRangeMessagesCondition(stationIdList,
+                                         queryOptions,
+                                         knownMessageTypes,
+                                         config,
+                                         timeRangeColumn,
+                                         fromWhereOrderByClause);
       }
     }
     else
