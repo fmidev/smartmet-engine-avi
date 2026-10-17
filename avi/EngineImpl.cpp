@@ -4938,6 +4938,295 @@ const Column* EngineImpl::getMessageTableTimeColumn(const string& timeColumn)
 
 // ----------------------------------------------------------------------
 /*!
+ * \brief Build WITH clause for 'record_set' table containg all valid messages for given time
+ *        instant/range.
+ *
+ * Note: By passing false instead of queryOptions.itsLocationOptions.itsWKTs.isRoute
+ * record_set.station_id is limited by IN (StationIdList) instead by subquery from
+ * request_stations table which makes the query slower (request_stations CTE is generated
+ * only for route query)
+ */
+// ----------------------------------------------------------------------
+
+string EngineImpl::recordSetWithClause(const StationIdList& stationIdList,
+                                       const QueryOptions& queryOptions) const
+{
+  if (queryOptions.itsTimeOptions.itsObservationTime.empty())
+    return buildRecordSetWithClause(!queryOptions.itsLocationOptions.itsBBoxes.empty(),
+                                    false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
+                                    stationIdList,
+                                    queryOptions.itsMessageFormat,
+                                    queryOptions.itsMessageTypes,
+                                    itsConfig->getMessageTypes(),
+                                    itsConfig->getRecordSetStartTimeOffsetHours(),
+                                    itsConfig->getRecordSetEndTimeOffsetHours(),
+                                    queryOptions.itsTimeOptions.itsStartTime,
+                                    queryOptions.itsTimeOptions.itsEndTime);
+  else
+    return buildRecordSetWithClause(!queryOptions.itsLocationOptions.itsBBoxes.empty(),
+                                    false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
+                                    stationIdList,
+                                    queryOptions.itsMessageFormat,
+                                    queryOptions.itsMessageTypes,
+                                    itsConfig->getMessageTypes(),
+                                    itsConfig->getRecordSetStartTimeOffsetHours(),
+                                    itsConfig->getRecordSetEndTimeOffsetHours(),
+                                    queryOptions.itsTimeOptions.itsObservationTime);
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief If needed, add 'message_validity' into tablemap for joining into main query
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::addMessageValidityTable(const QueryOptions& queryOptions, TableMap& tableMap) const
+{
+  // If needed, add 'message_validity' into tablemap for joining into main query
+  // ('latest_messages' and 'messagetimerangelatest_messages' queries join
+  // to it by itself when needed).
+  //
+  list<TimeRangeType> timeRangeTypes;
+  timeRangeTypes.push_back(TimeRangeType::ValidTimeRange);
+  timeRangeTypes.push_back(TimeRangeType::ValidTimeRangeLatest);
+  timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRange);
+  timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRangeLatest);
+  timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRange);
+  timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRangeLatest);
+  timeRangeTypes.push_back(TimeRangeType::MessageTimeRange);
+
+  string noMessageValidityTypesIn = buildMessageTypeInClause(
+      queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), timeRangeTypes);
+
+  if (!noMessageValidityTypesIn.empty())
+  {
+    //
+    // Because 'message_validity' contains data only for message types queried with
+    // MessageValidTimeRange[Latest] or MessageTimeRange[Latest] time restriction,
+    // it needs to be outer joined with avidb_message_types in the main query for querying
+    // message types with other time restriction types
+    //
+    auto& table = tableMap[messageValidityTable.itsName];
+    table.itsAlias = messageValidityTable.itsAlias;
+    table.itsJoin = messageValidityTable.itsJoin;
+
+    timeRangeTypes.pop_back();  // Erase MessageTimeRange, MessageValidTimeRangeLatest and
+                                // MessageValidTimeRange
+    timeRangeTypes.pop_back();  //
+    timeRangeTypes.pop_back();  //
+
+    noMessageValidityTypesIn = buildMessageTypeInClause(
+        queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), timeRangeTypes);
+
+    table.leftOuter = (!noMessageValidityTypesIn.empty());
+  }
+  else
+  {
+    // Only MessageTimeRangeLatest types queried, no need to add 'message_validity' into the
+    // tablemap
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Build WITH clauses and tables for querying valid messages
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::buildValidMessagesWithClause(const StationIdList& stationIdList,
+                                              const QueryOptions& queryOptions,
+                                              bool filterMETARs,
+                                              bool excludeSPECIs,
+                                              string& withClause,
+                                              TableMap& tableMap) const
+{
+  // Build WITH clause for 'record_set' table containg all valid messages for given time
+  // instant/range.
+  //
+  // Note: By passing false instead of queryOptions.itsLocationOptions.itsWKTs.isRoute
+  // record_set.station_id is limited by IN (StationIdList) instead by subquery from
+  // request_stations table which makes the query slower (request_stations CTE is generated
+  // only for route query)
+
+  string recordSetWithClause = this->recordSetWithClause(stationIdList, queryOptions);
+
+  withClause += ((withClause.empty() ? "WITH " : ",") + recordSetWithClause);
+
+  // Build WITH clause for 'message_validity' table containing configured message type specific
+  // validity length for message types having MessageValidTimeRange[Latest] or
+  // MessageTimeRange[Latest] restriction
+
+  string messageValidityWithClause = buildMessageTypeValidityWithClause(
+      queryOptions.itsMessageTypes, itsConfig->getMessageTypes());
+
+  if (!messageValidityWithClause.empty())
+  {
+    withClause += ("," + messageValidityWithClause);
+
+    if (queryOptions.itsTimeOptions.itsObservationTime.empty())
+      addMessageValidityTable(queryOptions, tableMap);
+  }
+
+  // If querying with observation time, build WITH clause for 'latest_messages' table containing
+  // message id's for the latest messages.
+  //
+  // Otherwise if querying valid MessageTimeRangeLatest messages, build WITH clause for
+  // 'messagetimerangelatest_messages' table containing message id's for the
+  // latest messages having message_time earlier than range start time in addition to all
+  // messages having starttime <= message_time < endtime
+
+  if (!queryOptions.itsTimeOptions.itsObservationTime.empty())
+  {
+    // Build WITH clause for 'latest_messages' table
+    //
+    withClause +=
+        ("," + buildLatestMessagesWithClause(queryOptions.itsMessageTypes,
+                                             itsConfig->getMessageTypes(),
+                                             queryOptions.itsTimeOptions.itsObservationTime,
+                                             queryOptions.itsTimeOptions.itsMessageCreatedTime,
+                                             queryOptions.itsTimeOptions.itsUseCurrentTime,
+                                             filterMETARs,
+                                             excludeSPECIs,
+                                             queryOptions.itsDistinctMessages,
+                                             itsConfig->getFilterFIMETARxxxExcludeIcaos()));
+
+    // Add 'latest_messages' into tablemap
+    //
+    // Note: 'latest_messages' is used thru subquery because of poor performance if joined.
+
+    auto& table = tableMap[latestMessagesTable.itsName];
+    table.itsJoin = latestMessagesTable.itsJoin;
+    table.subQuery = true;
+  }
+  else
+    withClause +=
+        buildMessageTimeRangeMessagesWithClause(queryOptions.itsMessageTypes,
+                                                itsConfig->getMessageTypes(),
+                                                queryOptions.itsTimeOptions.itsStartTime,
+                                                queryOptions.itsTimeOptions.itsEndTime,
+                                                filterMETARs,
+                                                excludeSPECIs,
+                                                itsConfig->getFilterFIMETARxxxExcludeIcaos());
+
+  withClause += " ";
+
+  // Replace avidb_messages with record_set in the tablemap; record_set contains all (columns
+  // of) needed avidb_messages rows, and is used instead
+
+  auto it = tableMap.find(messageTableName);
+
+  if (it == tableMap.end())
+    throw Fmi::Exception(BCP, "queryMessages: internal: Unable to get avidb_messages table");
+
+  auto recordSetTable = it->second;
+  tableMap.erase(it);
+
+  tableMap[recordSetTableName] = recordSetTable;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Add tables for querying messages created within time range
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::addCreatedMessagesTables(const QueryOptions& queryOptions,
+                                          bool filterMETARs,
+                                          bool excludeSPECIs,
+                                          string& withClause,
+                                          TableMap& tableMap) const
+{
+  if (queryOptions.itsLocationOptions.itsWKTs.isRoute)
+  {
+    withClause += " ";
+
+    if (filterMETARs || excludeSPECIs)
+    {
+      // Ensure station table is joined into main query for METAR filtering or exclusion of
+      // SPECIs (for nonroute query it's joined anyways for ordering the rows by icao code)
+      //
+      string messageTypeIn = buildMessageTypeInClause(
+          queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), list<TimeRangeType>());
+
+      if ((filterMETARs && (messageTypeIn.find("'METAR") != string::npos)) ||
+          (excludeSPECIs && (messageTypeIn.find("'SPECI'") != string::npos)))
+        joinTable(tableMap, stationTableName, stationTableAlias, stationTableJoin);
+    }
+  }
+
+  // Filter by message format
+
+  auto& table = tableMap[messageFormatTableName];
+  table.itsAlias = messageFormatTableAlias;
+  table.itsJoin = queryOptions.itsMessageFormat == "TAC" ? messageFormatTableJoinTAC
+                                                         : messageFormatTableJoinIWXXM;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Execute message query using the cache when possible
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::runMessageQuery(const Fmi::Database::PostgreSQLConnection& connection,
+                                 const string& finalSql,
+                                 const QueryOptions& queryOptions,
+                                 int maxMessageRows,
+                                 StationQueryData& stationQueryData) const
+{
+  const bool cacheUsable = itsCache && itsCache->ready() && isCacheable(queryOptions);
+
+  // Serve from the in-memory cache when possible (and not in shadow mode).
+  if (cacheUsable && !itsConfig->getCacheShadowCompare())
+  {
+    try
+    {
+      executeQueryEmbedded<StationQueryData>(finalSql,
+                                             queryOptions.itsDebug,
+                                             stationQueryData,
+                                             queryOptions.itsDistinctMessages,
+                                             maxMessageRows);
+      return;
+    }
+    catch (...)
+    {
+      // Any cache failure falls back to PostgreSQL; discard partial results.
+      stationQueryData.itsValues.clear();
+      stationQueryData.itsStationIds.clear();
+      Fmi::Exception ex(BCP, "AVI cache query failed; falling back to PostgreSQL");
+      ex.printError();
+    }
+  }
+
+  executeQuery<StationQueryData>(connection,
+                                 finalSql,
+                                 queryOptions.itsDebug,
+                                 stationQueryData,
+                                 queryOptions.itsDistinctMessages,
+                                 maxMessageRows);
+
+  // Shadow comparison: run the cache too and log any difference, but return
+  // the PostgreSQL result.
+  if (cacheUsable && itsConfig->getCacheShadowCompare())
+  {
+    try
+    {
+      StationQueryData shadow;
+      shadow.itsColumns = stationQueryData.itsColumns;
+      executeQueryEmbedded<StationQueryData>(
+          finalSql, false, shadow, queryOptions.itsDistinctMessages, maxMessageRows);
+      compareShadow(stationQueryData, shadow, finalSql);
+    }
+    catch (...)
+    {
+      Fmi::Exception ex(BCP, "AVI cache shadow query failed");
+      ex.printError();
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
  * \brief Query accepted messages
  */
 // ----------------------------------------------------------------------
@@ -5041,206 +5330,19 @@ StationQueryData EngineImpl::queryMessages(const Fmi::Database::PostgreSQLConnec
     if (!queryOptions.itsTimeOptions.itsObservationTime.empty() ||
         queryOptions.itsTimeOptions.itsQueryValidRangeMessages)
     {
-      // Build WITH clause for 'record_set' table containg all valid messages for given time
-      // instant/range.
-      //
-      // Note: By passing false instead of queryOptions.itsLocationOptions.itsWKTs.isRoute
-      // record_set.station_id is limited by IN (StationIdList) instead by subquery from
-      // request_stations table which makes the query slower (request_stations CTE is generated
-      // only for route query)
-
-      string recordSetWithClause;
-
-      if (queryOptions.itsTimeOptions.itsObservationTime.empty())
-        recordSetWithClause =
-            buildRecordSetWithClause(!queryOptions.itsLocationOptions.itsBBoxes.empty(),
-                                     false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
-                                     stationIdList,
-                                     queryOptions.itsMessageFormat,
-                                     queryOptions.itsMessageTypes,
-                                     itsConfig->getMessageTypes(),
-                                     itsConfig->getRecordSetStartTimeOffsetHours(),
-                                     itsConfig->getRecordSetEndTimeOffsetHours(),
-                                     queryOptions.itsTimeOptions.itsStartTime,
-                                     queryOptions.itsTimeOptions.itsEndTime);
-      else
-        recordSetWithClause =
-            buildRecordSetWithClause(!queryOptions.itsLocationOptions.itsBBoxes.empty(),
-                                     false /*queryOptions.itsLocationOptions.itsWKTs.isRoute*/,
-                                     stationIdList,
-                                     queryOptions.itsMessageFormat,
-                                     queryOptions.itsMessageTypes,
-                                     itsConfig->getMessageTypes(),
-                                     itsConfig->getRecordSetStartTimeOffsetHours(),
-                                     itsConfig->getRecordSetEndTimeOffsetHours(),
-                                     queryOptions.itsTimeOptions.itsObservationTime);
-
-      withClause += ((withClause.empty() ? "WITH " : ",") + recordSetWithClause);
-
-      // Build WITH clause for 'message_validity' table containing configured message type specific
-      // validity length for message types having MessageValidTimeRange[Latest] or
-      // MessageTimeRange[Latest] restriction
-
-      string messageValidityWithClause = buildMessageTypeValidityWithClause(
-          queryOptions.itsMessageTypes, itsConfig->getMessageTypes());
-
-      if (!messageValidityWithClause.empty())
-      {
-        withClause += ("," + messageValidityWithClause);
-
-        if (queryOptions.itsTimeOptions.itsObservationTime.empty())
-        {
-          // If needed, add 'message_validity' into tablemap for joining into main query
-          // ('latest_messages' and 'messagetimerangelatest_messages' queries join
-          // to it by itself when needed).
-          //
-          list<TimeRangeType> timeRangeTypes;
-          timeRangeTypes.push_back(TimeRangeType::ValidTimeRange);
-          timeRangeTypes.push_back(TimeRangeType::ValidTimeRangeLatest);
-          timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRange);
-          timeRangeTypes.push_back(TimeRangeType::CreationValidTimeRangeLatest);
-          timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRange);
-          timeRangeTypes.push_back(TimeRangeType::MessageValidTimeRangeLatest);
-          timeRangeTypes.push_back(TimeRangeType::MessageTimeRange);
-
-          string noMessageValidityTypesIn = buildMessageTypeInClause(
-              queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), timeRangeTypes);
-
-          if (!noMessageValidityTypesIn.empty())
-          {
-            //
-            // Because 'message_validity' contains data only for message types queried with
-            // MessageValidTimeRange[Latest] or MessageTimeRange[Latest] time restriction,
-            // it needs to be outer joined with avidb_message_types in the main query for querying
-            // message types with other time restriction types
-            //
-            auto& table = tableMap[messageValidityTable.itsName];
-            table.itsAlias = messageValidityTable.itsAlias;
-            table.itsJoin = messageValidityTable.itsJoin;
-
-            timeRangeTypes.pop_back();  // Erase MessageTimeRange, MessageValidTimeRangeLatest and
-                                        // MessageValidTimeRange
-            timeRangeTypes.pop_back();  //
-            timeRangeTypes.pop_back();  //
-
-            noMessageValidityTypesIn = buildMessageTypeInClause(
-                queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), timeRangeTypes);
-
-            table.leftOuter = (!noMessageValidityTypesIn.empty());
-          }
-          else
-          {
-            // Only MessageTimeRangeLatest types queried, no need to add 'message_validity' into the
-            // tablemap
-          }
-        }
-      }
-
-      // If querying with observation time, build WITH clause for 'latest_messages' table containing
-      // message id's for the latest messages.
-      //
-      // Otherwise if querying valid MessageTimeRangeLatest messages, build WITH clause for
-      // 'messagetimerangelatest_messages' table containing message id's for the
-      // latest messages having message_time earlier than range start time in addition to all
-      // messages having starttime <= message_time < endtime
-
-      if (!queryOptions.itsTimeOptions.itsObservationTime.empty())
-      {
-        // Build WITH clause for 'latest_messages' table
-        //
-        withClause +=
-            ("," + buildLatestMessagesWithClause(queryOptions.itsMessageTypes,
-                                                 itsConfig->getMessageTypes(),
-                                                 queryOptions.itsTimeOptions.itsObservationTime,
-                                                 queryOptions.itsTimeOptions.itsMessageCreatedTime,
-                                                 queryOptions.itsTimeOptions.itsUseCurrentTime,
-                                                 filterMETARs,
-                                                 excludeSPECIs,
-                                                 queryOptions.itsDistinctMessages,
-                                                 itsConfig->getFilterFIMETARxxxExcludeIcaos()));
-
-        // Add 'latest_messages' into tablemap
-        //
-        // Note: 'latest_messages' is used thru subquery because of poor performance if joined.
-
-        auto& table = tableMap[latestMessagesTable.itsName];
-        table.itsJoin = latestMessagesTable.itsJoin;
-        table.subQuery = true;
-      }
-      else
-        withClause +=
-            buildMessageTimeRangeMessagesWithClause(queryOptions.itsMessageTypes,
-                                                    itsConfig->getMessageTypes(),
-                                                    queryOptions.itsTimeOptions.itsStartTime,
-                                                    queryOptions.itsTimeOptions.itsEndTime,
-                                                    filterMETARs,
-                                                    excludeSPECIs,
-                                                    itsConfig->getFilterFIMETARxxxExcludeIcaos());
-
-      withClause += " ";
-
-      // Replace avidb_messages with record_set in the tablemap; record_set contains all (columns
-      // of) needed avidb_messages rows, and is used instead
-
-      auto it = tableMap.find(messageTableName);
-
-      if (it == tableMap.end())
-        throw Fmi::Exception(BCP, "queryMessages: internal: Unable to get avidb_messages table");
-
-      auto recordSetTable = it->second;
-      tableMap.erase(it);
-
-      tableMap[recordSetTableName] = recordSetTable;
+      buildValidMessagesWithClause(
+          stationIdList, queryOptions, filterMETARs, excludeSPECIs, withClause, tableMap);
     }
     else
     {
-      if (queryOptions.itsLocationOptions.itsWKTs.isRoute)
-      {
-        withClause += " ";
-
-        if (filterMETARs || excludeSPECIs)
-        {
-          // Ensure station table is joined into main query for METAR filtering or exclusion of
-          // SPECIs (for nonroute query it's joined anyways for ordering the rows by icao code)
-          //
-          string messageTypeIn = buildMessageTypeInClause(
-              queryOptions.itsMessageTypes, itsConfig->getMessageTypes(), list<TimeRangeType>());
-
-          if ((filterMETARs && (messageTypeIn.find("'METAR") != string::npos)) ||
-              (excludeSPECIs && (messageTypeIn.find("'SPECI'") != string::npos)))
-          {
-            auto& table = tableMap[stationTableName];
-
-            if (table.itsAlias.empty())
-              table.itsAlias = stationTableAlias;
-
-            if (table.itsJoin.empty())
-              table.itsJoin = stationTableJoin;
-          }
-        }
-      }
-
-      // Filter by message format
-
-      auto& table = tableMap[messageFormatTableName];
-      table.itsAlias = messageFormatTableAlias;
-      table.itsJoin = queryOptions.itsMessageFormat == "TAC" ? messageFormatTableJoinTAC
-                                                             : messageFormatTableJoinIWXXM;
+      addCreatedMessagesTables(queryOptions, filterMETARs, excludeSPECIs, withClause, tableMap);
     }
 
     // For time range query ensure tablemap contains message_types table for joining into main
     // query; needed for message type or type specific time range restriction
 
     if (queryOptions.itsTimeOptions.itsObservationTime.empty())
-    {
-      auto& table = tableMap[messageTypeTableName];
-
-      if (table.itsAlias.empty())
-        table.itsAlias = messageTypeTableAlias;
-
-      if (table.itsJoin.empty())
-        table.itsJoin = messageTypeTableJoin;
-    }
+      joinTable(tableMap, messageTypeTableName, messageTypeTableAlias, messageTypeTableJoin);
 
     // Max row count for the query; if exceeded, an error is thrown; if <= 0, unlimited
 
@@ -5263,55 +5365,7 @@ StationQueryData EngineImpl::queryMessages(const Fmi::Database::PostgreSQLConnec
 
     const string finalSql = withClause + selectClause + fromWhereOrderByClause.str();
 
-    const bool cacheUsable = itsCache && itsCache->ready() && isCacheable(queryOptions);
-
-    // Serve from the in-memory cache when possible (and not in shadow mode).
-    if (cacheUsable && !itsConfig->getCacheShadowCompare())
-    {
-      try
-      {
-        executeQueryEmbedded<StationQueryData>(finalSql,
-                                               queryOptions.itsDebug,
-                                               stationQueryData,
-                                               queryOptions.itsDistinctMessages,
-                                               maxMessageRows);
-        return stationQueryData;
-      }
-      catch (...)
-      {
-        // Any cache failure falls back to PostgreSQL; discard partial results.
-        stationQueryData.itsValues.clear();
-        stationQueryData.itsStationIds.clear();
-        Fmi::Exception ex(BCP, "AVI cache query failed; falling back to PostgreSQL");
-        ex.printError();
-      }
-    }
-
-    executeQuery<StationQueryData>(connection,
-                                   finalSql,
-                                   queryOptions.itsDebug,
-                                   stationQueryData,
-                                   queryOptions.itsDistinctMessages,
-                                   maxMessageRows);
-
-    // Shadow comparison: run the cache too and log any difference, but return
-    // the PostgreSQL result.
-    if (cacheUsable && itsConfig->getCacheShadowCompare())
-    {
-      try
-      {
-        StationQueryData shadow;
-        shadow.itsColumns = stationQueryData.itsColumns;
-        executeQueryEmbedded<StationQueryData>(
-            finalSql, false, shadow, queryOptions.itsDistinctMessages, maxMessageRows);
-        compareShadow(stationQueryData, shadow, finalSql);
-      }
-      catch (...)
-      {
-        Fmi::Exception ex(BCP, "AVI cache shadow query failed");
-        ex.printError();
-      }
-    }
+    runMessageQuery(connection, finalSql, queryOptions, maxMessageRows, stationQueryData);
 
     return stationQueryData;
   }

@@ -196,6 +196,25 @@ class EngineImpl : public Engine
                                  const StationIdList& stationIdList,
                                  const QueryOptions& queryOptions,
                                  bool validateQuery) const;
+  std::string recordSetWithClause(const StationIdList& stationIdList,
+                                  const QueryOptions& queryOptions) const;
+  void addMessageValidityTable(const QueryOptions& queryOptions, TableMap& tableMap) const;
+  void buildValidMessagesWithClause(const StationIdList& stationIdList,
+                                    const QueryOptions& queryOptions,
+                                    bool filterMETARs,
+                                    bool excludeSPECIs,
+                                    std::string& withClause,
+                                    TableMap& tableMap) const;
+  void addCreatedMessagesTables(const QueryOptions& queryOptions,
+                                bool filterMETARs,
+                                bool excludeSPECIs,
+                                std::string& withClause,
+                                TableMap& tableMap) const;
+  void runMessageQuery(const Fmi::Database::PostgreSQLConnection& connection,
+                       const std::string& finalSql,
+                       const QueryOptions& queryOptions,
+                       int maxMessageRows,
+                       StationQueryData& stationQueryData) const;
 
   void loadFIRAreas() const;
 
