@@ -3407,6 +3407,151 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
   }
 }
 
+namespace
+{
+// ----------------------------------------------------------------------
+/*!
+ * \brief Integer column value
+ */
+// ----------------------------------------------------------------------
+
+TimeSeries::Value integerValue(const IResult& result, std::size_t row, const string& name)
+{
+  // Currently can't handle NULLs properly, but by setting kFloatMissing for NULL,
+  // TableFeeder (used by avi plugin) produces 'missing' (by default, 'nan') column value.
+  //
+  // Solution is poor, numeric column value 32700 cannot be returned by avi plugin
+  // (in practice through, only stationid or messageid could have value 32700).
+  //
+  TimeSeries::Value return_value = TimeSeries::None();
+  if (!result.isNull(row, name))
+    return_value = result.getInt(row, name);
+  return return_value;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Double column value
+ */
+// ----------------------------------------------------------------------
+
+TimeSeries::Value doubleValue(const IResult& result, std::size_t row, const string& name)
+{
+  // Note: try/catch; With station query distance and bearing are available only when
+  // querying stations with coordinates; for other station queries distance and bearing
+  // are not selected at all
+  //
+  TimeSeries::Value return_value = TimeSeries::None();
+  try
+  {
+    if (!result.isNull(row, name))
+      return_value = result.getDouble(row, name);
+  }
+  catch (...)
+  {
+    return_value = TimeSeries::None();
+  }
+  return return_value;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief String column value
+ */
+// ----------------------------------------------------------------------
+
+TimeSeries::Value stringValue(const IResult& result, std::size_t row, const string& name)
+{
+  bool isNull = false;
+
+  try
+  {
+    isNull = result.isNull(row, name);
+  }
+  catch (...)
+  {
+    isNull = true;
+  }
+
+  if (isNull)
+    return TimeSeries::None();
+  return boost::algorithm::trim_copy(result.getString(row, name));
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief 'latlon' or 'lonlat' column value
+ */
+// ----------------------------------------------------------------------
+
+TimeSeries::Value lonLatValue(const IResult& result, std::size_t row, const string& name)
+{
+  // 'latlon' and 'lonlat' are selected as comma separated strings. Return them as
+  // TimeSeries::LonLat for formatted output with TableFeeder
+  //
+  TimeSeries::LonLat lonlat(0, 0);
+  string llStr(boost::algorithm::trim_copy(result.getString(row, name)));
+  vector<string> flds;
+  boost::algorithm::split(flds, llStr, boost::is_any_of(","));
+  bool lonlatValid = false;
+
+  if (flds.size() == 2)
+  {
+    string& lon = ((name == stationLonLatQueryColumn) ? flds[0] : flds[1]);
+    string& lat = ((name == stationLonLatQueryColumn) ? flds[1] : flds[0]);
+
+    boost::algorithm::trim(lon);
+    boost::algorithm::trim(lat);
+
+    try
+    {
+      lonlat.lon = Fmi::stod(lon);
+      lonlat.lat = Fmi::stod(lat);
+      lonlatValid = true;
+    }
+    catch (...)
+    {
+    }
+  }
+
+  if (!lonlatValid)
+    throw Fmi::Exception(BCP, string("Query returned invalid ") + name + " value '" + llStr + "'");
+
+  return lonlat;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Column value of the given type
+ */
+// ----------------------------------------------------------------------
+
+TimeSeries::Value columnValue(const IResult& result,
+                              std::size_t row,
+                              const string& name,
+                              ColumnType type)
+{
+  if (type == ColumnType::Integer)
+    return integerValue(result, row, name);
+
+  if (type == ColumnType::Double)
+    return doubleValue(result, row, name);
+
+  if (type == ColumnType::String)
+    return stringValue(result, row, name);
+
+  if ((type == ColumnType::TS_LonLat) || (type == ColumnType::TS_LatLon))
+    return lonLatValue(result, row, name);
+
+  Fmi::LocalDateTime utcTime(result.isNull(row, name)
+                                 ? Fmi::DateTime()
+                                 : Fmi::DateTime::from_string(result.getString(row, name)),
+                             tzUTC);
+  return utcTime;
+}
+
+}  // namespace
+
 // ----------------------------------------------------------------------
 /*!
  * \brief Load query result into given data object
@@ -3461,104 +3606,8 @@ void EngineImpl::loadQueryResult(
           //
           continue;
 
-        if (column.itsType == ColumnType::Integer)
-        {
-          // Currently can't handle NULLs properly, but by setting kFloatMissing for NULL,
-          // TableFeeder (used by avi plugin) produces 'missing' (by default, 'nan') column value.
-          //
-          // Solution is poor, numeric column value 32700 cannot be returned by avi plugin
-          // (in practice through, only stationid or messageid could have value 32700).
-          //
-          TimeSeries::Value return_value = TimeSeries::None();
-          if (!result.isNull(row, column.itsName))
-            return_value = result.getInt(row, column.itsName);
-
-          queryValues[column.itsName].push_back(return_value);
-        }
-        else if (column.itsType == ColumnType::Double)
-        {
-          // Note: try/catch; With station query distance and bearing are available only when
-          // querying stations with coordinates; for other station queries distance and bearing
-          // are not selected at all
-          //
-          TimeSeries::Value return_value = TimeSeries::None();
-          try
-          {
-            if (!result.isNull(row, column.itsName))
-              return_value = result.getDouble(row, column.itsName);
-          }
-          catch (...)
-          {
-            return_value = TimeSeries::None();
-          }
-
-          queryValues[column.itsName].push_back(return_value);
-        }
-        else if (column.itsType == ColumnType::String)
-        {
-          bool isNull = false;
-
-          try
-          {
-            isNull = result.isNull(row, column.itsName);
-          }
-          catch (...)
-          {
-            isNull = true;
-          }
-
-          if (isNull)
-            queryValues[column.itsName].emplace_back(TimeSeries::None());
-          else
-            queryValues[column.itsName].emplace_back(
-                boost::algorithm::trim_copy(result.getString(row, column.itsName)));
-        }
-        else if ((column.itsType == ColumnType::TS_LonLat) ||
-                 (column.itsType == ColumnType::TS_LatLon))
-        {
-          // 'latlon' and 'lonlat' are selected as comma separated strings. Return them as
-          // TimeSeries::LonLat for formatted output with TableFeeder
-          //
-          TimeSeries::LonLat lonlat(0, 0);
-          string llStr(boost::algorithm::trim_copy(result.getString(row, column.itsName)));
-          vector<string> flds;
-          boost::algorithm::split(flds, llStr, boost::is_any_of(","));
-          bool lonlatValid = false;
-
-          if (flds.size() == 2)
-          {
-            string& lon = ((column.itsName == stationLonLatQueryColumn) ? flds[0] : flds[1]);
-            string& lat = ((column.itsName == stationLonLatQueryColumn) ? flds[1] : flds[0]);
-
-            boost::algorithm::trim(lon);
-            boost::algorithm::trim(lat);
-
-            try
-            {
-              lonlat.lon = Fmi::stod(lon);
-              lonlat.lat = Fmi::stod(lat);
-              lonlatValid = true;
-            }
-            catch (...)
-            {
-            }
-          }
-
-          if (!lonlatValid)
-            throw Fmi::Exception(
-                BCP, string("Query returned invalid ") + column.itsName + " value '" + llStr + "'");
-
-          queryValues[column.itsName].emplace_back(lonlat);
-        }
-        else
-        {
-          Fmi::LocalDateTime utcTime(
-              result.isNull(row, column.itsName)
-                  ? Fmi::DateTime()
-                  : Fmi::DateTime::from_string(result.getString(row, column.itsName)),
-              tzUTC);
-          queryValues[column.itsName].emplace_back(utcTime);
-        }
+        queryValues[column.itsName].push_back(
+            columnValue(result, row, column.itsName, column.itsType));
       }
     }
   }
