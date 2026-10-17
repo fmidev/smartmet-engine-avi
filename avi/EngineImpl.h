@@ -78,6 +78,25 @@ class EngineImpl : public Engine
                                                bool autoSelectDistance,
                                                std::string& selectClause,
                                                bool& firIdQuery);
+  struct MessageSelectState;
+  static void selectAutomaticMessageQueryColumns(QueryTable* queryTables,
+                                                 const StringList& paramList,
+                                                 bool routeQuery,
+                                                 TableMap& tableMap,
+                                                 std::string& selectClause,
+                                                 bool& duplicate,
+                                                 bool& icaoSelected);
+  static void appendMessageQuerySelectColumn(const QueryTable& queryTable,
+                                             const Column* queryColumn,
+                                             std::string& selectClause);
+  static void markMessageColumnSelected(const QueryTable& queryTable,
+                                        const Column* queryColumn,
+                                        MessageSelectState& state);
+  static void selectMessageQueryParamColumn(QueryTable* queryTables,
+                                            const std::string& param,
+                                            TableMap& tableMap,
+                                            MessageSelectState& state,
+                                            std::string& selectClause);
   static TableMap buildMessageQuerySelectClause(QueryTable* queryTables,
                                                 const StationIdList& stationIdList,
                                                 const StringList& messageTypeList,

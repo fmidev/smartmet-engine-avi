@@ -3059,6 +3059,238 @@ Columns EngineImpl::buildStationQuerySelectClause(const StringList& paramList,
  */
 // ----------------------------------------------------------------------
 
+// ----------------------------------------------------------------------
+/*!
+ * \brief State of message query select clause generation
+ */
+// ----------------------------------------------------------------------
+
+struct EngineImpl::MessageSelectState
+{
+  bool leftOuter = true;
+  bool duplicate = false;
+  bool distinctMessages = false;
+  bool checkDuplicateMessages = false;
+  bool distinct = false;
+  bool messageColumnSelected = false;
+  int columnNumber = 0;
+};
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Select the station id and icao columns automatically for accepted messages
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::selectAutomaticMessageQueryColumns(QueryTable* queryTables,
+                                                    const StringList& paramList,
+                                                    bool routeQuery,
+                                                    TableMap& tableMap,
+                                                    string& selectClause,
+                                                    bool& duplicate,
+                                                    bool& icaoSelected)
+{
+  for (QueryTable* qt = queryTables;; qt++)
+  {
+    const QueryTable& queryTable = *qt;
+
+    if (queryTable.itsName.empty())
+      break;
+
+    if (queryTable.itsName == messageTableName)
+    {
+      auto& table = tableMap[messageTableName];
+      table.itsAlias = queryTable.itsAlias;
+      table.itsJoin = queryTable.itsJoin;
+
+      const auto* queryColumn = getQueryColumn(
+          queryTable.itsColumns, table.itsSelectedColumns, stationIdQueryColumn, duplicate);
+
+      if (!queryColumn)
+        throw Fmi::Exception(
+            BCP, "buildMessageQuerySelectClause(): internal: Unable to get station id column");
+
+      Column column(*queryColumn);
+      column.itsSelection = ColumnSelection::Automatic;
+      table.itsSelectedColumns.push_back(column);
+
+      selectClause = queryTable.itsAlias + "." + queryColumn->itsTableColumnName + " AS " +
+                     queryColumn->itsName;
+    }
+    else if ((!routeQuery) && (queryTable.itsName == stationTableName))
+    {
+      auto& table = tableMap[stationTableName];
+      table.itsAlias = queryTable.itsAlias;
+      table.itsJoin = queryTable.itsJoin;
+
+      const auto* queryColumn = getQueryColumn(
+          queryTable.itsColumns, table.itsSelectedColumns, stationIcaoQueryColumn, duplicate);
+
+      if (!queryColumn)
+        throw Fmi::Exception(
+            BCP, "buildMessageQuerySelectClause(): internal: Unable to get station icao column");
+
+      Column column(*queryColumn);
+      column.itsSelection = ColumnSelection::Automatic;
+      table.itsSelectedColumns.push_back(column);
+
+      // NOTE: Generate select expression if icao is requested by the caller too. When looping
+      // the parameters below, column's select expression is NOT generated if the column already
+      // exists in column list; it's type just gets changed to AutomaticRequested
+
+      if (find(paramList.begin(), paramList.end(), stationIcaoQueryColumn) != paramList.end())
+      {
+        selectClause += (string(selectClause.empty() ? "" : ",") + queryTable.itsAlias + "." +
+                         queryColumn->itsTableColumnName + " AS " + queryColumn->itsName);
+        icaoSelected = true;
+      }
+    }
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Append the select expression of a column to the select clause
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::appendMessageQuerySelectColumn(const QueryTable& queryTable,
+                                                const Column* queryColumn,
+                                                string& selectClause)
+{
+  if (queryColumn->itsExpression)
+  {
+    selectClause +=
+        (string(selectClause.empty() ? "" : ",") +
+         queryColumn->itsExpression(queryColumn->itsTableColumnName, queryColumn->itsName));
+  }
+  else if (queryColumn->itsCoordinateExpression)
+  {
+    // Select NULL for distance and bearing columns; they will be set after the query by
+    // searching from station data
+    //
+    selectClause += (string(selectClause.empty() ? "" : ",") + nullExpression(queryColumn));
+  }
+  else
+  {
+    selectClause += (string(selectClause.empty() ? "" : ",") + queryTable.itsAlias + "." +
+                     queryColumn->itsTableColumnName);
+
+    if (queryColumn->itsType == ColumnType::DateTime)
+      selectClause += string(" AT TIME ZONE 'UTC'");
+
+    if ((queryColumn->itsType == ColumnType::DateTime) ||
+        (queryColumn->itsName != queryColumn->itsTableColumnName))
+      selectClause += (string(" AS ") + queryColumn->itsName);
+  }
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Update the state when a message column has been selected
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::markMessageColumnSelected(const QueryTable& queryTable,
+                                           const Column* queryColumn,
+                                           MessageSelectState& state)
+{
+  if (queryTable.itsName == messageTableName)
+  {
+    state.distinct = false;
+
+    if (state.distinctMessages && (queryColumn->itsName == messageQueryColumn))
+      // Clear flag forcing automatic 'message' column selection
+      //
+      state.distinctMessages = false;
+    else
+      state.checkDuplicateMessages = true;
+  }
+
+  state.messageColumnSelected = true;
+}
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Select the column of a parameter
+ */
+// ----------------------------------------------------------------------
+
+void EngineImpl::selectMessageQueryParamColumn(QueryTable* queryTables,
+                                               const string& param,
+                                               TableMap& tableMap,
+                                               MessageSelectState& state,
+                                               string& selectClause)
+{
+  for (QueryTable* qt = queryTables;; qt++)
+  {
+    const QueryTable& queryTable = *qt;
+
+    if (queryTable.itsName.empty())
+      break;
+
+    auto& table = tableMap[queryTable.itsName];
+    const auto* queryColumn = getQueryColumn(queryTable.itsColumns,
+                                             table.itsSelectedColumns,
+                                             param,
+                                             state.duplicate,
+                                             state.columnNumber);
+
+    if (queryColumn)
+    {
+      if (table.itsAlias.empty())
+        table.itsAlias = queryTable.itsAlias;
+
+      if (table.itsJoin.empty())
+        table.itsJoin = queryTable.itsJoin;
+
+      table.leftOuter = state.leftOuter;
+
+      appendMessageQuerySelectColumn(queryTable, queryColumn, selectClause);
+
+      if ((queryTable.itsName != stationTableName) && (queryTable.itsName != firTableName))
+        markMessageColumnSelected(queryTable, queryColumn, state);
+
+      table.itsSelectedColumns.push_back(*queryColumn);
+      table.itsSelectedColumns.back().itsNumber = state.columnNumber;
+
+      break;
+    }
+
+    if (state.duplicate)
+      // Automatically selected column is selected by the caller too
+      break;
+  }
+}
+
+namespace
+{
+// ----------------------------------------------------------------------
+/*!
+ * \brief Ensure the table is joined into the query
+ */
+// ----------------------------------------------------------------------
+
+Table& joinTable(TableMap& tableMap, const char* tableName, const char* alias, const char* join)
+{
+  auto& table = tableMap[tableName];
+
+  if (table.itsAlias.empty())
+    table.itsAlias = alias;
+
+  if (table.itsJoin.empty())
+    table.itsJoin = join;
+
+  return table;
+}
+}  // namespace
+
+// ----------------------------------------------------------------------
+/*!
+ * \brief Build select clause for querying accepted or rejected messages
+ */
+// ----------------------------------------------------------------------
+
 TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
                                                    const StationIdList& stationIdList,
                                                    const StringList& messageTypeList,
@@ -3073,12 +3305,9 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
     // Selected tables/columns
 
     TableMap tableMap;
-    bool leftOuter = true;
+    MessageSelectState state;
     bool icaoSelected = false;
-    bool duplicate = false;
-    bool distinctMessages = distinct;
-    bool checkDuplicateMessages = false;
-    int columnNumber = 0;
+    state.distinctMessages = distinct;
 
     selectClause.clear();
     messageColumnSelected = distinct = false;
@@ -3100,155 +3329,34 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
       //
       // No LEFT OUTER joins when querying accepted messages
       //
-      distinct = true;
-      leftOuter = false;
+      state.distinct = true;
+      state.leftOuter = false;
 
-      for (QueryTable* qt = queryTables;; qt++)
-      {
-        const QueryTable& queryTable = *qt;
-
-        if (queryTable.itsName.empty())
-          break;
-
-        if (queryTable.itsName == messageTableName)
-        {
-          auto& table = tableMap[messageTableName];
-          table.itsAlias = queryTable.itsAlias;
-          table.itsJoin = queryTable.itsJoin;
-
-          const auto* queryColumn = getQueryColumn(
-              queryTable.itsColumns, table.itsSelectedColumns, stationIdQueryColumn, duplicate);
-
-          if (!queryColumn)
-            throw Fmi::Exception(
-                BCP, "buildMessageQuerySelectClause(): internal: Unable to get station id column");
-
-          Column column(*queryColumn);
-          column.itsSelection = ColumnSelection::Automatic;
-          table.itsSelectedColumns.push_back(column);
-
-          selectClause = queryTable.itsAlias + "." + queryColumn->itsTableColumnName + " AS " +
-                         queryColumn->itsName;
-        }
-        else if ((!routeQuery) && (queryTable.itsName == stationTableName))
-        {
-          auto& table = tableMap[stationTableName];
-          table.itsAlias = queryTable.itsAlias;
-          table.itsJoin = queryTable.itsJoin;
-
-          const auto* queryColumn = getQueryColumn(
-              queryTable.itsColumns, table.itsSelectedColumns, stationIcaoQueryColumn, duplicate);
-
-          if (!queryColumn)
-            throw Fmi::Exception(
-                BCP,
-                "buildMessageQuerySelectClause(): internal: Unable to get station icao column");
-
-          Column column(*queryColumn);
-          column.itsSelection = ColumnSelection::Automatic;
-          table.itsSelectedColumns.push_back(column);
-
-          // NOTE: Generate select expression if icao is requested by the caller too. When looping
-          // the parameters below, column's select expression is NOT generated if the column already
-          // exists in column list; it's type just gets changed to AutomaticRequested
-
-          if (find(paramList.begin(), paramList.end(), stationIcaoQueryColumn) != paramList.end())
-          {
-            selectClause += (string(selectClause.empty() ? "" : ",") + queryTable.itsAlias + "." +
-                             queryColumn->itsTableColumnName + " AS " + queryColumn->itsName);
-            icaoSelected = true;
-          }
-        }
-      }
+      selectAutomaticMessageQueryColumns(queryTables,
+                                         paramList,
+                                         routeQuery,
+                                         tableMap,
+                                         selectClause,
+                                         state.duplicate,
+                                         icaoSelected);
     }
 
     for (auto const& param : paramList)
     {
-      for (QueryTable* qt = queryTables;; qt++)
-      {
-        const QueryTable& queryTable = *qt;
-
-        if (queryTable.itsName.empty())
-          break;
-
-        auto& table = tableMap[queryTable.itsName];
-        const auto* queryColumn = getQueryColumn(
-            queryTable.itsColumns, table.itsSelectedColumns, param, duplicate, columnNumber);
-
-        if (queryColumn)
-        {
-          if (table.itsAlias.empty())
-            table.itsAlias = queryTable.itsAlias;
-
-          if (table.itsJoin.empty())
-            table.itsJoin = queryTable.itsJoin;
-
-          table.leftOuter = leftOuter;
-
-          if (queryColumn->itsExpression)
-          {
-            selectClause +=
-                (string(selectClause.empty() ? "" : ",") +
-                 queryColumn->itsExpression(queryColumn->itsTableColumnName, queryColumn->itsName));
-          }
-          else if (queryColumn->itsCoordinateExpression)
-          {
-            // Select NULL for distance and bearing columns; they will be set after the query by
-            // searching from station data
-            //
-            selectClause += (string(selectClause.empty() ? "" : ",") + nullExpression(queryColumn));
-          }
-          else
-          {
-            selectClause += (string(selectClause.empty() ? "" : ",") + queryTable.itsAlias + "." +
-                             queryColumn->itsTableColumnName);
-
-            if (queryColumn->itsType == ColumnType::DateTime)
-              selectClause += string(" AT TIME ZONE 'UTC'");
-
-            if ((queryColumn->itsType == ColumnType::DateTime) ||
-                (queryColumn->itsName != queryColumn->itsTableColumnName))
-              selectClause += (string(" AS ") + queryColumn->itsName);
-          }
-
-          if ((queryTable.itsName != stationTableName) && (queryTable.itsName != firTableName))
-          {
-            if (queryTable.itsName == messageTableName)
-            {
-              distinct = false;
-
-              if (distinctMessages && (queryColumn->itsName == messageQueryColumn))
-                // Clear flag forcing automatic 'message' column selection
-                //
-                distinctMessages = false;
-              else
-                checkDuplicateMessages = true;
-            }
-
-            messageColumnSelected = true;
-          }
-
-          table.itsSelectedColumns.push_back(*queryColumn);
-          table.itsSelectedColumns.back().itsNumber = columnNumber;
-
-          break;
-        }
-
-        if (duplicate)
-          // Automatically selected column is selected by the caller too
-          break;
-      }
-
-      columnNumber++;
+      selectMessageQueryParamColumn(queryTables, param, tableMap, state, selectClause);
+      state.columnNumber++;
     }
 
-    if (distinctMessages && checkDuplicateMessages)
+    distinct = state.distinct;
+    messageColumnSelected = state.messageColumnSelected;
+
+    if (state.distinctMessages && state.checkDuplicateMessages)
     {
       // 'message' column was not selected by the caller; select it to skip duplicates
       //
       auto& table = tableMap[messageTableName];
       const auto* queryColumn = getQueryColumn(
-          messageQueryColumns, table.itsSelectedColumns, messageQueryColumn, duplicate);
+          messageQueryColumns, table.itsSelectedColumns, messageQueryColumn, state.duplicate);
 
       if (!queryColumn)
         throw Fmi::Exception(
@@ -3272,13 +3380,7 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
 
     if ((!routeQuery) && distinct && (!icaoSelected))
     {
-      auto& table = tableMap[stationTableName];
-
-      if (table.itsAlias.empty())
-        table.itsAlias = stationTableAlias;
-
-      if (table.itsJoin.empty())
-        table.itsJoin = stationTableJoin;
+      joinTable(tableMap, stationTableName, stationTableAlias, stationTableJoin);
 
       selectClause += (string(",") + stationTableAlias + "." + stationIcaoTableColumn);
     }
@@ -3291,13 +3393,8 @@ TableMap EngineImpl::buildMessageQuerySelectClause(QueryTable* queryTables,
 
     if (messageColumnSelected && (!messageTypeList.empty()))
     {
-      auto& table = tableMap[messageTypeTableName];
-
-      if (table.itsAlias.empty())
-        table.itsAlias = messageTypeTableAlias;
-
-      if (table.itsJoin.empty())
-        table.itsJoin = messageTypeTableJoin;
+      auto& table =
+          joinTable(tableMap, messageTypeTableName, messageTypeTableAlias, messageTypeTableJoin);
 
       table.leftOuter = false;
     }
