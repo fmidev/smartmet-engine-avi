@@ -1095,7 +1095,8 @@ bool Config::readMessageTimeRangeType(libconfig::Setting& typeSetting,
   {
     Fmi::Exception exception(BCP, "Invalid configuration attribute value!");
     exception.addDetail(
-        R"(Use one of the following values : "validtime", "messagetime" or "creationtime")");
+        R"(Use one of the following values : "validtime", "messagevalidtime", "messagetime" or )"
+        R"("creationtime")");
     exception.addParameter("Configuration file", theConfigFileName);
     exception.addParameter("Attribute", blockName + ".timerangetype");
     exception.addParameter("Invalid value", timeRangeType);

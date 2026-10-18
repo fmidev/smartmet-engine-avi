@@ -104,6 +104,7 @@ make %{_smp_mflags}
 %changelog
 * Sat Oct 17 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.17-1.fmi
 - queryStationsAndMessages: keep the stations of all scopes in station-only queries
+- Config: list messagevalidtime among the valid timerangetype values in the error message
 - Split functions with a cognitive complexity above 25 into smaller helpers, no functional changes
 - ABI change: new or changed members in installed headers, dependent packages must be rebuilt
 
