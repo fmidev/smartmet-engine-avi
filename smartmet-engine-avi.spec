@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 26.10.17
+Version: 26.10.23
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -28,9 +28,9 @@ BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
 BuildRequires: duckdb-devel
 BuildRequires: smartmet-library-spine-devel >= 26.10.16
-BuildRequires: smartmet-library-macgyver-devel >= 26.10.16
+BuildRequires: smartmet-library-macgyver-devel >= 26.10.23
 BuildRequires: smartmet-library-timeseries-devel >= 26.10.16
-Requires: smartmet-library-macgyver >= 26.10.17
+Requires: smartmet-library-macgyver >= 26.10.23
 Requires: smartmet-library-spine >= 26.10.17
 Requires: smartmet-library-timeseries >= 26.10.16
 Requires: duckdb
@@ -102,6 +102,11 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Oct 23 2026 Pertti Kinnia <pertti.kinnia@fmi.fi> - 26.10.23-1.fmi
+- Pooled PostgreSQL connections idle longer than the new postgis.maxidletime setting (s) are closed and reopened before use, to avoid queries stalling for ~15-20 minutes on connections silently dropped by a firewall/NAT
+- New postgis settings connecttimeout (s), tcpusertimeout (ms), keepalivesidle, keepalivesinterval (s) and keepalivescount for detecting dead connections. All default to 0 = disabled, i.e. the old behaviour. The new settings can be host specific via a top level overrides list
+- AviCache: libpqxx version compatibility simplified
+
 * Sat Oct 17 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.17-1.fmi
 - queryStationsAndMessages: keep the stations of all scopes in station-only queries
 - Config: list messagevalidtime among the valid timerangetype values in the error message

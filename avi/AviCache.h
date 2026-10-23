@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include "ConnectionPool.h"
 #include "ResultAccessor.h"
 #include <macgyver/DateTime.h>
 #include <macgyver/PostgreSQLConnection.h>
@@ -54,7 +55,7 @@ class AviCache
     Fmi::DateTime end;
   };
 
-  AviCache(const Config& config, Fmi::Database::PostgreSQLConnectionPool& pool);
+  AviCache(const Config& config, ConnectionPool& pool);
   ~AviCache();
 
   AviCache() = delete;
@@ -87,7 +88,7 @@ class AviCache
   void refreshSpan();        // recompute cachedSpan from the mirror
 
   const Config& itsConfig;
-  Fmi::Database::PostgreSQLConnectionPool& itsPool;
+  ConnectionPool& itsPool;
 
   // DuckDB database handle (duckdb_database). Stored as void* so the large
   // duckdb.h need not be included from this header; cast in AviCache.cpp.

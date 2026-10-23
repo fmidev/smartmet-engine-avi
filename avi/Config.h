@@ -130,6 +130,12 @@ class Config : public SmartMet::Spine::ConfigBase
   const std::string& getEncoding() const { return itsEncoding; }
   unsigned getStartConnections() const { return startConnections; }
   unsigned getMaxConnections() const { return maxConnections; }
+  unsigned getConnectTimeout() const { return itsConnectTimeout; }
+  unsigned getTcpUserTimeout() const { return itsTcpUserTimeout; }
+  unsigned getKeepalivesIdle() const { return itsKeepalivesIdle; }
+  unsigned getKeepalivesInterval() const { return itsKeepalivesInterval; }
+  unsigned getKeepalivesCount() const { return itsKeepalivesCount; }
+  unsigned getMaxIdleTime() const { return itsMaxIdleTime; }
   int getMaxMessageStations() const { return itsMaxMessageStations; }
   int getMaxMessageRows() const { return itsMaxMessages; }
   int getRecordSetStartTimeOffsetHours() const { return itsRecordSetStartTimeOffsetHours; }
@@ -191,6 +197,19 @@ class Config : public SmartMet::Spine::ConfigBase
 
   unsigned startConnections = 5;
   unsigned maxConnections = 10;
+
+  // Hardening against a pooled connection being silently dropped (no FIN/RST) by something
+  // stateful on the network path (firewall, NAT, ...). All default to 0 (disabled) - unchanged
+  // behavior unless explicitly configured. The tcp user timeout and keepalive settings are
+  // passed to libpq as the connection parameters connect_timeout, tcp_user_timeout and
+  // keepalives_*.
+  unsigned itsConnectTimeout = 0;      // seconds; max time to wait for a (re)connect
+  unsigned itsTcpUserTimeout = 0;      // milliseconds; max time sent data may stay unacknowledged
+  unsigned itsKeepalivesIdle = 0;      // seconds of inactivity before the first keepalive probe
+  unsigned itsKeepalivesInterval = 0;  // seconds between unacknowledged keepalive probes
+  unsigned itsKeepalivesCount = 0;     // unacknowledged probes before the connection is dead
+  unsigned itsMaxIdleTime = 0;         // seconds; pooled connections idle longer than this are
+                                       // closed and reopened before being handed out
 
   int itsMaxMessageStations;  // if config/query value not given or <= 0, unlimited
   int itsMaxMessages;         // if config/query value not given or <= 0, unlimited

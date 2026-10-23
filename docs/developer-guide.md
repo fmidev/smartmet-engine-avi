@@ -79,7 +79,7 @@ Results are `StationQueryData` (column values per station id) or `QueryData`.
    `IResult` interface (`ResultAccessor.h`), implemented for libpqxx (`PqxxResult.h`) and
    for the DuckDB cache, so the same loading code serves both.
 
-Connections come from a pool (`postgis` settings).
+Connections come from a pool (`postgis` settings, `ConnectionPool.h`). Connections idle in the pool longer than `postgis.maxidletime` are reopened on checkout.
 
 ## 4. Message types and time ranges
 
@@ -106,7 +106,7 @@ to its configuration.
 
 | Key | Meaning |
 |-----|---------|
-| `postgis` | Host, port, database, credentials and connection pool size. |
+| `postgis` | Host, port, database, credentials and connection pool size. Optionally a connect timeout (`connecttimeout`), dead connection detection (`tcpusertimeout`, `keepalivesidle`, `keepalivesinterval`, `keepalivescount`) and recycling of pooled connections idle longer than `maxidletime`; these can be set per host in a top level `overrides` list (as in the server config, `Spine::lookupHostSetting`); see `cnf/avi.conf.sample`. |
 | `message.types` | The message types with `timerangetype`, `validityhours`, `latestmessage`, `messirpatterns`, scope and query restrictions. |
 | `message.recordsetstarttimeoffsethours`, `recordsetendtimeoffsethours` | The CTE window around the requested time (required, > 0). It must be wide enough for every type's validity. |
 | `message.filter_FI_METARxxx` | The Finnish METAR deduplication. |

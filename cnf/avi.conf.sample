@@ -15,6 +15,22 @@ postgis:
 
 	startconnections = 5;  # Start size of database connection pool
 	maxconnections = 10;   # Max size of database connection pool
+
+	# Detection of dead connections, e.g. pooled connections silently dropped (no FIN/RST) by a
+	# firewall/NAT on the network path while idle. All default to 0 (disabled).
+	# They can also be set for some hosts only, see 'overrides' at the end of the file.
+	#
+	# connecttimeout = 10;       # s; max time to wait for a (re)connect (libpq connect_timeout);
+	#                            # without it a connect to an unreachable server is unbounded
+	# tcpusertimeout = 20000;    # ms; max time sent data (e.g. a query) may stay unacknowledged
+	#                            # before the connection is aborted (libpq tcp_user_timeout).
+	#                            # Without it the kernel retransmits for ~15-20 minutes
+	# keepalivesidle = 60;       # s; inactivity before the first TCP keepalive probe
+	# keepalivesinterval = 10;   # s; interval between unacknowledged keepalive probes
+	# keepalivescount = 3;       # unacknowledged probes before the connection is considered dead
+	# maxidletime = 300;         # s; pooled connections idle longer than this are closed and
+	#                            # reopened before use. Set below the idle timeout of the
+	#                            # firewall/NAT on the network path
 };
 
 message:
@@ -178,3 +194,25 @@ message:
 	#	(message.created >= start time AND message.created < end time)
 	#
 }
+
+# Host specific values for the dead connection detection and idle connection recycling settings
+# of the postgis section (connecttimeout, tcpusertimeout, keepalives*, maxidletime). An entry
+# applies when one of its names is a prefix of the host name (case insensitive); the first
+# matching entry with a value for the setting wins, otherwise the postgis section value (or 0)
+# applies. Other settings are not read from here.
+#
+# overrides:
+# (
+# 	{
+# 		name = ["backend1", "backend2"];
+# 		postgis:
+# 		{
+# 			connecttimeout = 10;
+# 			tcpusertimeout = 20000;
+# 			keepalivesidle = 60;
+# 			keepalivesinterval = 10;
+# 			keepalivescount = 3;
+# 			maxidletime = 300;
+# 		};
+# 	}
+# );

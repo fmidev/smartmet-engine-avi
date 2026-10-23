@@ -4,6 +4,7 @@
 #include <boost/algorithm/string.hpp>
 #include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
+#include <spine/ConfigTools.h>
 #include <set>
 #include <stdexcept>
 
@@ -618,6 +619,16 @@ void Config::readPostgisSettings(const libconfig::Config& theConfig,
     theConfig.lookupValue("postgis.maxconnections", maxConnections);
     maxConnections = std::max(startConnections, maxConnections);
   }
+
+  // Dead connection detection and idle connection recycling may be enabled only for some hosts:
+  // a value in a matching 'overrides' entry (name = list of host name prefixes) takes precedence
+  // over the postgis section value
+  Spine::lookupHostSetting(theConfig, itsConnectTimeout, "postgis.connecttimeout");
+  Spine::lookupHostSetting(theConfig, itsTcpUserTimeout, "postgis.tcpusertimeout");
+  Spine::lookupHostSetting(theConfig, itsKeepalivesIdle, "postgis.keepalivesidle");
+  Spine::lookupHostSetting(theConfig, itsKeepalivesInterval, "postgis.keepalivesinterval");
+  Spine::lookupHostSetting(theConfig, itsKeepalivesCount, "postgis.keepalivescount");
+  Spine::lookupHostSetting(theConfig, itsMaxIdleTime, "postgis.maxidletime");
 }
 
 // ----------------------------------------------------------------------

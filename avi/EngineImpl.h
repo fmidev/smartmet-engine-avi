@@ -2,6 +2,7 @@
 
 #include "AviCache.h"
 #include "Config.h"
+#include "ConnectionPool.h"
 #include "Engine.h"
 #include <macgyver/PostgreSQLConnection.h>
 
@@ -228,7 +229,7 @@ class EngineImpl : public Engine
 
   std::string itsConfigFileName;
   std::shared_ptr<Config> itsConfig;
-  std::unique_ptr<Fmi::Database::PostgreSQLConnectionPool> itsConnectionPool;
+  std::unique_ptr<ConnectionPool> itsConnectionPool;
   std::unique_ptr<AviCache> itsCache;
 
   mutable std::mutex itsFIRMutex;

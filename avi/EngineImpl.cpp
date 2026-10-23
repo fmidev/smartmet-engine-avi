@@ -111,6 +111,11 @@ Fmi::Database::PostgreSQLConnectionOptions mk_connection_options(Config& itsConf
   opt.password = itsConfig.getPassword();
   opt.database = itsConfig.getDatabase();
   opt.encoding = itsConfig.getEncoding();
+  opt.connect_timeout = itsConfig.getConnectTimeout();
+  opt.tcp_user_timeout = itsConfig.getTcpUserTimeout();
+  opt.keepalives_idle = itsConfig.getKeepalivesIdle();
+  opt.keepalives_interval = itsConfig.getKeepalivesInterval();
+  opt.keepalives_count = itsConfig.getKeepalivesCount();
   return opt;
 }
 
@@ -2798,10 +2803,11 @@ void EngineImpl::init()
   {
     itsConfig = std::make_shared<Config>(itsConfigFileName);
 
-    itsConnectionPool = std::make_unique<Fmi::Database::PostgreSQLConnectionPool>(
-        itsConfig->getStartConnections(),
-        itsConfig->getMaxConnections(),
-        mk_connection_options(*itsConfig));
+    itsConnectionPool =
+        std::make_unique<ConnectionPool>(itsConfig->getStartConnections(),
+                                         itsConfig->getMaxConnections(),
+                                         mk_connection_options(*itsConfig),
+                                         std::chrono::seconds(itsConfig->getMaxIdleTime()));
 
     // Start the in-memory message cache if enabled. Its initial load runs in
     // the cache's own background thread, so it does not delay engine startup;

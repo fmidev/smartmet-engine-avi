@@ -32,6 +32,7 @@ vpath %.h $(SUBNAME)
 INTERNAL_HDRS = \
 	avi/EngineImpl.h \
 	avi/AviCache.h \
+	avi/ConnectionPool.h \
 	avi/Config.h
 
 SRCS = $(wildcard $(SUBNAME)/*.cpp)

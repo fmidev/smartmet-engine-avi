@@ -194,7 +194,7 @@ void appendField(duckdb_appender app,
 
 // ----------------------------------------------------------------------
 
-AviCache::AviCache(const Config& config, Fmi::Database::PostgreSQLConnectionPool& pool)
+AviCache::AviCache(const Config& config, ConnectionPool& pool)
     : itsConfig(config), itsPool(pool)
 {
 }
@@ -359,7 +359,7 @@ void AviCache::createSchema()
 namespace
 {
 void loadTable(duckdb_connection con,
-               Fmi::Database::PostgreSQLConnectionPool& pool,
+               ConnectionPool& pool,
                const std::string& pgQuery,
                const char* table,
                const std::vector<ColType>& colTypes)

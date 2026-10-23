@@ -40,6 +40,7 @@ Tests require a PostgreSQL test database. In CI, a local test database is create
 - **`Engine`** (`Engine.h`) — Public API base class inheriting `SmartMet::Spine::SmartMetEngine`. All public query methods are virtual with default implementations that throw "AVI engine not available". This allows plugins to link against the header without the engine actually being loaded.
 - **`EngineImpl`** (`EngineImpl.h`) — Private implementation class that overrides all virtual methods. Manages a PostgreSQL connection pool and handles SQL query generation, validation, and result loading.
 - **`AviCache`** (`AviCache.h`) — Optional in-memory DuckDB copy of the recent messages and the station/type/format/route tables, refreshed by a background thread. `EngineImpl::queryMessages` runs the generated SQL against it for "latest at current time" queries (`isCacheable`), falling back to PostgreSQL otherwise or on any error.
+- **`ConnectionPool`** (`ConnectionPool.h`) — Wraps macgyver's `PostgreSQLConnectionPool`; used by both `EngineImpl` and `AviCache`. Reopens a connection on checkout if it has been idle longer than `postgis.maxidletime` (0 = disabled), since a connection silently dropped by a firewall/NAT is not detected otherwise.
 - **`IResult`** (`ResultAccessor.h`) — Backend-neutral query result access; `PqxxResult.h` wraps libpqxx, `AviCache.cpp` wraps DuckDB. Result loading (`loadQueryResult`, `getValues`) uses only this interface.
 - **`Config`** (`Config.h`) — Parses libconfig configuration files. Defines `MessageType` objects that control time range queries, validity periods, message scoping (station/FIR/global), and Finnish METAR filtering rules.
 
@@ -66,7 +67,7 @@ The engine queries against `avidb_stations`, `avidb_messages`, `avidb_rejected_m
 
 Configuration uses libconfig format (`cnf/avi.conf.sample`). Key sections:
 
-- `postgis` — Database connection (host, port, database, credentials, connection pool size)
+- `postgis` — Database connection (host, port, database, credentials, connection pool size); optional connect timeout (`connecttimeout` s), dead connection detection (`tcpusertimeout` ms, `keepalivesidle`, `keepalivesinterval`, `keepalivescount`) and idle connection recycling (`maxidletime`), all 0 (disabled) by default; these can be host specific via a top level `overrides` list (`Spine::lookupHostSetting`, e.g. `overrides: ({ name = ["host1"]; postgis: { maxidletime = 300; }; })`)
 - `message.types` — List of known message types with their time range type (`validtime`, `messagevalidtime`, `messagetime`, `creationtime`), validity hours, latest-message behavior, messir patterns, and query restriction settings
 - `message.recordsetstarttimeoffsethours` / `recordsetendtimeoffsethours` — Expand the message_time CTE window to capture messages valid at the requested time (required, must be > 0)
 - `message.filter_FI_METARxxx` — Finnish METAR deduplication filter

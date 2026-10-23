@@ -35,7 +35,7 @@ Fmi::Database::PostgreSQLConnectionOptions makeOptions(const Config& config)
 }
 
 // Run a "SELECT ... AS n" returning a single long on PostgreSQL.
-long pgScalar(Fmi::Database::PostgreSQLConnectionPool& pool, const std::string& sql)
+long pgScalar(ConnectionPool& pool, const std::string& sql)
 {
   auto ptr = pool.get();
   auto& conn = *ptr.get();
@@ -55,7 +55,7 @@ struct CacheFixture
   CacheFixture()
   {
     config = std::make_shared<Config>("cnf/valid.conf");
-    pool = std::make_shared<Fmi::Database::PostgreSQLConnectionPool>(2, 4, makeOptions(*config));
+    pool = std::make_shared<ConnectionPool>(2, 4, makeOptions(*config));
     cache = std::make_shared<AviCache>(*config, *pool);
     cache->start();
 
@@ -65,7 +65,7 @@ struct CacheFixture
   }
 
   std::shared_ptr<Config> config;
-  std::shared_ptr<Fmi::Database::PostgreSQLConnectionPool> pool;
+  std::shared_ptr<ConnectionPool> pool;
   std::shared_ptr<AviCache> cache;
 };
 
