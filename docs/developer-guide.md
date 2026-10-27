@@ -106,7 +106,7 @@ to its configuration.
 
 | Key | Meaning |
 |-----|---------|
-| `postgis` | Host, port, database, credentials and connection pool size. Optionally a connect timeout (`connecttimeout`), dead connection detection (`tcpusertimeout`, `keepalivesidle`, `keepalivesinterval`, `keepalivescount`) and recycling of pooled connections idle longer than `maxidletime`; these can be set per host in a top level `overrides` list (as in the server config, `Spine::lookupHostSetting`); see `cnf/avi.conf.sample`. |
+| `postgis` | Host, port, database, credentials and connection pool size. Optionally a connect timeout (`connecttimeout`), dead connection detection (`tcpusertimeout`, `keepalivesidle`, `keepalivesinterval`, `keepalivescount`) and recycling of pooled connections idle longer than `maxidletime`; these can be set per host in a top level `overrides` list (as in the server config, `Spine::lookupHostSetting`); see `cnf/avi.conf.sample`. Every `overrides` entry must have `name` as a list, also for a single host (`name = ["backend1"];`); an entry without `name`, also one meant only for other settings, makes the configuration load fail. |
 | `message.types` | The message types with `timerangetype`, `validityhours`, `latestmessage`, `messirpatterns`, scope and query restrictions. |
 | `message.recordsetstarttimeoffsethours`, `recordsetendtimeoffsethours` | The CTE window around the requested time (required, > 0). It must be wide enough for every type's validity. |
 | `message.filter_FI_METARxxx` | The Finnish METAR deduplication. |

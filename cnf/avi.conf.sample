@@ -201,6 +201,9 @@ message:
 # matching entry with a value for the setting wins, otherwise the postgis section value (or 0)
 # applies. Other settings are not read from here.
 #
+# Every entry must have 'name' as a list, also for a single host (name = ["backend1"];). An entry
+# without 'name', also one meant only for some other settings, makes the configuration load fail.
+#
 # overrides:
 # (
 # 	{
