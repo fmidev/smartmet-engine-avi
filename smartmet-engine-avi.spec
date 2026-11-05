@@ -27,12 +27,12 @@ BuildRequires: %{smartmet_boost}-devel
 BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
 BuildRequires: duckdb-devel
-BuildRequires: smartmet-library-spine-devel >= 26.10.16
-BuildRequires: smartmet-library-macgyver-devel >= 26.10.23
-BuildRequires: smartmet-library-timeseries-devel >= 26.10.16
-Requires: smartmet-library-macgyver >= 26.10.23
-Requires: smartmet-library-spine >= 26.10.17
-Requires: smartmet-library-timeseries >= 26.10.16
+BuildRequires: smartmet-library-spine-devel >= 26.11.4
+BuildRequires: smartmet-library-macgyver-devel >= 26.11.3
+BuildRequires: smartmet-library-timeseries-devel >= 26.11.4
+Requires: smartmet-library-macgyver >= 26.11.3
+Requires: smartmet-library-spine >= 26.11.4
+Requires: smartmet-library-timeseries >= 26.11.4
 Requires: duckdb
 #TestRequires: smartmet-library-spine-plugin-test
 #TestRequires: smartmet-test-db
