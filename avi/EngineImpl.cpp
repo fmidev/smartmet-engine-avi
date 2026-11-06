@@ -10,6 +10,7 @@
 #include <macgyver/TimeParser.h>
 #include <spine/Convenience.h>
 #include <algorithm>
+#include <iomanip>
 #include <memory>
 #include <set>
 #include <sstream>

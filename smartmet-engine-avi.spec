@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet aviation message engine
 Name: %{SPECNAME}
-Version: 26.10.23
+Version: 26.11.6
 Release: 1%{?dist}.fmi
 License: FMI
 Group: SmartMet/Engines
@@ -28,9 +28,9 @@ BuildRequires: zlib-devel
 BuildRequires: bzip2-devel
 BuildRequires: duckdb-devel
 BuildRequires: smartmet-library-spine-devel >= 26.11.4
-BuildRequires: smartmet-library-macgyver-devel >= 26.11.3
+BuildRequires: smartmet-library-macgyver-devel >= 26.11.6
 BuildRequires: smartmet-library-timeseries-devel >= 26.11.4
-Requires: smartmet-library-macgyver >= 26.11.3
+Requires: smartmet-library-macgyver >= 26.11.6
 Requires: smartmet-library-spine >= 26.11.4
 Requires: smartmet-library-timeseries >= 26.11.4
 Requires: duckdb
@@ -102,6 +102,10 @@ make %{_smp_mflags}
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Nov 6 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.11.6-1.fmi
+- Include the headers used directly instead of relying on transitive includes
+- Rebuilt against the new macgyver AsyncTaskGroup ABI
+
 * Fri Oct 23 2026 Pertti Kinnia <pertti.kinnia@fmi.fi> - 26.10.23-1.fmi
 - Pooled PostgreSQL connections idle longer than the new postgis.maxidletime setting (s) are closed and reopened before use, to avoid queries stalling for ~15-20 minutes on connections silently dropped by a firewall/NAT
 - New postgis settings connecttimeout (s), tcpusertimeout (ms), keepalivesidle, keepalivesinterval (s) and keepalivescount for detecting dead connections. All default to 0 = disabled, i.e. the old behaviour. The new settings can be host specific via a top level overrides list
