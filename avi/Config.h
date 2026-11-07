@@ -211,8 +211,8 @@ class Config : public SmartMet::Spine::ConfigBase
   unsigned itsMaxIdleTime = 0;         // seconds; pooled connections idle longer than this are
                                        // closed and reopened before being handed out
 
-  int itsMaxMessageStations;  // if config/query value not given or <= 0, unlimited
-  int itsMaxMessages;         // if config/query value not given or <= 0, unlimited
+  int itsMaxMessageStations = 0;  // if config/query value not given or <= 0, unlimited
+  int itsMaxMessages = 0;         // if config/query value not given or <= 0, unlimited
 
   // Database has no indexes for message table's valid_from and valid_to columns used to restrict
   // query for some message types.
