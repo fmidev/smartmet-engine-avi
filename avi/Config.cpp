@@ -647,12 +647,12 @@ void Config::readMessageQuerySettings(const libconfig::Config& theConfig,
   else
     itsMaxMessageStations = 0;
 
-  // Max # of rows fetched by message query; if <= 0, unlimited
+  // Max # of rows fetched by message query; if <= 0, unlimited; if missing, 50000
 
   if (theConfig.exists("message.maxrows"))
     theConfig.lookupValue("message.maxrows", itsMaxMessages);
   else
-    itsMaxMessages = 0;
+    itsMaxMessages = 50000;
 
   // Record set's message_time start and end offsets as hours
 

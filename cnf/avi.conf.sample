@@ -38,7 +38,7 @@ message:
 							# Note: 'maxstations' and 'maxrows' limits can be overridden (with values >= 0) when querying data
 							#
 	maxstations	 = 0;		# max number of stations allowed in message query; if missing or <= 0, unlimited; if exceeded, an error is thrown
-	maxrows		 = 0;		# max number of messages fetched; if missing or <= 0, unlimited; if exceeded, an error is thrown
+	maxrows		 = 50000;	# max number of messages fetched; if missing, 50000; if <= 0, unlimited; if exceeded, an error is thrown
 
 										# offsets expanding the message_time range to include messages that can be valid at/within
 										# the time instant/range requested
