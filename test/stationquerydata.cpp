@@ -106,34 +106,34 @@ BOOST_AUTO_TEST_CASE(stationquerydata_getValues,
   // By default, check duplicate messages
   StationQueryData stationQueryData;
 
-  // The first row is not a dublicate in the object (new stationid 0)
+  // The first row is not a duplicate in the object (new stationid 0)
   bool duplicate = true;
   QueryValues& queryValues = stationQueryData.getValues(result, 0, 0, duplicate);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(duplicate, false);
   BOOST_CHECK_EQUAL(queryValues.size(), 0);
 
-  // The first row is not a dublicate in the object because the check of duplicate messages is ON by
+  // The first row is not a duplicate in the object because the check of duplicate messages is ON by
   // default.
   queryValues = stationQueryData.getValues(result, 0, 0, duplicate);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(duplicate, false);
   BOOST_CHECK_EQUAL(queryValues.size(), 0);
 
-  // The first row is not a dublicate of the second row because the check of duplicate messages is
+  // The first row is not a duplicate of the second row because the check of duplicate messages is
   // ON by default.
   queryValues = stationQueryData.getValues(result, 0, 1, duplicate);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(duplicate, false);
   BOOST_CHECK_EQUAL(queryValues.size(), 0);
 
-  // The third row is not a dublicate (new stationid 1)
+  // The third row is not a duplicate (new stationid 1)
   queryValues = stationQueryData.getValues(result, 2, 2, duplicate);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
   BOOST_CHECK_EQUAL(duplicate, false);
   BOOST_CHECK_EQUAL(queryValues.size(), 0);
 
-  // The third row is a dublicate for the fourth (same stationid and same message)
+  // The third row is a duplicate for the fourth (same stationid and same message)
   queryValues = stationQueryData.getValues(result, 2, 3, duplicate);
   BOOST_CHECK_EQUAL(stationQueryData.itsStationIds.size(), 2);
   BOOST_CHECK_EQUAL(duplicate, true);
@@ -142,32 +142,32 @@ BOOST_AUTO_TEST_CASE(stationquerydata_getValues,
   // Do not check duplicate messages
   StationQueryData stationQueryData2(false);
 
-  // The first row is not a dublicate (new stationid 0)
+  // The first row is not a duplicate (new stationid 0)
   queryValues = stationQueryData2.getValues(result, 0, 0, duplicate);
   BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(duplicate, false);
   BOOST_CHECK_EQUAL(queryValues.size(), 0);
 
-  // The first row is a dublicate in the object because the same stationid 0.
+  // The first row is a duplicate in the object because the same stationid 0.
   queryValues = stationQueryData2.getValues(result, 0, 0, duplicate);
   BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(duplicate, true);
   BOOST_CHECK_EQUAL(queryValues.size(), 0);
 
-  // The first row is a dublicate of the second row because same stationid 0 and the check of
+  // The first row is a duplicate of the second row because same stationid 0 and the check of
   // duplicate messages has turned OFF.
   queryValues = stationQueryData2.getValues(result, 0, 1, duplicate);
   BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 1);
   BOOST_CHECK_EQUAL(duplicate, true);
   BOOST_CHECK_EQUAL(queryValues.size(), 0);
 
-  // The third row is not a dublicate (new stationid 1)
+  // The third row is not a duplicate (new stationid 1)
   queryValues = stationQueryData2.getValues(result, 2, 2, duplicate);
   BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 2);
   BOOST_CHECK_EQUAL(duplicate, false);
   BOOST_CHECK_EQUAL(queryValues.size(), 0);
 
-  // The third row is a dublicate for the fourth (same stationid)
+  // The third row is a duplicate for the fourth (same stationid)
   queryValues = stationQueryData2.getValues(result, 2, 3, duplicate);
   BOOST_CHECK_EQUAL(stationQueryData2.itsStationIds.size(), 2);
   BOOST_CHECK_EQUAL(duplicate, true);

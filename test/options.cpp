@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(locationoptions_members)
   BOOST_CHECK(typeid(wktsVariable.itsWKTs) == typeid(stringListVariable));
   BOOST_CHECK_EQUAL(wktsVariable.itsWKTs.size(), stringListVariable.size());
   BOOST_CHECK(typeid(wktsVariable.isRoute) == typeid(boolVariable));
-  // Unable to test the value of isRoute bacause it is uninitialized
+  // Unable to test the value of isRoute because it is uninitialized
   // BOOST_CHECK_EQUAL(wktsVariable.isRoute, boolVariable);
 
   const unsigned int unsignedIntVariable = 0;
@@ -68,11 +68,11 @@ BOOST_AUTO_TEST_CASE(locationoptions_members)
   BOOST_CHECK_EQUAL(locationOptions.itsCountries.size(), stringListVariable.size());
 
   BOOST_CHECK(typeid(locationOptions.itsMaxDistance) == typeid(doubleVariable));
-  // Unable to test the value of itsMaxDistance bacause it is uninitialized
+  // Unable to test the value of itsMaxDistance because it is uninitialized
   // BOOST_CHECK_EQUAL(locationOptions.itsMaxDistance, doubleVariable);
 
   BOOST_CHECK(typeid(locationOptions.itsNumberOfNearestStations) == typeid(unsignedIntVariable));
-  // Unable to test the value of itsNumberOfNearestStations bacause it is uninitialized
+  // Unable to test the value of itsNumberOfNearestStations because it is uninitialized
   // BOOST_CHECK_EQUAL(locationOptions.itsNumberOfNearestStations, unsignedIntVariable);
 }
 
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(queryoptions_members)
   BOOST_CHECK_EQUAL(queryOptions.itsValidity, validityVariable);
 
   BOOST_CHECK(typeid(queryOptions.itsMessageColumnSelected) == typeid(boolVariable));
-  // Unable to test the value of itsMessageColumnSelected bacause it is uninitialized
+  // Unable to test the value of itsMessageColumnSelected because it is uninitialized
   // BOOST_CHECK_EQUAL(queryOptions.itsMessageColumnSelected, boolVariable);
 
   BOOST_CHECK(typeid(queryOptions.itsMaxMessageStations) == typeid(intVariable));

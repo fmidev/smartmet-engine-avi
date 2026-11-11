@@ -319,7 +319,7 @@ using QueryValues = std::map<std::string, ValueVector>;
 
 struct QueryData
 {
-  // The data has no station id; return the common value map having colum name as the map key
+  // The data has no station id; return the common value map having column name as the map key
   //
   QueryValues& getValues(const IResult& /* dummy */,
                          std::size_t /* row */,

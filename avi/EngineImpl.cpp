@@ -2603,7 +2603,7 @@ void buildMessageQueryFromWhereOrderByClause(int maxMessageRows,
       // bbox(es)/maxdistance, not with preselected station id list
       //
       // Avi plugin was also modified not to allow use of multiple location options (it has
-      // been the configured case anyway), it was the simpliest way to handle the change
+      // been the configured case anyway), it was the simplest way to handle the change
 
       ostringstream whereStationClause;
 
@@ -4945,7 +4945,7 @@ const Column* EngineImpl::getMessageTableTimeColumn(const string& timeColumn)
 
 // ----------------------------------------------------------------------
 /*!
- * \brief Build WITH clause for 'record_set' table containg all valid messages for given time
+ * \brief Build WITH clause for 'record_set' table containing all valid messages for given time
  *        instant/range.
  *
  * Note: By passing false instead of queryOptions.itsLocationOptions.itsWKTs.isRoute
@@ -5047,7 +5047,7 @@ void EngineImpl::buildValidMessagesWithClause(const StationIdList& stationIdList
                                               string& withClause,
                                               TableMap& tableMap) const
 {
-  // Build WITH clause for 'record_set' table containg all valid messages for given time
+  // Build WITH clause for 'record_set' table containing all valid messages for given time
   // instant/range.
   //
   // Note: By passing false instead of queryOptions.itsLocationOptions.itsWKTs.isRoute
