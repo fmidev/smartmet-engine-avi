@@ -5,8 +5,9 @@
 #include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
 #include <spine/ConfigTools.h>
+#include <libconfig.h++>
+#include <ostream>
 #include <set>
-#include <stdexcept>
 
 namespace SmartMet
 {

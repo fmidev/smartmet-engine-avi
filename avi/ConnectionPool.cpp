@@ -9,6 +9,8 @@
 #include <macgyver/Exception.h>
 #include <spine/Convenience.h>
 #include <iostream>
+#include <string>
+#include <utility>
 
 namespace SmartMet
 {

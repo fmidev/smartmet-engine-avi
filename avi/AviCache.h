@@ -26,16 +26,19 @@
 
 #pragma once
 
-#include "ConnectionPool.h"
 #include "ResultAccessor.h"
 #include <macgyver/DateTime.h>
-#include <macgyver/PostgreSQLConnection.h>
 #include <atomic>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
+
+namespace SmartMet::Engine::Avi
+{
+class ConnectionPool;
+}  // namespace SmartMet::Engine::Avi
 
 namespace SmartMet
 {

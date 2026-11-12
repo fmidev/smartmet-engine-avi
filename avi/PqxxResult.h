@@ -12,6 +12,7 @@
 #pragma once
 
 #include "ResultAccessor.h"
+#include <cstddef>
 #include <pqxx/result>
 #include <string>
 #include <utility>

@@ -3,13 +3,16 @@
 #pragma once
 
 #include "ResultAccessor.h"
+#include <macgyver/Exception.h>
 #include <spine/SmartMetEngine.h>
 #include <timeseries/TimeSeries.h>
 #include <cstddef>
 #include <list>
 #include <map>
-#include <pqxx/result>
+#include <ostream>
+#include <string>
 #include <utility>
+#include <vector>
 
 #define stationIdQueryColumn "stationid"
 #define messageQueryColumn "message"
@@ -439,8 +442,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 };
 
 // The engine
-
-class EngineImpl;
 
 // ======================================================================
 }  // namespace Avi

@@ -2,11 +2,19 @@
 
 #include "AviCache.h"
 #include "Config.h"
+#include "ConnectionPool.h"
 #include <macgyver/Exception.h>
+#include <macgyver/PostgreSQLConnection.h>
 #include <macgyver/StringConversion.h>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <duckdb.h>
+#include <initializer_list>
 #include <iostream>
 #include <map>
+#include <pqxx/pqxx>
+#include <utility>
 #include <vector>
 
 namespace SmartMet

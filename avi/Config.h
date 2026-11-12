@@ -4,7 +4,15 @@
 
 #include <spine/ConfigBase.h>
 #include <algorithm>
+#include <iosfwd>
 #include <list>
+#include <string>
+
+namespace libconfig
+{
+class Config;
+class Setting;
+}  // namespace libconfig
 
 namespace SmartMet
 {

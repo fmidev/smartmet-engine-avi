@@ -1,10 +1,20 @@
 #pragma once
 
 #include "AviCache.h"
-#include "Config.h"
 #include "ConnectionPool.h"
 #include "Engine.h"
 #include <macgyver/PostgreSQLConnection.h>
+#include <atomic>
+#include <memory>
+#include <mutex>
+#include <string>
+
+namespace SmartMet::Engine::Avi
+{
+class Config;
+class IResult;
+enum class MessageScope;
+}  // namespace SmartMet::Engine::Avi
 
 namespace SmartMet
 {
@@ -80,6 +90,7 @@ class EngineImpl : public Engine
                                                std::string& selectClause,
                                                bool& firIdQuery);
   struct MessageSelectState;
+
   static void selectAutomaticMessageQueryColumns(QueryTable* queryTables,
                                                  const StringList& paramList,
                                                  bool routeQuery,
