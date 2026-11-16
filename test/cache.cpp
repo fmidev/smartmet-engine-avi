@@ -2,6 +2,7 @@
 
 #include "AviCache.h"
 #include "Config.h"
+#include "ConnectionPool.h"
 
 #include <boost/test/included/unit_test.hpp>
 #include <macgyver/PostgreSQLConnection.h>
