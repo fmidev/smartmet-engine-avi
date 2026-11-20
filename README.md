@@ -32,7 +32,7 @@ The engine can be loaded in a dummy mode that needs no database. In this mode it
    disabled = true;
    ```
 
-Setting `disabled = true` in the server's `engines.avi` section is different: the server then does not load `avi.so` at all, and any plugin that requires the Avi engine fails at startup.
+Setting `disabled = true` in the server's `engines.avi` section is different: the server then does not load `avi.so` at all, and any plugin that requires the Avi engine fails at startup. The avi plugin requires it; the WMS plugin does not since version 26.11.20, but its METAR layers then fail.
 
 ## Documentation
 

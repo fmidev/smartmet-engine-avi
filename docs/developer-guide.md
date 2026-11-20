@@ -121,7 +121,8 @@ may be missing. This lets plugins that look up the engine at startup (avi, wms) 
 machine without the AVI database. An empty configuration file is not the same thing: the
 full engine is then created and fails on the missing `postgis` settings. Setting
 `disabled = true` in the server's `engines.avi` section is different again: the server
-does not load `avi.so`, and plugins that require it fail at startup.
+does not load `avi.so`, and plugins that require it fail at startup. The avi plugin requires
+it; the WMS plugin does not since version 26.11.20 (its METAR layers then fail).
 
 ## 6. In-memory message cache
 
