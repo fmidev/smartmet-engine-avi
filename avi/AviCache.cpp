@@ -3,6 +3,7 @@
 #include "AviCache.h"
 #include "Config.h"
 #include "ConnectionPool.h"
+#include <macgyver/Cancellation.h>
 #include <macgyver/Exception.h>
 #include <macgyver/PostgreSQLConnection.h>
 #include <macgyver/StringConversion.h>
@@ -595,16 +596,27 @@ std::unique_ptr<IResult> AviCache::executeEmbedded(const std::string& sql) const
   if (db == nullptr)
     throw Fmi::Exception(BCP, "AviCache: database not open");
 
+  Fmi::check_cancelled();
+
   duckdb_connection con = nullptr;
   if (duckdb_connect(db, &con) == DuckDBError)
     throw Fmi::Exception(BCP, "AviCache: connect failed");
 
   duckdb_result result;
-  if (duckdb_query(con, sql.c_str(), &result) == DuckDBError)
+  duckdb_state state = DuckDBError;
+  {
+    // The query of a cancelled request (Fmi::CancellationToken) is interrupted, the thread
+    // watching the requests calls this
+    Fmi::CancellationCallback breaker([con]() { duckdb_interrupt(con); });
+    state = duckdb_query(con, sql.c_str(), &result);
+  }
+
+  if (state == DuckDBError)
   {
     std::string err = duckdb_result_error(&result);
     duckdb_destroy_result(&result);
     duckdb_disconnect(&con);
+    Fmi::check_cancelled();
     throw Fmi::Exception(BCP, "AviCache query failed: " + err);
   }
 
